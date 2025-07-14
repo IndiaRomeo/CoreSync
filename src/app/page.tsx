@@ -381,10 +381,31 @@ export default function Home() {
       {/* Redes sociales */}
       <footer className="w-full absolute bottom-4 flex items-center justify-center z-40 gap-8">
         <a href="https://www.instagram.com/coresync_collective/" target="_blank" rel="noopener" className="hover:scale-110 transition">
-          <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" strokeWidth="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8a4 4 0 0 1 3.37 3.37z" strokeWidth="2"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/></svg>
+          <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-white">
+            <rect x="2" y="2" width="20" height="20" rx="5" strokeWidth="2"/>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8a4 4 0 0 1 3.37 3.37z" strokeWidth="2"/>
+            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
+          </svg>
         </a>
-        <a href="https://www.facebook.com/CoreSyncCollective/" target="_blank" rel="noopener" className="hover:scale-110 transition">
-          <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H5v4h5v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" strokeWidth="2"/></svg>
+        <a
+          href="https://www.facebook.com/CoreSyncCollective/"
+          target="_blank"
+          rel="noopener"
+          className="hover:scale-110 transition"
+        >
+          <svg
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            className="text-white"
+          >
+            <path
+              d="M18 2h-3a5 5 0 0 0-5 5v3H5v4h5v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"
+              strokeWidth="2"
+            />
+          </svg>
         </a>
       </footer>
 
