@@ -16,6 +16,7 @@ export default function Home() {
   const [tapWhatsapp, setTapWhatsapp] = useState(false);
   const [tapShare, setTapShare] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
+  const [tapCountdown, setTapCountdown] = useState(false);
 
   // Cuando el video termina de cargar, oculta el loader
   const handleLoadedData = () => setLoading(false);
@@ -145,7 +146,17 @@ export default function Home() {
             cursor-pointer
             transition-transform duration-300
             hover:scale-110
+            ${tapCountdown ? "scale-110" : ""}
           `}
+          onClick={() => {
+            // Esto sigue para el efecto click en PC/tablet (puedes dejarlo)
+            setTapCountdown(true);
+            setTimeout(() => setTapCountdown(false), 300);
+          }}
+          onTouchStart={() => {
+            setTapCountdown(true);
+            setTimeout(() => setTapCountdown(false), 300);
+          }}
           >
             {timeLeft.expired ? (
               <span className="text-pink-600">¡El evento ha comenzado!</span>
