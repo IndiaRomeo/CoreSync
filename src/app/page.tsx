@@ -353,7 +353,7 @@ export default function Home() {
           }
         }}
         className={`
-          fixed bottom-6 right-24 md:right-24 z-50
+          fixed bottom-24 right-6 z-50
           bg-black/80 hover:bg-white/80
           border-2 border-white
           rounded-full p-4 shadow-lg transition
