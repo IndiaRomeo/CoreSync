@@ -21,10 +21,10 @@ const orbitron = Orbitron({
 
 export const metadata: Metadata = {
   title: "Core Sync Collective - Evento Techno en Mariquita",
-  description: "Fiesta Techno | Core Sync Collective | 16 de agosto 2025 | San Sebastián de Mariquita | ¡Compra tu entrada ya!",
-  /*openGraph: {
+  description: "Fiesta Techno | Core Sync Collective | Agosto 2025 | San Sebastián de Mariquita | ¡Compra tu entrada ya!",
+  openGraph: {
     title: "Core Sync Collective - Fiesta Techno",
-    description: "No te pierdas el evento del año: 16 de agosto, Mariquita. Boletas limitadas. ¡Compra ahora!",
+    description: "No te pierdas el evento del año: Agosto, Mariquita. Boletas limitadas. ¡Compra ahora!",
     url: "https://core-sync-4voc.vercel.app/",
     siteName: "Core Sync Collective",
     images: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     ],
     locale: "es_CO",
     type: "website",
-  },*/
+  },
   // Puedes agregar más propiedades aquí si quieres
 };
 
