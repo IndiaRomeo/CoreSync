@@ -19,7 +19,7 @@ const orbitron = Orbitron({
   weight: ["700"],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Core Sync Collective - Evento Techno en Mariquita",
   description: "Fiesta Techno | Core Sync Collective | 16 de agosto 2025 | San Sebastián de Mariquita | ¡Compra tu entrada ya!",
   openGraph: {
@@ -46,6 +46,7 @@ export const metadata = {
   },
   // Puedes agregar más propiedades aquí si quieres
 };
+
 
 export default function RootLayout({
   children,
