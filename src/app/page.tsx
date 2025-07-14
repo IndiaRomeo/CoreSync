@@ -10,13 +10,11 @@ export default function Home() {
   const [showTitle, setShowTitle] = useState(false);
   const [open, setOpen] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const [faqQuery, setFaqQuery] = useState("");
-  const eventDate = new Date("2025-08-16T21:00:00-05:00"); // Ajusta tu zona horaria si es necesario
+  const eventDate = new Date("2025-08-16T21:00:00-05:00");
   const [showUrgency, setShowUrgency] = useState(false);
   const [showShareCopied, setShowShareCopied] = useState(false);
   const [tapWhatsapp, setTapWhatsapp] = useState(false);
   const [tapShare, setTapShare] = useState(false);
-  const [animateCountdown, setAnimateCountdown] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
 
   // Cuando el video termina de cargar, oculta el loader
@@ -32,26 +30,23 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       setShowTitle(false);
-      // Pequeño delay para forzar el reinicio de la animación (100ms)
       setTimeout(() => setShowTitle(true), 100);
     }
   }, [loading]);
 
   useEffect(() => {
     if (showTitle) {
-      setTimeout(() => setShowButton(true), 250); // 250ms después del título
+      setTimeout(() => setShowButton(true), 250);
     } else {
       setShowButton(false);
     }
   }, [showTitle]);
 
-  // --- MODAL SCROLL Y CIERRE AL HACER CLICK AFUERA ---
-  const handleModalOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Si el usuario da click en el fondo (overlay) cierra modal
+  // MODAL SCROLL Y CIERRE AL HACER CLICK AFUERA
+  const handleModalOverlayClick = () => {
     setOpen(false);
   };
   const handleModalClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Evita que el click dentro del modal cierre el modal
     e.stopPropagation();
   };
   const [timeLeft, setTimeLeft] = useState({
@@ -60,71 +55,53 @@ export default function Home() {
   });
 
   // Cierre con tecla ESC
-useEffect(() => {
-  if (!open) return;
-  const handleEsc = (e: KeyboardEvent) => {
-    if (e.key === "Escape") setOpen(false);
-  };
-  window.addEventListener("keydown", handleEsc);
-  return () => window.removeEventListener("keydown", handleEsc);
-}, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [open]);
 
-useEffect(() => {
-  function updateCountdown() {
-    const now = new Date();
-    const diff = eventDate.getTime() - now.getTime();
-    if (diff <= 0) {
-      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
-      return;
+  useEffect(() => {
+    function updateCountdown() {
+      const now = new Date();
+      const diff = eventDate.getTime() - now.getTime();
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      setTimeLeft({ days, hours, minutes, seconds, expired: false });
     }
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((diff / (1000 * 60)) % 60);
-    const seconds = Math.floor((diff / 1000) % 60);
-    setTimeLeft({ days, hours, minutes, seconds, expired: false });
-  }
 
-  updateCountdown();
-  const timer = setInterval(updateCountdown, 1000);
-  return () => clearInterval(timer);
-}, []);
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-useEffect(() => {
-  // Mostrar notificación en intervalos
-  const show = () => {
-    setShowUrgency(true);
-    setTimeout(() => setShowUrgency(false), 2200); // Visible 2.2 segundos
-  };
-  show(); // Mostrar la primera vez al cargar
-  const interval = setInterval(show, 7000); // Luego cada 7 segundos
-  return () => clearInterval(interval);
-}, []);
+  useEffect(() => {
+    // Mostrar notificación en intervalos
+    const show = () => {
+      setShowUrgency(true);
+      setTimeout(() => setShowUrgency(false), 2200);
+    };
+    show();
+    const interval = setInterval(show, 7000);
+    return () => clearInterval(interval);
+  }, []);
 
-useEffect(() => {
-  if (showTitle) {
-    setTimeout(() => setShowCountdown(true), 100); // cuando muestres el título, muestra el contador
-  } else {
-    setShowCountdown(false);
-  }
-}, [showTitle]);
-
-
-// Tus preguntas frecuentes como array (puedes agregar o quitar):
-const faqList = [
-  {
-    question: "¿Qué necesito para entrar?",
-    answer: "Tu entrada digital (QR o email) y tu documento de identidad."
-  },
-  {
-    question: "¿Hay parqueadero?",
-    answer: "Sí, parqueadero privado al lado del evento."
-  },
-  {
-    question: "¿Puedo comprar varias entradas?",
-    answer: "¡Claro! Puedes seleccionar cuántas quieres en la pasarela de pago."
-  },
-  // Agrega más aquí si quieres
-];
+  useEffect(() => {
+    if (showTitle) {
+      setTimeout(() => setShowCountdown(true), 100);
+    } else {
+      setShowCountdown(false);
+    }
+  }, [showTitle]);
 
   return (
     <main role="main" className="relative flex flex-col items-center justify-center min-h-screen w-full bg-black overflow-hidden">
@@ -169,10 +146,6 @@ const faqList = [
             transition-transform duration-300
             hover:scale-110
           `}
-          onClick={() => {
-            setAnimateCountdown(true);
-            setTimeout(() => setAnimateCountdown(false), 340); // 340ms efecto rápido
-          }}
           >
             {timeLeft.expired ? (
               <span className="text-pink-600">¡El evento ha comenzado!</span>
@@ -227,19 +200,18 @@ const faqList = [
         </div>
       )}
 
-
       {/* El botón va aquí, FUERA del bloque anterior */}
       {showButton && (
         <button
           onClick={() => setOpen(true)}
           className="
             mt-10
-            px-6 py-3         // base: compacto (móvil)
-            sm:px-8 sm:py-3   // sm: un poco más grande (tablet)
-            md:px-10 md:py-4  // md+: grande (escritorio)
-            text-lg           // base
-            sm:text-xl        // sm: tablet
-            md:text-2xl       // md+: escritorio
+            px-6 py-3
+            sm:px-8 sm:py-3
+            md:px-10 md:py-4
+            text-lg
+            sm:text-xl
+            md:text-2xl
             bg-white text-black 
             font-bold 
             rounded-full shadow-xl
@@ -276,7 +248,7 @@ const faqList = [
                 aria-label="Cerrar"
               >&times;</button>
             </div>
-            {/* Contenido con truco para esquinas */}
+            {/* Contenido */}
             <div className="px-0 pt-0 pb-0 flex-1 overflow-hidden rounded-b-2xl">
               <div className="px-8 pt-2 pb-10 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               <img
@@ -321,33 +293,6 @@ const faqList = [
                   <li>XXXXX</li>
                 </ul>
               </div>
-              {/*<div className="mb-4">
-                <input
-                  type="text"
-                  placeholder="Busca una pregunta..."
-                  className="w-full mb-3 p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-sm transition"
-                  value={faqQuery}
-                  onChange={e => setFaqQuery(e.target.value)}
-                  autoComplete="off"
-                />
-                { Renderizar solo las FAQ que coinciden }
-                {faqList
-                  .filter(faq =>
-                    faq.question.toLowerCase().includes(faqQuery.toLowerCase())
-                  )
-                  .map((faq, idx) => (
-                    <details key={idx} className="mb-1 group transition-all">
-                      <summary className="font-bold cursor-pointer group-open:text-blue-900 transition">{faq.question}</summary>
-                      <div className="ml-4 mt-1 text-sm text-gray-600">{faq.answer}</div>
-                    </details>
-                  ))}
-                { Si no hay resultados }
-                {faqList.filter(faq =>
-                  faq.question.toLowerCase().includes(faqQuery.toLowerCase())
-                ).length === 0 && (
-                  <div className="text-gray-400 text-sm">No se encontraron preguntas con ese término.</div>
-                )}
-              </div>*/}
               <a
                 href="#"
                 className="block mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200"
@@ -389,12 +334,12 @@ const faqList = [
           const shareData = {
             title: "Core Sync Collective - Evento Techno",
             text: "¡No te pierdas este evento! 16 de agosto, San Sebastián de Mariquita.",
-            url: typeof window !== "undefined" ? window.location.href : "https://coresync.com", // Cambia por tu URL real si quieres
+            url: typeof window !== "undefined" ? window.location.href : "https://coresync.com",
           };
           if (navigator.share) {
             try {
               await navigator.share(shareData);
-            } catch (err) {
+            } catch {
               // usuario canceló o error, puedes ignorar
             }
           } else {
@@ -441,7 +386,6 @@ const faqList = [
         <a href="https://www.facebook.com/CoreSyncCollective/" target="_blank" rel="noopener" className="hover:scale-110 transition">
           <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H5v4h5v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" strokeWidth="2"/></svg>
         </a>
-        {/* Agrega TikTok, X, etc. si quieres */}
       </footer>
 
       {/* Botón sticky de compra SOLO visible en móviles y tablets */}
@@ -475,7 +419,5 @@ const faqList = [
       )}
 
     </main>
-
-    
   );
 }
