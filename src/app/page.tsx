@@ -388,7 +388,7 @@ export default function Home() {
         </a>
       </footer>
 
-      {/* Botón sticky de compra SOLO visible en móviles y tablets */}
+      {/* Botón sticky de compra SOLO visible en móviles y tablets 
       <button
         onClick={() => setOpen(true)}
         className={`
@@ -404,7 +404,7 @@ export default function Home() {
         `}
       >
         Comprar boleta
-      </button>
+      </button>*/}
 
       {showShareCopied && (
         <div className="
