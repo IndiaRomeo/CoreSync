@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -23,4 +26,196 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.glitch {
+  position: relative;
+  color: #fff;
+  font-family: inherit;
+  letter-spacing: 0.1em;
+  animation: glitch-skew 1.5s infinite linear alternate-reverse;
+}
+
+.glitch span {
+  position: absolute;
+  top: 0; left: 0; width: 100%; pointer-events: none;
+  opacity: 0.7;
+}
+
+.glitch span:first-child {
+  left: 2px;
+  text-shadow: -2px 0 magenta;
+  clip-path: polygon(0 2%,100% 2%,100% 35%,0 35%);
+  animation: glitch-anim-1 1.2s infinite linear alternate-reverse;
+}
+.glitch span:last-child {
+  left: -2px;
+  text-shadow: -2px 0 cyan;
+  clip-path: polygon(0 66%,100% 66%,100% 100%,0 100%);
+  animation: glitch-anim-2 1.3s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-skew {
+  0% { transform: skew(0deg); }
+  13% { transform: skew(-2deg); }
+  17% { transform: skew(2deg); }
+  23% { transform: skew(-1deg); }
+  30% { transform: skew(0deg); }
+  100% { transform: skew(0deg); }
+}
+@keyframes glitch-anim-1 {
+  0% { clip-path: polygon(0 2%,100% 2%,100% 35%,0 35%); }
+  8% { clip-path: polygon(0 6%,100% 4%,100% 25%,0 25%); left: -4px;}
+  15% { clip-path: polygon(0 8%,100% 12%,100% 27%,0 27%); left: 3px;}
+  25% { clip-path: polygon(0 2%,100% 2%,100% 35%,0 35%); left: 0;}
+  100% { clip-path: polygon(0 2%,100% 2%,100% 35%,0 35%); left: 2px;}
+}
+@keyframes glitch-anim-2 {
+  0% { clip-path: polygon(0 66%,100% 66%,100% 100%,0 100%);}
+  9% { clip-path: polygon(0 68%,100% 69%,100% 94%,0 97%); left: 2px;}
+  20% { clip-path: polygon(0 72%,100% 70%,100% 97%,0 99%); left: -3px;}
+  28% { clip-path: polygon(0 66%,100% 66%,100% 100%,0 100%); left: 0;}
+  100% { clip-path: polygon(0 66%,100% 66%,100% 100%,0 100%); left: -2px;}
+}
+
+.glitch span:nth-child(1) {
+  left: 2px;
+  filter: blur(1px) contrast(2);
+  text-shadow: -2px 0 magenta;
+  clip-path: polygon(0 2%,100% 2%,100% 35%,0 35%);
+  animation: glitch-anim-1 1.1s infinite linear alternate-reverse;
+}
+.glitch span:nth-child(3) {
+  left: 4px;
+  filter: blur(2px) brightness(1.3);
+  text-shadow: 2px 0 lime;
+  clip-path: polygon(0 38%,100% 38%,100% 60%,0 60%);
+  animation: glitch-anim-3 0.7s infinite linear alternate-reverse;
+}
+@keyframes glitch-anim-3 {
+  0% { left: 4px; }
+  30% { left: -3px; }
+  50% { left: 7px; }
+  80% { left: -1px; }
+  100% { left: 4px; }
+}
+
+@keyframes title-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.93) translateY(40px) skewX(-8deg);
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(0px) skewX(1deg);
+    filter: blur(0.5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) skewX(0);
+    filter: blur(0);
+  }
+}
+.animate-title-appear {
+  animation: title-appear 1.2s cubic-bezier(.7,0,.3,1) both;
+}
+
+@keyframes button-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.97) translateY(40px) skewX(-4deg);
+    filter: blur(7px);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1.02) translateY(0px) skewX(1deg);
+    filter: blur(0.5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) skewX(0);
+    filter: blur(0);
+  }
+}
+.animate-button-appear {
+  animation: button-appear 1.15s cubic-bezier(.7,0,.3,1) both;
+}
+
+@keyframes modal-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.93) translateY(70px) skewX(-8deg);
+    filter: blur(10px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.03) translateY(0px) skewX(1deg);
+    filter: blur(0.8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) skewX(0);
+    filter: blur(0);
+  }
+}
+.animate-modal-in {
+  animation: modal-in 0.65s cubic-bezier(.7,0,.3,1) both;
+}
+
+@keyframes countdown-appear {
+  0% { opacity: 0; transform: translateY(50px) scale(0.95); filter: blur(5px);}
+  70% { opacity: 1; transform: translateY(-4px) scale(1.02); filter: blur(0.7px);}
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0);}
+}
+.animate-countdown-appear {
+  animation: countdown-appear 1.2s cubic-bezier(.7,0,.3,1) both;
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(-32px);}
+  100% { opacity: 1; transform: translateY(0);}
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s cubic-bezier(.17,.67,.83,.67);
+}
+
+@keyframes pulse-blink {
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.2; }
+  60% { opacity: 1; }
+}
+.animate-pulse-blink {
+  animation: pulse-blink 1.1s cubic-bezier(.4,0,.6,1) infinite;
+}
+
+@keyframes flash-shadow {
+  0%, 100% { box-shadow: 0 6px 28px 0 #0008; }
+  50% { box-shadow: 0 0 35px 8px #0071ff88; }
+}
+.animate-flash-shadow {
+  animation: flash-shadow 1.2s cubic-bezier(.4,0,.6,1) infinite;
+}
+
+@keyframes pulse-tap {
+  0% { transform: scale(1);}
+  40% { transform: scale(0.9);}
+  70% { transform: scale(1.04);}
+  100% { transform: scale(1);}
+}
+.animate-tap {
+  animation: pulse-tap 0.34s cubic-bezier(.7,0,.3,1);
+}
+
+@keyframes countdown-zoom {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.11); }
+  60% { transform: scale(1.13); }
+  100% { transform: scale(1); }
+}
+.animate-countdown-zoom {
+  animation: countdown-zoom 0.34s cubic-bezier(.5,.9,.2,1) both;
+}
+.hover-animate-countdown-zoom:hover {
+  animation: countdown-zoom 0.34s cubic-bezier(.5,.9,.2,1) both;
 }
