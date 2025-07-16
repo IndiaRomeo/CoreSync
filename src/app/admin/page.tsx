@@ -228,7 +228,7 @@ export default function AdminPanel() {
 
       {/* Stats cards */}
       {!loading && (
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap md:flex-nowrap gap-3 mb-4 w-full justify-center">
           <StatCard label="Total boletas" value={total} color="bg-blue-800" />
           <StatCard label="Pagadas" value={pagadas} color="bg-green-700" />
           <StatCard label="Reservadas" value={reservadas} color="bg-yellow-700" />
@@ -239,35 +239,39 @@ export default function AdminPanel() {
 
       {/* Pie Chart de análisis */}
       {!loading && (
-        <div className="w-full flex flex-col items-center my-10">
-          <div className="text-center text-2xl font-bold mb-4 tracking-wide">
+        <div className="w-full flex flex-col items-center my-8">
+          <div className="text-center text-2xl font-bold mb-4 tracking-wide hidden md:block">
             Análisis general de asistencia
           </div>
+          <div className="text-center text-base font-bold mb-4 tracking-wide md:hidden">
+            Estadísticas de asistencia
+          </div>
           <div className="flex justify-center w-full">
-            <ResponsiveContainer width={750} height={430}>
-              <PieChart width={600} height={430}>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                  outerRadius={110} // un poco más grande para aprovechar el alto
-                  dataKey="value"
-                  paddingAngle={2}
-                >
-                  {pieData.map((entry, idx) => (
-                    <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" iconType="circle" />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl">
+              <ResponsiveContainer width="100%" height={window.innerWidth < 640 ? 250 : 430}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    outerRadius={window.innerWidth < 640 ? 75 : 110}
+                    dataKey="value"
+                    paddingAngle={2}
+                  >
+                    {pieData.map((entry, idx) => (
+                      <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" iconType="circle" />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       )}
-
 
       {/* Último ticket creado */}
       {!loading && ultimo && (
