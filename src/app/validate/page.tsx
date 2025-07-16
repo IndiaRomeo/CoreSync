@@ -3,7 +3,6 @@ import { useState, useRef } from "react";
 import QrScanner from "@/components/QrScanner";
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 
-// Define el tipo de los datos del ticket
 type TicketData = {
   codigo: string;
   nombre: string;
@@ -12,38 +11,28 @@ type TicketData = {
   estado: string;
 };
 
-// Reproduce sonido según el tipo ("ok" o "fail")
-// Asegúrate de tener ok.mp3 y fail.mp3 en tu carpeta /public
-function playBeep(type: "ok" | "fail" = "ok") {
+function playBeep(type = "ok") {
   const url = type === "ok" ? "/ok.mp3" : "/fail.mp3";
   const audio = new Audio(url);
   audio.play();
 }
 
 export default function Validador() {
-  const [data, setData] = useState<TicketData | null>(null);
-  const [msg, setMsg] = useState("");
-  const [scanned, setScanned] = useState(false);
+    const [data, setData] = useState<TicketData | null>(null);
+    const [msg, setMsg] = useState("");
+    const [scanned, setScanned] = useState(false);
+    const scannedCodesRef = useRef<Set<string>>(new Set());
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const scannedCodesRef = useRef<Set<string>>(new Set());
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleResult = async (qrValue: string) => {
+    const handleResult = async (qrValue: string) => {
     if (scanned) return;
-    // Limpia timeout anterior si lo hay
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    // Extraer el código desde el QR (ej: CoreSync|CS-xxxx|nombre|tel|mail)
+    // Extraer el código
     const parts = qrValue.split("|");
     const codigo = parts[1];
 
     if (!codigo) {
       setMsg("QR inválido");
-      setScanned(true);
-      timeoutRef.current = setTimeout(() => {
-        setMsg("");
-        setScanned(false);
-      }, 2500);
       return;
     }
 
@@ -51,14 +40,10 @@ export default function Validador() {
     if (scannedCodesRef.current.has(codigo)) {
       setMsg("Este ticket ya fue validado.");
       setScanned(true);
-      playBeep("fail");
-      if (typeof window !== "undefined" && window.navigator.vibrate) {
-        window.navigator.vibrate([250, 100, 250]);
-      }
       timeoutRef.current = setTimeout(() => {
         setMsg("");
         setScanned(false);
-      }, 3500);
+      }, 4000); // 5 segundos visible
       return;
     }
 
@@ -71,29 +56,32 @@ export default function Validador() {
       const r = await res.json();
       if (r.ok) {
         setData(r);
+        // Vibración éxito
         playBeep("ok");
-        if (typeof window !== "undefined" && window.navigator.vibrate) {
-          window.navigator.vibrate(120);
-        }
-        scannedCodesRef.current.add(codigo);
 
+        scannedCodesRef.current.add(codigo); // GUARDAR CÓDIGO COMO USADO
         timeoutRef.current = setTimeout(() => {
           setData(null);
           setScanned(false);
-        }, 5000); // 5 segundos visible
+        }, 5000); // Dura 5 segundos visible
       } else {
         setMsg(r.error || "No válido");
+
+        // Vibración error
         playBeep("fail");
-        if (typeof window !== "undefined" && window.navigator.vibrate) {
-          window.navigator.vibrate([250, 100, 250]);
+
+        // Aquí: Si el mensaje ES "ya fue usado", da más tiempo
+        if (r.error === "Este ticket ya fue usado.") {
+          timeoutRef.current = setTimeout(() => {
+            setMsg("");
+            setScanned(false);
+          }, 3000); // 5 segundos
+        } else {
+          timeoutRef.current = setTimeout(() => {
+            setMsg("");
+            setScanned(false);
+          }, 2500); // Otros errores, menos tiempo
         }
-        // Si el error es "ya fue usado" dale un poco más de tiempo
-        const time =
-          r.error === "Este ticket ya fue usado." ? 3500 : 2500;
-        timeoutRef.current = setTimeout(() => {
-          setMsg("");
-          setScanned(false);
-        }, time);
       }
     } catch {
       setMsg("Error de red");
@@ -101,26 +89,23 @@ export default function Validador() {
     }
   };
 
+
   return (
     <div className="flex flex-col items-center p-6">
       <h1 className="text-2xl font-bold mb-2">Validar Ticket QR</h1>
-      <div className="my-4">{!scanned && <QrScanner onResult={handleResult} />}</div>
-
-      {/* Feedback de éxito */}
+      <div className="my-4">
+        {!scanned && <QrScanner onResult={handleResult} />}
+      </div>
       {data && (
         <div className="bg-green-200 rounded p-3 text-center mt-3 flex flex-col items-center">
-          <AiOutlineCheckCircle className="text-green-700 mb-2" size={48} />
+          <AiOutlineCheckCircle className="text-green-700" size={48} />
           <div className="text-lg font-bold text-green-700">¡TICKET VÁLIDO!</div>
-          <div className="font-semibold text-gray-900 mt-2">Nombre: {data.nombre}</div>
-          <div className="text-sm">Código: {data.codigo}</div>
-          <div className="text-sm">Estado: {data.estado}</div>
+          {/* ...otros datos */}
         </div>
       )}
-
-      {/* Feedback de error */}
       {msg && (
         <div className="bg-red-100 rounded p-3 text-center mt-3 flex flex-col items-center">
-          <AiOutlineCloseCircle className="text-red-700 mb-2" size={48} />
+          <AiOutlineCloseCircle className="text-red-700" size={48} />
           <div className="text-lg font-bold text-red-700">{msg}</div>
         </div>
       )}
