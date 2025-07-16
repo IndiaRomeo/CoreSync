@@ -176,6 +176,15 @@ export default function AdminPanel() {
                         >
                           Ver QR
                         </button>
+                        <a
+                          href={`/api/boleta-pdf?codigo=${encodeURIComponent(t.Código || t.codigo || "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-300 underline hover:text-purple-500 transition cursor-pointer ml-3"
+                          download={`ticket_${t.Código || t.codigo}.pdf`}
+                        >
+                          Descargar Ticket
+                        </a>
                       </td>
                     ) : k.toLowerCase() === "qr usado" ? (
                       <td key={j} className="border-b border-gray-800 px-2 py-2 text-center">
