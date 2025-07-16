@@ -4,6 +4,7 @@ import fs from "fs";
 import QRCode from "qrcode";
 import path from "path";
 import sharp from "sharp";
+import { cookies } from "next/headers"; // <--- AÑADE ESTO ARRIBA
 
 
 const CRED_FILE = process.cwd() + "/credenciales.json";
@@ -18,6 +19,13 @@ if (process.env.GOOGLE_CREDENTIALS_JSON) {
 const SHEET_ID = '1zpO7v5Pu1TbWqbRmPxpOYb_E5w01irr0ZKe9_MFsxXo';
 
 export async function POST(req) {
+  // --- BLOQUE DE PROTECCIÓN ADMIN ---
+  const cookieStore = cookies();
+  const auth = cookieStore.get("admin_auth");
+  if (!auth || auth.value !== "1") {
+    return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
+  }
+
   try {
     const data = await req.json();
 
