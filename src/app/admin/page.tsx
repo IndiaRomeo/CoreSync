@@ -154,6 +154,15 @@ export default function AdminPanel() {
           >
             {loading ? "Actualizando..." : "Actualizar lista"}
           </button>
+          {/* === Botón de backup === */}
+          <button
+            className="bg-blue-700 px-3 py-1 rounded font-bold text-xs hover:bg-blue-800 transition cursor-pointer"
+            onClick={() => {
+              window.open('/api/backup', '_blank');
+            }}
+          >
+            Descargar backup completo
+          </button>
         </div>
       </div>
 
