@@ -123,7 +123,7 @@ export default function AdminPanel() {
             onChange={e => setPassword(e.target.value)}
             autoFocus
           />
-          <button className="bg-blue-700 rounded py-2 font-bold text-white">Ingresar</button>
+          <button className="bg-blue-700 rounded py-2 font-bold text-white cursor-pointer">Ingresar</button>
           {loginError && <div className="text-red-400 text-xs">{loginError}</div>}
         </form>
       </div>
