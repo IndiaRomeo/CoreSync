@@ -13,6 +13,21 @@ if (process.env.GOOGLE_CREDENTIALS_JSON) {
 
 const SHEET_ID = '1zpO7v5Pu1TbWqbRmPxpOYb_E5w01irr0ZKe9_MFsxXo';
 
+// Agrega un log a la hoja Logs
+async function addLog(sheets, { codigo, nombre, email, estado, resultado, validador = "" }) {
+  const now = new Date();
+  // Ajusta hora local si tu servidor está en UTC (Colombia: UTC-5)
+  const fecha = now.toLocaleString("es-CO", { timeZone: "America/Bogota" });
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: "Logs!A:G",
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[fecha, codigo, nombre, email, estado, resultado, validador]],
+    },
+  });
+}
+
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const codigo = searchParams.get("codigo");
@@ -38,15 +53,25 @@ export async function GET(req) {
     const idx = rows.findIndex(r => r[0] === codigo);
 
     if (idx === -1) {
+      // No existe
+      // Puedes loguear intentos no válidos si quieres, pero usualmente no.
       return NextResponse.json({ ok: false, error: "Ticket no existe." }, { status: 404 });
     }
 
     // Bandera de "usado" (columna H, r[7])
     const usado = (rows[idx][7] || "").toUpperCase() === "SI";
     const estado = (rows[idx][4] || "").toLowerCase(); // Columna E es estado
+    const baseLog = {
+      codigo,
+      nombre: rows[idx][1],
+      email: rows[idx][3],
+      estado: rows[idx][4],
+      validador: "", // Puedes poner aquí nombre de validador si tienes login/admin
+    };
 
     if (usado) {
       // Ya fue validado antes
+      await addLog(sheets, { ...baseLog, resultado: "YA USADO" });
       return NextResponse.json({
         ok: false,
         error: "Este ticket ya fue usado.",
@@ -56,15 +81,16 @@ export async function GET(req) {
 
     // NO permitir validar tickets reservados
     if (estado !== "pagado") {
-    return NextResponse.json({
+      await addLog(sheets, { ...baseLog, resultado: "RESERVADO" });
+      return NextResponse.json({
         ok: false,
         error: "No puedes validar una boleta reservada. Debe estar PAGADA.",
         codigo,
-    }, { status: 400 });
+      }, { status: 400 });
     }
 
+    // Si el ticket fue válido:
     // Marcar como "SI" (usado) en la hoja
-    // idx + 1 porque Sheets es 1-based y primera fila suele ser encabezado
     const rowNumber = idx + 1;
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
@@ -74,6 +100,8 @@ export async function GET(req) {
         values: [["SI"]],
       },
     });
+
+    await addLog(sheets, { ...baseLog, resultado: "VALIDADO" });
 
     // Devolver los datos
     return NextResponse.json({
