@@ -43,6 +43,7 @@ export async function GET(req) {
 
     // Bandera de "usado" (columna H, r[7])
     const usado = (rows[idx][7] || "").toUpperCase() === "SI";
+    const estado = (rows[idx][4] || "").toLowerCase(); // Columna E es estado
 
     if (usado) {
       // Ya fue validado antes
@@ -51,6 +52,15 @@ export async function GET(req) {
         error: "Este ticket ya fue usado.",
         codigo,
       }, { status: 400 });
+    }
+
+    // NO permitir validar tickets reservados
+    if (estado !== "pagado") {
+    return NextResponse.json({
+        ok: false,
+        error: "No puedes validar una boleta reservada. Debe estar PAGADA.",
+        codigo,
+    }, { status: 400 });
     }
 
     // Marcar como "SI" (usado) en la hoja
