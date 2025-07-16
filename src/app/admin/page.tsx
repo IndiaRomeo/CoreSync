@@ -157,18 +157,37 @@ export default function AdminPanel() {
                   <td className="border-b border-gray-800 px-2 py-2 text-center font-mono">{i + 1}</td>
                   {Object.entries(t).map(([k, v], j) =>
                     k.toLowerCase() === "estado" ? (
-                      <td key={j} className="border-b border-gray-800 px-2 py-2">
-                        <span className={
-                          String(v).toLowerCase() === "pagado"
-                            ? "inline-block px-3 py-1 rounded-full bg-green-600 text-white font-bold"
-                            : String(v).toLowerCase() === "reservado"
-                            ? "inline-block px-3 py-1 rounded-full bg-yellow-600 text-white font-bold"
-                            : "inline-block px-3 py-1 rounded-full bg-gray-500 text-white"
-                        }>
-                          {v}
-                        </span>
-                      </td>
-                    ) : k.toLowerCase() === "qr" ? (
+                    <td key={j} className="border-b border-gray-800 px-2 py-2">
+                      <span className={
+                        String(v).toLowerCase() === "pagado"
+                          ? "inline-block px-3 py-1 rounded-full bg-green-600 text-white font-bold"
+                          : String(v).toLowerCase() === "reservado"
+                          ? "inline-block px-3 py-1 rounded-full bg-yellow-600 text-white font-bold"
+                          : "inline-block px-3 py-1 rounded-full bg-gray-500 text-white"
+                      }>
+                        {v}
+                      </span>
+                      {String(v).toLowerCase() === "reservado" && (
+                        <button
+                          className="ml-2 px-2 py-1 bg-green-700 rounded text-xs font-bold text-white hover:bg-green-900"
+                          onClick={async () => {
+                            if (!window.confirm("¿Marcar este ticket como PAGADO?")) return;
+                            await fetch("/api/marcar-pago", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ codigo: t.Código || t.codigo }),
+                            });
+                            // Actualizar la tabla
+                            setTickets(tickets => tickets.map(ticket =>
+                              ticket.Código === t.Código ? { ...ticket, Estado: "Pagado" } : ticket
+                            ));
+                          }}
+                        >
+                          Marcar pagado
+                        </button>
+                      )}
+                    </td>
+                  ) : k.toLowerCase() === "qr" ? (
                       <td key={j} className="border-b border-gray-800 px-2 py-2">
                         <button
                           onClick={() => setShowQr(v as string)}
@@ -176,7 +195,7 @@ export default function AdminPanel() {
                         >
                           Ver QR
                         </button>
-                        <a
+                        {/*<a
                           href={`/api/boleta-pdf?codigo=${encodeURIComponent(t.Código || t.codigo || "")}`}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -184,7 +203,7 @@ export default function AdminPanel() {
                           download={`ticket_${t.Código || t.codigo}.pdf`}
                         >
                           Descargar Ticket
-                        </a>
+                        </a>*/}
                       </td>
                     ) : k.toLowerCase() === "qr usado" ? (
                       <td key={j} className="border-b border-gray-800 px-2 py-2 text-center">

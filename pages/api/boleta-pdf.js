@@ -146,7 +146,7 @@ async function generarPDF({ nombre, codigo, qrBase64 }) {
 // API Route handler
 // ======================
 export default async function handler(req, res) {
-  // === POST: Igual a como ya lo tenías ===
+  // POST: Genera PDF con datos enviados
   if (req.method === 'POST') {
     const { nombre, codigo, qrBase64 } = req.body;
     let ticketNumber = '';
@@ -159,22 +159,17 @@ export default async function handler(req, res) {
     return res.status(200).send(pdfBuffer);
   }
 
-  // === GET: Genera el PDF buscando por código en Google Sheets ===
+  // GET: Busca en Google Sheets por código y genera PDF
   if (req.method === 'GET') {
     const { codigo } = req.query;
     if (!codigo) return res.status(400).send("Falta código");
 
-    // Conexión a Sheets
     const auth = new google.auth.GoogleAuth({
       credentials,
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Leer la hoja, asumiendo que:
-    // - Código está en columna A (índice 0)
-    // - Nombre en columna B (índice 1)
-    // - QR en columna G (índice 6) o H (índice 7) según tu hoja
     const resSheet = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: "A:H",
@@ -184,8 +179,7 @@ export default async function handler(req, res) {
     if (idx === -1) return res.status(404).send("No existe ese ticket");
 
     const nombre = rows[idx][1];
-    // Ajusta la columna del QR a la correcta (acá suponiendo G o H, ajusta si es diferente)
-    const qrBase64 = rows[idx][6] || rows[idx][7];
+    const qrBase64 = rows[idx][6] || rows[idx][7]; // AJUSTA si tu QR está en otra columna
     if (!qrBase64) return res.status(404).send("QR no encontrado");
 
     let ticketNumber = '';
@@ -198,6 +192,6 @@ export default async function handler(req, res) {
     return res.status(200).send(pdfBuffer);
   }
 
-  // Si método no soportado:
+  // Otro método (no permitido)
   res.status(405).end();
 }
