@@ -59,16 +59,76 @@ function exportToCsv(tickets: Ticket[]) {
 }
 
 export default function AdminPanel() {
+  // TODOS LOS HOOKS PRIMERO
+  // 1. Login
+  const [isAuth, setIsAuth] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  // 2. Panel admin
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [showQr, setShowQr] = useState<string | null>(null);
   const [filter, setFilter] = useState(""); // para búsqueda rápida
   const [showHelp, setShowHelp] = useState(false);
+  const [alert, setAlert] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
+
+  // 2. Al cargar, revisa si la cookie de login está presente
+  useEffect(() => {
+    fetch("/api/admin-login")
+      .then(res => setIsAuth(res.ok))
+      .finally(() => setCheckingAuth(false));
+  }, []);
 
   useEffect(() => {
     actualizarTickets();
     // eslint-disable-next-line
   }, []);
+
+  useEffect(() => {
+    if (alert) {
+      const t = setTimeout(() => setAlert(null), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [alert]);
+
+  // 3. Formulario login (solo visible si !isAuth)
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError("");
+    const res = await fetch("/api/admin-login", {
+      method: "POST",
+      body: JSON.stringify({ password }),
+      headers: { "Content-Type": "application/json" },
+    });
+    if (res.ok) {
+      setIsAuth(true);
+      setPassword("");
+    } else {
+      setLoginError("Clave incorrecta");
+    }
+  }
+
+  if (checkingAuth) return null;
+  if (!isAuth) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <form onSubmit={handleLogin} className="bg-gray-900 rounded-xl p-8 shadow-xl flex flex-col gap-4 w-full max-w-xs">
+          <h2 className="text-lg font-bold text-white">Acceso restringido</h2>
+          <input
+            type="password"
+            placeholder="Contraseña admin"
+            className="p-2 rounded bg-gray-800 text-white border border-gray-700"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            autoFocus
+          />
+          <button className="bg-blue-700 rounded py-2 font-bold text-white">Ingresar</button>
+          {loginError && <div className="text-red-400 text-xs">{loginError}</div>}
+        </form>
+      </div>
+    );
+  }
 
   // Stats
   const total = tickets.length;
@@ -77,7 +137,6 @@ export default function AdminPanel() {
   const usados = tickets.filter(t => ((t["Qr usado"] || t.Usado || "").toLowerCase() === "si")).length;
   const sinUsar = total - usados;
   const ultimo = tickets.length ? tickets[tickets.length - 1] : null;
-  const [alert, setAlert] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
   const pagadasNoUsadas = pagadas - usados;
 
   const pieData = [
@@ -88,13 +147,6 @@ export default function AdminPanel() {
 
   // Colores personalizados
   const COLORS = ["#10b981", "#3b82f6", "#eab308"]; // verde, azul, amarillo
-
-  useEffect(() => {
-    if (alert) {
-      const t = setTimeout(() => setAlert(null), 2000);
-      return () => clearTimeout(t);
-    }
-  }, [alert]);
 
   function actualizarTickets() {
     setLoading(true);
@@ -154,7 +206,7 @@ export default function AdminPanel() {
           >
             {loading ? "Actualizando..." : "Actualizar lista"}
           </button>
-          {/* === Botón de backup === */}
+          {/* === Botón de backup === 
           <button
             className="bg-blue-700 px-3 py-1 rounded font-bold text-xs hover:bg-blue-800 transition cursor-pointer"
             onClick={() => {
@@ -162,7 +214,7 @@ export default function AdminPanel() {
             }}
           >
             Descargar backup completo
-          </button>
+          </button>*/}
         </div>
       </div>
 
