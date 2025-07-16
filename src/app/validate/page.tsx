@@ -23,7 +23,7 @@ export default function Validador() {
       return;
     }
     try {
-      const res = await fetch(`/api/validar-ticket?codigo=${codigo}`);
+      const res = await fetch(`/api/validate-ticket?codigo=${codigo}`);
       const r = await res.json();
       if (r.ok) setData(r);
       else setMsg(r.error || "No válido");
