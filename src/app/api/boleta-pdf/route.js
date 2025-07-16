@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server';
-import { pdf, Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { NextResponse } from "next/server";
+import { pdf, Document, Page, Text, View, StyleSheet, Font, Image } from "@react-pdf/renderer";
+import path from "path";
 
-Font.register({ family: 'Orbitron', src: process.cwd() + '/public/fonts/Orbitron.ttf' });
-Font.register({ family: 'Montserrat', src: process.cwd() + '/public/fonts/Montserrat.ttf' });
+// IMPORTANTE: Quita stream-buffers, no se necesita con react-pdf
+// Font.register necesita ruta absoluta correcta
+Font.register({ family: "Orbitron", src: path.join(process.cwd(), "public/fonts/Orbitron.ttf") });
+Font.register({ family: "Montserrat", src: path.join(process.cwd(), "public/fonts/Montserrat.ttf") });
 
-const PRIMARY = '#0e0638';
+const PRIMARY = "#0e0638";
 
 const styles = StyleSheet.create({
   page: {
@@ -106,25 +109,19 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
   return (
     <Document>
       <Page size={{ width: 318, height: 420 }} style={styles.page}>
-        {/* Header */}
+        {/* ... igual que tienes */}
         <View style={styles.header}>
           <Text style={styles.headerText}>Core Sync Collective</Text>
         </View>
-        {/* Main content */}
         <View style={styles.main}>
           <Text style={styles.number}>TICKET #{ticketNumber}</Text>
           <Text style={styles.name}>{nombre}</Text>
           <Text style={styles.event}>
-            16 de agosto, 9:00 PM{'\n'}
-            hasta 17 de agosto, 5:00 AM
+            16 de agosto, 9:00 PM{"\n"}hasta 17 de agosto, 5:00 AM
           </Text>
-
-        {/* Salto de línea visual aquí */}
-        <View style={{ height: 40 }} />
-
+          <View style={{ height: 40 }} />
           <Image src={qrBase64} style={styles.qr} />
         </View>
-        {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>#CoreSync | Presenta tu ticket en la entrada</Text>
         </View>
@@ -133,32 +130,37 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
   );
 }
 
+// --- Este es el endpoint que devuelve el PDF como Buffer correctamente ---
 export async function POST(req) {
-  const data = await req.json();
-  const { nombre, codigo, qrBase64 } = data;
+  try {
+    const data = await req.json();
+    const { nombre, codigo, qrBase64 } = data;
 
-  // Extrae el número de ticket del código
-  let ticketNumber = '';
-  if (codigo && codigo.split('-').length >= 3) {
-    ticketNumber = codigo.split('-')[2];
+    let ticketNumber = '';
+    if (codigo && codigo.split('-').length >= 3) {
+      ticketNumber = codigo.split('-')[2];
+    }
+
+    // 1. Crea el documento
+    const pdfDoc = pdf(
+      <TicketPDF nombre={nombre} codigo={codigo} qrBase64={qrBase64} />
+    );
+
+    // 2. Obtén el Buffer binario
+    const pdfBuffer = await pdfDoc.toBuffer();
+
+    // 3. Devuelve el buffer como PDF con los headers CORRECTOS
+    return new NextResponse(pdfBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="ticket#${ticketNumber}.pdf"`,
+        "Content-Length": pdfBuffer.length.toString(),
+        // NO pongas Content-Encoding, ni nada más
+      },
+    });
+  } catch (e) {
+    // Puedes devolver un PDF de error o solo un JSON
+    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   }
-
-  const pdfDoc = pdf(
-    <TicketPDF
-      nombre={nombre}
-      codigo={codigo}
-      qrBase64={qrBase64}
-    />
-  );
-  const pdfBuffer = await pdfDoc.toBuffer();
-
-  // Usa el número para el nombre del archivo
-  return new NextResponse(pdfBuffer, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      // El nombre será ticket#123456.pdf
-      'Content-Disposition': `attachment; filename="ticket#${ticketNumber}.pdf"`,
-    },
-  });
 }
