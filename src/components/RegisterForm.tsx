@@ -78,10 +78,28 @@ function ModalMsg({
 }
 
 export default function RegistrarForm() {
+   // NUEVO: estado para saber si está logueado como admin
+  const [isAuth, setIsAuth] = useState<boolean | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [modalMsg, setModalMsg] = useState("");
   const [modalType, setModalType] = useState<"success" | "error" | "warning">("success");
   const [buyerData, setBuyerData] = useState<BuyerData | null>(null);
+
+  // Al montar, revisar si tiene login de admin
+  useEffect(() => {
+    fetch("/api/admin-login")
+      .then(res => setIsAuth(res.ok))
+      .catch(() => setIsAuth(false));
+  }, []);
+
+  // useEffect para cerrar el modal después de 3 segundos si es error o warning
+  useEffect(() => {
+    if (modalMsg && modalType !== "success") {
+      const t = setTimeout(() => setModalMsg(""), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [modalMsg, modalType]);
 
   // useEffect para cerrar el modal después de 3 segundos si es error o warning
   useEffect(() => {
@@ -184,6 +202,23 @@ export default function RegistrarForm() {
       setModalType("error");
       setBuyerData(null);
     }
+  }
+
+  // --- MOSTRAR ESTADOS DE LOGIN ---
+  if (isAuth === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white text-xl">
+        Cargando...
+      </div>
+    );
+  }
+  if (!isAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white text-xl">
+        Acceso restringido. <br />
+        Debes iniciar sesión como administrador para registrar compradores.
+      </div>
+    );
   }
 
   return (
