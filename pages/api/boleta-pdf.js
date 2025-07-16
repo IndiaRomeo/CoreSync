@@ -1,8 +1,33 @@
 // pages/api/boleta-pdf.js
 import { pdf, Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 
-Font.register({ family: 'Orbitron', src: process.cwd() + '/public/fonts/Orbitron.ttf' });
-Font.register({ family: 'Montserrat', src: process.cwd() + '/public/fonts/Montserrat.ttf' });
+// Función para obtener la ruta segura de la fuente
+function getFontBuffer(fontName) {
+  // Busca la fuente en /public/fonts o /fonts, según cómo tengas el proyecto
+  const localPath = path.join(process.cwd(), "public/fonts", fontName);
+  const altPath = path.join(process.cwd(), "fonts", fontName);
+  if (fs.existsSync(localPath)) return fs.readFileSync(localPath);
+  if (fs.existsSync(altPath)) return fs.readFileSync(altPath);
+  throw new Error(`Fuente no encontrada: ${fontName}`);
+}
+
+// Intenta registrar Orbitron y Montserrat con base64
+let orbitronBuffer, montserratBuffer;
+try {
+  orbitronBuffer = getFontBuffer("Orbitron.ttf");
+  montserratBuffer = getFontBuffer("Montserrat.ttf");
+  Font.register({
+    family: 'Orbitron',
+    src: `data:font/ttf;base64,${orbitronBuffer.toString('base64')}`
+  });
+  Font.register({
+    family: 'Montserrat',
+    src: `data:font/ttf;base64,${montserratBuffer.toString('base64')}`
+  });
+} catch (e) {
+  // Si no encuentras la fuente, usa Helvetica para no romper todo
+  console.warn("No se encontraron fuentes custom. Se usará Helvetica.");
+}
 
 const PRIMARY = '#0e0638';
 
