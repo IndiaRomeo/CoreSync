@@ -1,9 +1,8 @@
 // pages/api/boleta-pdf.js
 import { pdf, Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 
-// 1. Registrar fuentes con nombre personalizado
-Font.register({ family: 'Orbitron', src: process.cwd() + '/fonts/Orbitron.ttf' });
-Font.register({ family: 'Montserrat', src: process.cwd() + '/fonts/Montserrat.ttf' });
+Font.register({ family: 'Orbitron', src: process.cwd() + '/public/fonts/Orbitron.ttf' });
+Font.register({ family: 'Montserrat', src: process.cwd() + '/public/fonts/Montserrat.ttf' });
 
 const PRIMARY = '#0e0638';
 
