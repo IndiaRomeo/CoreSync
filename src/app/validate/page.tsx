@@ -3,9 +3,6 @@ import { useState, useRef } from "react";
 import QrScanner from "@/components/QrScanner";
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 
-const okAudio = typeof window !== 'undefined' ? new Audio('/ok.mp3') : null;
-const failAudio = typeof window !== 'undefined' ? new Audio('/fail.mp3') : null;
-
 type TicketData = {
   codigo: string;
   nombre: string;
@@ -15,14 +12,15 @@ type TicketData = {
 };
 
 function playBeep(type = "ok") {
-  if (type === "ok" && okAudio) {
-    okAudio.currentTime = 0; // Reinicia si está sonando
-    okAudio.play();
-  } else if (type === "fail" && failAudio) {
-    failAudio.currentTime = 0;
-    failAudio.play();
-  }
+  const url = type === "ok" ? "/ok.mp3" : "/fail.mp3";
+  // Siempre crea un nuevo objeto Audio (mejor para móviles y Safari)
+  const audio = new window.Audio(url);
+  audio.volume = 1;
+  audio.play().catch(() => {
+    // Ignora el error de autoplay bloqueado
+  });
 }
+
 export default function Validador() {
     const [data, setData] = useState<TicketData | null>(null);
     const [msg, setMsg] = useState("");
