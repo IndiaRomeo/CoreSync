@@ -43,7 +43,6 @@ export async function GET(req) {
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
     const sheets = google.sheets({ version: "v4", auth });
-    const userAgent = req.headers.get("user-agent") || "";
 
     // Leer la hoja
     const res = await sheets.spreadsheets.values.get({
@@ -103,7 +102,7 @@ export async function GET(req) {
       },
     });
 
-    await addLog(sheets, { ...baseLog, resultado: "VALIDADO", validador: userAgent });
+    await addLog(sheets, { ...baseLog, resultado: "VALIDADO" });
 
     // Devolver los datos
     return NextResponse.json({

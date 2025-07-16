@@ -1,9 +1,22 @@
 // pages/api/boleta-pdf.js
 import { pdf, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
-// Puedes personalizar colores y estilos, pero sin registrar fuentes custom
-const PRIMARY = '#0e0638';
+// ==== AGREGADO: GOOGLE SHEETS ====
+import { google } from "googleapis";
+import fs from "fs";
 
+const CRED_FILE = process.cwd() + "/credenciales.json";
+let credentials;
+if (process.env.GOOGLE_CREDENTIALS_JSON) {
+  credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+} else {
+  credentials = JSON.parse(fs.readFileSync(CRED_FILE, "utf8"));
+}
+
+const SHEET_ID = '1zpO7v5Pu1TbWqbRmPxpOYb_E5w01irr0ZKe9_MFsxXo';
+// ================================
+
+const PRIMARY = '#0e0638';
 const styles = StyleSheet.create({
   page: {
     backgroundColor: '#fff',
@@ -25,7 +38,6 @@ const styles = StyleSheet.create({
     display: 'flex',
   },
   headerText: {
-    // fontFamily: 'Helvetica', // default, no es necesario
     color: '#fff',
     fontSize: 19,
     fontWeight: 700,
@@ -101,11 +113,9 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
   return (
     <Document>
       <Page size={{ width: 318, height: 420 }} style={styles.page}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerText}>Core Sync Collective</Text>
         </View>
-        {/* Main content */}
         <View style={styles.main}>
           <Text style={styles.number}>TICKET #{ticketNumber}</Text>
           <Text style={styles.name}>{nombre}</Text>
@@ -116,7 +126,6 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
           <View style={{ height: 40 }} />
           <Image src={qrBase64} style={styles.qr} />
         </View>
-        {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>#CoreSync | Presenta tu ticket en la entrada</Text>
         </View>
@@ -125,26 +134,70 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
   );
 }
 
-// Handler API route
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).end();
-  }
-
-  // Si usas bodyParser (por default en Next.js API routes)
-  const { nombre, codigo, qrBase64 } = req.body;
-
-  let ticketNumber = '';
-  if (codigo && codigo.split('-').length >= 3) {
-    ticketNumber = codigo.split('-')[2];
-  }
-
+// Helper: genera PDF buffer
+async function generarPDF({ nombre, codigo, qrBase64 }) {
   const pdfDoc = pdf(
     <TicketPDF nombre={nombre} codigo={codigo} qrBase64={qrBase64} />
   );
-  const pdfBuffer = await pdfDoc.toBuffer();
+  return await pdfDoc.toBuffer();
+}
 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="ticket#${ticketNumber}.pdf"`);
-  res.status(200).send(pdfBuffer);
+// ======================
+// API Route handler
+// ======================
+export default async function handler(req, res) {
+  // === POST: Igual a como ya lo tenías ===
+  if (req.method === 'POST') {
+    const { nombre, codigo, qrBase64 } = req.body;
+    let ticketNumber = '';
+    if (codigo && codigo.split('-').length >= 3) {
+      ticketNumber = codigo.split('-')[2];
+    }
+    const pdfBuffer = await generarPDF({ nombre, codigo, qrBase64 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="ticket#${ticketNumber}.pdf"`);
+    return res.status(200).send(pdfBuffer);
+  }
+
+  // === GET: Genera el PDF buscando por código en Google Sheets ===
+  if (req.method === 'GET') {
+    const { codigo } = req.query;
+    if (!codigo) return res.status(400).send("Falta código");
+
+    // Conexión a Sheets
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
+    const sheets = google.sheets({ version: "v4", auth });
+
+    // Leer la hoja, asumiendo que:
+    // - Código está en columna A (índice 0)
+    // - Nombre en columna B (índice 1)
+    // - QR en columna G (índice 6) o H (índice 7) según tu hoja
+    const resSheet = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: "A:H",
+    });
+    const rows = resSheet.data.values || [];
+    const idx = rows.findIndex(r => r[0] === codigo);
+    if (idx === -1) return res.status(404).send("No existe ese ticket");
+
+    const nombre = rows[idx][1];
+    // Ajusta la columna del QR a la correcta (acá suponiendo G o H, ajusta si es diferente)
+    const qrBase64 = rows[idx][6] || rows[idx][7];
+    if (!qrBase64) return res.status(404).send("QR no encontrado");
+
+    let ticketNumber = '';
+    if (codigo && codigo.split('-').length >= 3) {
+      ticketNumber = codigo.split('-')[2];
+    }
+    const pdfBuffer = await generarPDF({ nombre, codigo, qrBase64 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="ticket#${ticketNumber}.pdf"`);
+    return res.status(200).send(pdfBuffer);
+  }
+
+  // Si método no soportado:
+  res.status(405).end();
 }
