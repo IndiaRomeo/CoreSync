@@ -1,83 +1,70 @@
-// /api/validar-ticket/route.js
-import { google } from "googleapis";
-import { NextResponse } from "next/server";
-import fs from "fs";
+"use client";
+import { useState, useRef } from "react";
+import QrScanner from "@/components/QrScanner";
 
-const CRED_FILE = process.cwd() + "/credenciales.json";
-let credentials;
-if (process.env.GOOGLE_CREDENTIALS_JSON) {
-  credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-} else {
-  credentials = JSON.parse(fs.readFileSync(CRED_FILE, "utf8"));
-}
+type TicketData = {
+  codigo: string;
+  nombre: string;
+  telefono: string;
+  email: string;
+  estado: string;
+};
 
-const SHEET_ID = '1zpO7v5Pu1TbWqbRmPxpOYb_E5w01irr0ZKe9_MFsxXo';
+export default function Validador() {
+  const [data, setData] = useState<TicketData | null>(null);
+  const [msg, setMsg] = useState("");
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const codigo = searchParams.get("codigo");
+  const handleResult = async (qrValue: string) => {
+    // Si ya hay mensaje, no escanear de nuevo
+    if (data || msg) return;
 
-  if (!codigo) {
-    return NextResponse.json({ ok: false, error: "Falta código" }, { status: 400 });
-  }
-
-  try {
-    const auth = new google.auth.GoogleAuth({
-      credentials,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
-    const sheets = google.sheets({ version: "v4", auth });
-
-    // Leer la hoja
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: "A:H",
-    });
-
-    const rows = res.data.values || [];
-    const idx = rows.findIndex(r => r[0] === codigo);
-
-    if (idx === -1) {
-      return NextResponse.json({ ok: false, error: "Ticket no existe" }, { status: 404 });
+    const parts = qrValue.split("|");
+    const codigo = parts[1];
+    if (!codigo) {
+      setMsg("QR inválido");
+      timeoutRef.current = setTimeout(() => setMsg(""), 3500); // 3.5 seg
+      return;
     }
-
-    // Bandera de "usado" (columna H, r[7])
-    const usado = (rows[idx][7] || "").toUpperCase() === "SI";
-
-    if (usado) {
-      // Ya fue validado antes
-      return NextResponse.json({
-        ok: false,
-        error: "Este ticket ya fue usado",
-        codigo,
-      }, { status: 400 });
+    try {
+      const res = await fetch(`/api/validate-ticket?codigo=${codigo}`);
+      const r = await res.json();
+      if (r.ok) {
+        setData(r);
+        timeoutRef.current = setTimeout(() => setData(null), 3500); // 3.5 seg
+      } else {
+        setMsg(r.error || "No válido");
+        timeoutRef.current = setTimeout(() => setMsg(""), 3500); // 3.5 seg
+      }
+    } catch {
+      setMsg("Error de red");
+      timeoutRef.current = setTimeout(() => setMsg(""), 3500);
     }
+  };
 
-    // Marcar como "SI" (usado) en la hoja
-    // idx + 1 porque Sheets es 1-based y primera fila suele ser encabezado
-    const rowNumber = idx + 1;
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SHEET_ID,
-      range: `H${rowNumber}`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: {
-        values: [["SI"]],
-      },
-    });
+  // Limpiar timeout cuando cambias de mensaje/data
+  // Opcional: para evitar conflictos si el usuario escanea muy rápido
+  // useEffect(() => {
+  //   return () => {
+  //     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  //   };
+  // }, []);
 
-    // Devolver los datos
-    return NextResponse.json({
-      ok: true,
-      codigo,
-      nombre: rows[idx][1],
-      telefono: rows[idx][2],
-      email: rows[idx][3],
-      estado: rows[idx][4],
-      usado: true,
-    });
-
-  } catch (e) {
-    console.error(e);
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
-  }
+  return (
+    <div className="flex flex-col items-center p-6">
+      <h1 className="text-2xl font-bold mb-2">Validar Ticket QR</h1>
+      <div className="my-4">
+        <QrScanner onResult={handleResult} />
+      </div>
+      {data && (
+        <div className="bg-green-200 rounded p-3 text-center mt-3">
+          <div className="text-lg font-bold text-green-700">¡TICKET VÁLIDO!</div>
+          <div className="font-semibold text-gray-900">Nombre: {data.nombre}</div>
+          <div className="text-sm">Código: {data.codigo}</div>
+          <div className="text-sm">Estado: {data.estado}</div>
+        </div>
+      )}
+      {msg && <div className="bg-red-100 text-red-700 mt-3 px-3 py-2 rounded">{msg}</div>}
+    </div>
+  );
 }
