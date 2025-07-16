@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 
 const CRED_FILE = process.cwd() + "/credenciales.json";
+
 let credentials;
 if (process.env.GOOGLE_CREDENTIALS_JSON) {
   credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
@@ -42,6 +43,7 @@ export async function GET(req) {
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
     const sheets = google.sheets({ version: "v4", auth });
+    const userAgent = req.headers.get("user-agent") || "";
 
     // Leer la hoja
     const res = await sheets.spreadsheets.values.get({
@@ -101,7 +103,7 @@ export async function GET(req) {
       },
     });
 
-    await addLog(sheets, { ...baseLog, resultado: "VALIDADO" });
+    await addLog(sheets, { ...baseLog, resultado: "VALIDADO", validador: userAgent });
 
     // Devolver los datos
     return NextResponse.json({
