@@ -161,7 +161,7 @@ export default function AdminPanel() {
             Análisis general de asistencia
           </div>
           <div className="flex justify-center w-full">
-            <ResponsiveContainer width={430} height={430}>
+            <ResponsiveContainer width={750} height={430}>
               <PieChart width={600} height={430}>
                 <Pie
                   data={pieData}
@@ -169,7 +169,7 @@ export default function AdminPanel() {
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                  outerRadius={170} // un poco más grande para aprovechar el alto
+                  outerRadius={110} // un poco más grande para aprovechar el alto
                   dataKey="value"
                   paddingAngle={2}
                 >
