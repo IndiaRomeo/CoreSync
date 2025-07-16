@@ -36,7 +36,7 @@ export default function Validador() {
       timeoutRef.current = setTimeout(() => {
         setMsg("");
         setScanned(false);
-      }, 5000); // 5 segundos visible
+      }, 4000); // 5 segundos visible
       return;
     }
 
@@ -53,7 +53,7 @@ export default function Validador() {
         timeoutRef.current = setTimeout(() => {
           setData(null);
           setScanned(false);
-        }, 6000); // Dura 6 segundos visible
+        }, 5000); // Dura 5 segundos visible
       } else {
         setMsg(r.error || "No válido");
         // Aquí: Si el mensaje ES "ya fue usado", da más tiempo
@@ -61,7 +61,7 @@ export default function Validador() {
           timeoutRef.current = setTimeout(() => {
             setMsg("");
             setScanned(false);
-          }, 5000); // 5 segundos
+          }, 3000); // 5 segundos
         } else {
           timeoutRef.current = setTimeout(() => {
             setMsg("");
