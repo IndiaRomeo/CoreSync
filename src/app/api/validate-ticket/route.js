@@ -4,8 +4,15 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 
 const CRED_FILE = process.cwd() + "/credenciales.json";
-const credentials = JSON.parse(fs.readFileSync(CRED_FILE, "utf8"));
-const SHEET_ID = '...';
+//ESTE BLOQUE para local y Vercel:
+let credentials;
+if (process.env.GOOGLE_CREDENTIALS_JSON) {
+  credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+} else {
+  credentials = JSON.parse(fs.readFileSync(CRED_FILE, "utf8"));
+}
+
+const SHEET_ID = '1zpO7v5Pu1TbWqbRmPxpOYb_E5w01irr0ZKe9_MFsxXo';
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
