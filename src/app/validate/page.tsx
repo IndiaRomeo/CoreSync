@@ -14,35 +14,46 @@ export default function Validador() {
   const [data, setData] = useState<TicketData | null>(null);
   const [msg, setMsg] = useState("");
   const [scanned, setScanned] = useState(false);
+  const scannedCodesRef = useRef<Set<string>>(new Set());
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleResult = async (qrValue: string) => {
-    if (scanned) return; // Evita escanear muchas veces el mismo QR rápido
-    setScanned(true);
-
-    // Limpia estado antes de un nuevo escaneo
-    setMsg("");
-    setData(null);
+    if (scanned) return;
 
     // Extraer el código
     const parts = qrValue.split("|");
     const codigo = parts[1];
+
     if (!codigo) {
       setMsg("QR inválido");
-      setScanned(false);
       return;
     }
+
+    // Si el código YA fue escaneado en la sesión actual:
+    if (scannedCodesRef.current.has(codigo)) {
+      setMsg("Este ticket ya fue validado");
+      setScanned(true);
+      timeoutRef.current = setTimeout(() => {
+        setMsg("");
+        setScanned(false);
+      }, 5000); // 4 segundos de aviso
+      return;
+    }
+
+    setScanned(true);
+    setMsg("");
+    setData(null);
 
     try {
       const res = await fetch(`/api/validate-ticket?codigo=${codigo}`);
       const r = await res.json();
       if (r.ok) {
         setData(r);
-        // Oculta el mensaje luego de 2 segundos
+        scannedCodesRef.current.add(codigo); // GUARDAR CÓDIGO COMO USADO
         timeoutRef.current = setTimeout(() => {
           setData(null);
           setScanned(false);
-        }, 2000);
+        }, 6000); // Dura 6 segundos visible
       } else {
         setMsg(r.error || "No válido");
         setScanned(false);
@@ -53,19 +64,10 @@ export default function Validador() {
     }
   };
 
-  // Limpieza al desmontar
-  // (opcional si quieres evitar fugas de memoria)
-  // useEffect(() => {
-  //   return () => {
-  //     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-  //   };
-  // }, []);
-
   return (
     <div className="flex flex-col items-center p-6">
       <h1 className="text-2xl font-bold mb-2">Validar Ticket QR</h1>
       <div className="my-4">
-        {/* Puedes desactivar el scanner mientras muestras el resultado */}
         {!scanned && <QrScanner onResult={handleResult} />}
       </div>
       {data && (
