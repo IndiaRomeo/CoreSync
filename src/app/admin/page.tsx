@@ -66,13 +66,9 @@ export default function AdminPanel() {
   const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
-    fetch("/api/tickets")
-      .then(res => res.json())
-      .then(data => {
-        setTickets(data.tickets || []);
-        setLoading(false);
-      });
-  }, []); 
+    actualizarTickets();
+    // eslint-disable-next-line
+  }, []);
 
   // Stats
   const total = tickets.length;
@@ -99,6 +95,16 @@ export default function AdminPanel() {
       return () => clearTimeout(t);
     }
   }, [alert]);
+
+  function actualizarTickets() {
+    setLoading(true);
+    fetch("/api/tickets")
+      .then(res => res.json())
+      .then(data => {
+        setTickets(data.tickets || []);
+        setLoading(false);
+      });
+  }
 
   // Filtro/búsqueda simple (por nombre, email o código)
   const filteredTickets = tickets.filter(t =>
@@ -139,6 +145,14 @@ export default function AdminPanel() {
             onClick={() => exportToCsv(filteredTickets)}
           >
             Descargar CSV
+          </button>
+          <button
+            className="bg-blue-700 px-3 py-1 rounded font-bold text-xs hover:bg-blue-900 transition cursor-pointer"
+            onClick={actualizarTickets}
+            disabled={loading}
+            title="Actualizar lista de boletas"
+          >
+            {loading ? "Actualizando..." : "Actualizar lista"}
           </button>
         </div>
       </div>
@@ -206,7 +220,6 @@ export default function AdminPanel() {
           <table className="min-w-full border border-gray-700 text-xs md:text-sm bg-gray-900/90 shadow-lg rounded-xl">
             <thead className="sticky top-0 z-10">
               <tr>
-                <th className="border-b border-gray-700 px-2 py-2 text-left font-bold bg-gray-800">#</th>
                 {tickets[0] &&
                   Object.keys(tickets[0]).map(key => (
                     <th key={key} className="border-b border-gray-700 px-2 py-2 text-left font-bold bg-gray-800">
@@ -225,7 +238,6 @@ export default function AdminPanel() {
                       : "hover:bg-gray-700/40"
                   }
                 >
-                  <td className="border-b border-gray-800 px-2 py-2 text-center font-mono">{i + 1}</td>
                   {Object.entries(t).map(([k, v], j) =>
                     k.toLowerCase() === "estado" ? (
                     <td key={j} className="border-b border-gray-800 px-2 py-2">
