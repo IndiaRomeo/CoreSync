@@ -1,5 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
+import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
+
+// Componente simple de alerta
+function AlertBar({ msg, type = "info", onClose }: { msg: string; type: string; onClose: () => void }) {
+  const bg = type === "success" ? "bg-green-600"
+           : type === "error" ? "bg-red-600"
+           : "bg-blue-600";
+  return (
+    <div className={`fixed top-5 left-1/2 z-[200] -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg text-white font-bold ${bg} animate-fade-in-up`}>
+      {msg}
+      <button className="ml-4 text-white/80 hover:text-white" onClick={onClose}>×</button>
+    </div>
+  );
+}
 
 type Ticket = {
   Código: string;
@@ -67,6 +81,24 @@ export default function AdminPanel() {
   const usados = tickets.filter(t => ((t["Qr usado"] || t.Usado || "").toLowerCase() === "si")).length;
   const sinUsar = total - usados;
   const ultimo = tickets.length ? tickets[tickets.length - 1] : null;
+  const [alert, setAlert] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
+  const pagadasNoUsadas = pagadas - usados;
+
+  const pieData = [
+    { name: "Asistieron (pagado y usado)", value: usados },
+    { name: "Pagó pero no asistió", value: pagadasNoUsadas },
+    { name: "Reservadas (no pagado)", value: reservadas },
+  ];
+
+  // Colores personalizados
+  const COLORS = ["#10b981", "#3b82f6", "#eab308"]; // verde, azul, amarillo
+
+  useEffect(() => {
+    if (alert) {
+      const t = setTimeout(() => setAlert(null), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [alert]);
 
   // Filtro/búsqueda simple (por nombre, email o código)
   const filteredTickets = tickets.filter(t =>
@@ -79,6 +111,13 @@ export default function AdminPanel() {
   // Mobile tabla scroll-x, cabeceras sticky
   return (
     <div className="p-6 min-h-screen bg-black text-white">
+      {alert && (
+        <AlertBar
+          msg={alert.msg}
+          type={alert.type}
+          onClose={() => setAlert(null)}
+        />
+      )}
       {/* Header + Menú de ayuda */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap mb-3 gap-2">
         <div className="flex items-center gap-4">
@@ -113,6 +152,28 @@ export default function AdminPanel() {
           <StatCard label="QR usados" value={usados} color="bg-purple-700" />
           <StatCard label="Sin usar" value={sinUsar} color="bg-gray-700" />
         </div>
+      )}
+
+      {!loading && (
+        <ResponsiveContainer width={340} height={240} className="mb-8">
+          <PieChart>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+              outerRadius={90}
+              dataKey="value"
+            >
+              {pieData.map((entry, idx) => (
+                <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend verticalAlign="bottom" iconType="circle" />
+          </PieChart>
+        </ResponsiveContainer>
       )}
 
       {/* Último ticket creado */}
@@ -169,18 +230,22 @@ export default function AdminPanel() {
                       </span>
                       {String(v).toLowerCase() === "reservado" && (
                         <button
-                          className="ml-2 px-2 py-1 bg-green-700 rounded text-xs font-bold text-white hover:bg-green-900"
+                          className="ml-2 px-2 py-1 bg-green-700 rounded text-xs font-bold text-white hover:bg-green-900 cursor-pointer"
                           onClick={async () => {
                             if (!window.confirm("¿Marcar este ticket como PAGADO?")) return;
-                            await fetch("/api/marcar-pago", {
+                            const resp = await fetch("/api/marcar-pago", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ codigo: t.Código || t.codigo }),
                             });
-                            // Actualizar la tabla
-                            setTickets(tickets => tickets.map(ticket =>
-                              ticket.Código === t.Código ? { ...ticket, Estado: "Pagado" } : ticket
-                            ));
+                            if (resp.ok) {
+                              setAlert({ msg: "¡Boleta marcada como pagada!", type: "success" });
+                              setTickets(tickets => tickets.map(ticket =>
+                                ticket.Código === t.Código ? { ...ticket, Estado: "Pagado" } : ticket
+                              ));
+                            } else {
+                              setAlert({ msg: "Error al marcar como pagada", type: "error" });
+                            }
                           }}
                         >
                           Marcar pagado
