@@ -181,6 +181,14 @@ export default function AdminPanel() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">Panel Admin - Boletas</h1>
           <button
+            className="bg-gray-800 text-xs rounded px-3 py-1 border border-gray-600 hover:bg-red-800 transition cursor-pointer"
+            onClick={async () => {
+              await fetch("/api/admin-logout", { method: "POST" });
+              window.location.reload(); // O resetea estado isAuth y muestra login otra vez
+            }}
+            title="Cerrar sesión"
+          >Cerrar sesión</button>
+          <button
             className="bg-gray-800 text-xs rounded px-3 py-1 border border-gray-600 hover:bg-blue-800 transition cursor-pointer"
             onClick={() => setShowHelp(true)}
           >¿Cómo usar?</button>
