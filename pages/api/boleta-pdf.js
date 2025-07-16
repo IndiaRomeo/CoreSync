@@ -1,5 +1,9 @@
 // pages/api/boleta-pdf.js
-import { pdf, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { pdf, Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+
+// 1. Registrar fuentes con nombre personalizado
+Font.register({ family: 'Orbitron', src: process.cwd() + '/public/fonts/Orbitron.ttf' });
+Font.register({ family: 'Montserrat', src: process.cwd() + '/public/fonts/Montserrat.ttf' });
 
 const PRIMARY = '#0e0638';
 
@@ -24,6 +28,7 @@ const styles = StyleSheet.create({
     display: 'flex',
   },
   headerText: {
+    fontFamily: 'Orbitron',  // USA LA FUENTE REGISTRADA
     color: '#fff',
     fontSize: 19,
     fontWeight: 700,
@@ -39,6 +44,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   number: {
+    fontFamily: 'Orbitron',  // USA LA FUENTE REGISTRADA
     fontSize: 16,
     color: '#111',
     fontWeight: 700,
@@ -47,6 +53,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   name: {
+    fontFamily: 'Montserrat', // USA LA FUENTE REGISTRADA
     fontSize: 15,
     color: '#111',
     textAlign: 'center',
@@ -54,6 +61,7 @@ const styles = StyleSheet.create({
     fontWeight: 700,
   },
   event: {
+    fontFamily: 'Montserrat', // USA LA FUENTE REGISTRADA
     fontSize: 12,
     color: '#111',
     textAlign: 'center',
@@ -82,6 +90,7 @@ const styles = StyleSheet.create({
     display: 'flex',
   },
   footerText: {
+    fontFamily: 'Orbitron',  // USA LA FUENTE REGISTRADA
     color: '#fff',
     fontSize: 10,
     letterSpacing: 1.2,
@@ -90,7 +99,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Componente del PDF
 function TicketPDF({ nombre, codigo, qrBase64 }) {
   let ticketNumber = '';
   if (codigo && codigo.split('-').length >= 3) {
@@ -123,13 +131,12 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
   );
 }
 
-// Handler clásico de API routes
+// Next.js API route
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).end();
   }
 
-  // OJO: si tienes bodyParser desactivado, puedes usar rawBuffer, si no, req.body
   const { nombre, codigo, qrBase64 } = req.body;
 
   let ticketNumber = '';
