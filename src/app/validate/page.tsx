@@ -11,13 +11,13 @@ type TicketData = {
 };
 
 export default function Validador() {
-  const [data, setData] = useState<TicketData | null>(null);
-  const [msg, setMsg] = useState("");
-  const [scanned, setScanned] = useState(false);
-  const scannedCodesRef = useRef<Set<string>>(new Set());
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [data, setData] = useState<TicketData | null>(null);
+    const [msg, setMsg] = useState("");
+    const [scanned, setScanned] = useState(false);
+    const scannedCodesRef = useRef<Set<string>>(new Set());
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleResult = async (qrValue: string) => {
+    const handleResult = async (qrValue: string) => {
     if (scanned) return;
 
     // Extraer el código
@@ -31,12 +31,12 @@ export default function Validador() {
 
     // Si el código YA fue escaneado en la sesión actual:
     if (scannedCodesRef.current.has(codigo)) {
-      setMsg("Este ticket ya fue validado");
+      setMsg("Este ticket ya fue validado.");
       setScanned(true);
       timeoutRef.current = setTimeout(() => {
         setMsg("");
         setScanned(false);
-      }, 5000); // 4 segundos de aviso
+      }, 5000); // 5 segundos visible
       return;
     }
 
@@ -56,13 +56,25 @@ export default function Validador() {
         }, 6000); // Dura 6 segundos visible
       } else {
         setMsg(r.error || "No válido");
-        setScanned(false);
+        // Aquí: Si el mensaje ES "ya fue usado", da más tiempo
+        if (r.error === "Este ticket ya fue usado.") {
+          timeoutRef.current = setTimeout(() => {
+            setMsg("");
+            setScanned(false);
+          }, 5000); // 5 segundos
+        } else {
+          timeoutRef.current = setTimeout(() => {
+            setMsg("");
+            setScanned(false);
+          }, 2500); // Otros errores, menos tiempo
+        }
       }
     } catch {
       setMsg("Error de red");
       setScanned(false);
     }
   };
+
 
   return (
     <div className="flex flex-col items-center p-6">
