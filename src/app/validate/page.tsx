@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import QrScanner from "@/components/QrScanner";
+import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 
 type TicketData = {
   codigo: string;
@@ -49,6 +50,18 @@ export default function Validador() {
       const r = await res.json();
       if (r.ok) {
         setData(r);
+        // Vibración éxito
+        if (window && window.navigator.vibrate) {
+          window.navigator.vibrate(120);
+        }
+
+        // ... animación visual verde
+        setScanned(true);
+        setTimeout(() => {
+          setData(null);
+          setScanned(false);
+        }, 4000);
+
         scannedCodesRef.current.add(codigo); // GUARDAR CÓDIGO COMO USADO
         timeoutRef.current = setTimeout(() => {
           setData(null);
@@ -56,6 +69,18 @@ export default function Validador() {
         }, 5000); // Dura 5 segundos visible
       } else {
         setMsg(r.error || "No válido");
+
+        // Vibración error
+        if (window && window.navigator.vibrate) {
+          window.navigator.vibrate([250, 120, 250]);
+        }
+        // ... animación visual roja
+        setScanned(true);
+        setTimeout(() => {
+          setMsg("");
+          setScanned(false);
+        }, 4000);
+
         // Aquí: Si el mensaje ES "ya fue usado", da más tiempo
         if (r.error === "Este ticket ya fue usado.") {
           timeoutRef.current = setTimeout(() => {
@@ -83,14 +108,18 @@ export default function Validador() {
         {!scanned && <QrScanner onResult={handleResult} />}
       </div>
       {data && (
-        <div className="bg-green-200 rounded p-3 text-center mt-3">
+        <div className="bg-green-200 rounded p-3 text-center mt-3 flex flex-col items-center">
+          <AiOutlineCheckCircle className="text-green-700" size={48} />
           <div className="text-lg font-bold text-green-700">¡TICKET VÁLIDO!</div>
-          <div className="font-semibold text-gray-900">Nombre: {data.nombre}</div>
-          <div className="text-sm">Código: {data.codigo}</div>
-          <div className="text-sm">Estado: {data.estado}</div>
+          {/* ...otros datos */}
         </div>
       )}
-      {msg && <div className="bg-red-100 text-red-700 mt-3 px-3 py-2 rounded">{msg}</div>}
+      {msg && (
+        <div className="bg-red-100 rounded p-3 text-center mt-3 flex flex-col items-center">
+          <AiOutlineCloseCircle className="text-red-700" size={48} />
+          <div className="text-lg font-bold text-red-700">{msg}</div>
+        </div>
+      )}
     </div>
   );
 }
