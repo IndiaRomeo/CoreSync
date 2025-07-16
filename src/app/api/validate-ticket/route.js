@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 
 const CRED_FILE = process.cwd() + "/credenciales.json";
-//ESTE BLOQUE para local y Vercel:
 let credentials;
 if (process.env.GOOGLE_CREDENTIALS_JSON) {
   credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
@@ -29,7 +28,7 @@ export async function GET(req) {
     });
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Lee toda la hoja (puedes optimizar para produ, esto es fácil de usar)
+    // Leer la hoja
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: "A:H",
@@ -42,9 +41,31 @@ export async function GET(req) {
       return NextResponse.json({ ok: false, error: "Ticket no existe" }, { status: 404 });
     }
 
-    // Si tienes un campo "usado", puedes comprobarlo, ej: columna H = r[7]
-    const usado = rows[idx][7] === "SI";
+    // Bandera de "usado" (columna H, r[7])
+    const usado = (rows[idx][7] || "").toUpperCase() === "SI";
 
+    if (usado) {
+      // Ya fue validado antes
+      return NextResponse.json({
+        ok: false,
+        error: "Este ticket ya fue usado",
+        codigo,
+      }, { status: 400 });
+    }
+
+    // Marcar como "SI" (usado) en la hoja
+    // idx + 1 porque Sheets es 1-based y primera fila suele ser encabezado
+    const rowNumber = idx + 1;
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `H${rowNumber}`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [["SI"]],
+      },
+    });
+
+    // Devolver los datos
     return NextResponse.json({
       ok: true,
       codigo,
@@ -52,9 +73,9 @@ export async function GET(req) {
       telefono: rows[idx][2],
       email: rows[idx][3],
       estado: rows[idx][4],
-      usado,
-      // ...más info que guardes
+      usado: true,
     });
+
   } catch (e) {
     console.error(e);
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
