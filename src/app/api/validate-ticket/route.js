@@ -32,7 +32,7 @@ export async function GET(req) {
     // Lee toda la hoja (puedes optimizar para produ, esto es fácil de usar)
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: "A:G",
+      range: "A:H",
     });
 
     const rows = res.data.values || [];
@@ -43,7 +43,7 @@ export async function GET(req) {
     }
 
     // Si tienes un campo "usado", puedes comprobarlo, ej: columna H = r[7]
-    // const usado = rows[idx][7] === "SI";
+    const usado = rows[idx][7] === "SI";
 
     return NextResponse.json({
       ok: true,
@@ -52,7 +52,7 @@ export async function GET(req) {
       telefono: rows[idx][2],
       email: rows[idx][3],
       estado: rows[idx][4],
-      // usado,
+      usado,
       // ...más info que guardes
     });
   } catch (e) {

@@ -69,7 +69,7 @@ export async function POST(req) {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: "A:G",
+      range: "A:H",
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [[
@@ -79,7 +79,8 @@ export async function POST(req) {
           data.email || "",
           data.estado || "",
           qrWithLogoBase64, // QR generado (con logo en el centro)
-          data.observaciones || ""
+          data.observaciones || "",
+          "NO"
         ]]
       }
     });
