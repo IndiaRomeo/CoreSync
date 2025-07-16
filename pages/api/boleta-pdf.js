@@ -24,7 +24,7 @@ try {
     family: 'Montserrat',
     src: `data:font/ttf;base64,${montserratBuffer.toString('base64')}`
   });
-} catch (e) {
+} catch {
   // Si no encuentras la fuente, usa Helvetica para no romper todo
   console.warn("No se encontraron fuentes custom. Se usará Helvetica.");
 }
