@@ -1,34 +1,7 @@
 // pages/api/boleta-pdf.js
-import { pdf, Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { pdf, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
-// Función para obtener la ruta segura de la fuente
-function getFontBuffer(fontName) {
-  // Busca la fuente en /public/fonts o /fonts, según cómo tengas el proyecto
-  const localPath = path.join(process.cwd(), "public/fonts", fontName);
-  const altPath = path.join(process.cwd(), "fonts", fontName);
-  if (fs.existsSync(localPath)) return fs.readFileSync(localPath);
-  if (fs.existsSync(altPath)) return fs.readFileSync(altPath);
-  throw new Error(`Fuente no encontrada: ${fontName}`);
-}
-
-// Intenta registrar Orbitron y Montserrat con base64
-let orbitronBuffer, montserratBuffer;
-try {
-  orbitronBuffer = getFontBuffer("Orbitron.ttf");
-  montserratBuffer = getFontBuffer("Montserrat.ttf");
-  Font.register({
-    family: 'Orbitron',
-    src: `data:font/ttf;base64,${orbitronBuffer.toString('base64')}`
-  });
-  Font.register({
-    family: 'Montserrat',
-    src: `data:font/ttf;base64,${montserratBuffer.toString('base64')}`
-  });
-} catch {
-  // Si no encuentras la fuente, usa Helvetica para no romper todo
-  console.warn("No se encontraron fuentes custom. Se usará Helvetica.");
-}
-
+// Puedes personalizar colores y estilos, pero sin registrar fuentes custom
 const PRIMARY = '#0e0638';
 
 const styles = StyleSheet.create({
@@ -52,7 +25,7 @@ const styles = StyleSheet.create({
     display: 'flex',
   },
   headerText: {
-    fontFamily: 'Orbitron',  // USA LA FUENTE REGISTRADA
+    // fontFamily: 'Helvetica', // default, no es necesario
     color: '#fff',
     fontSize: 19,
     fontWeight: 700,
@@ -68,7 +41,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   number: {
-    fontFamily: 'Orbitron',  // USA LA FUENTE REGISTRADA
     fontSize: 16,
     color: '#111',
     fontWeight: 700,
@@ -77,7 +49,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   name: {
-    fontFamily: 'Montserrat', // USA LA FUENTE REGISTRADA
     fontSize: 15,
     color: '#111',
     textAlign: 'center',
@@ -85,7 +56,6 @@ const styles = StyleSheet.create({
     fontWeight: 700,
   },
   event: {
-    fontFamily: 'Montserrat', // USA LA FUENTE REGISTRADA
     fontSize: 12,
     color: '#111',
     textAlign: 'center',
@@ -114,7 +84,6 @@ const styles = StyleSheet.create({
     display: 'flex',
   },
   footerText: {
-    fontFamily: 'Orbitron',  // USA LA FUENTE REGISTRADA
     color: '#fff',
     fontSize: 10,
     letterSpacing: 1.2,
@@ -123,6 +92,7 @@ const styles = StyleSheet.create({
   },
 });
 
+// Componente del PDF
 function TicketPDF({ nombre, codigo, qrBase64 }) {
   let ticketNumber = '';
   if (codigo && codigo.split('-').length >= 3) {
@@ -155,12 +125,13 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
   );
 }
 
-// Next.js API route
+// Handler API route
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).end();
   }
 
+  // Si usas bodyParser (por default en Next.js API routes)
   const { nombre, codigo, qrBase64 } = req.body;
 
   let ticketNumber = '';
