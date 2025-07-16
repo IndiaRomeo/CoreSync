@@ -154,27 +154,37 @@ export default function AdminPanel() {
         </div>
       )}
 
+      {/* Pie Chart de análisis */}
       {!loading && (
-        <ResponsiveContainer width={340} height={240} className="mb-8">
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-              outerRadius={90}
-              dataKey="value"
-            >
-              {pieData.map((entry, idx) => (
-                <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend verticalAlign="bottom" iconType="circle" />
-          </PieChart>
-        </ResponsiveContainer>
+        <div className="w-full flex flex-col items-center my-10">
+          <div className="text-center text-2xl font-bold mb-4 tracking-wide">
+            Análisis general de asistencia
+          </div>
+          <div className="flex justify-center w-full">
+            <ResponsiveContainer width={430} height={430}>
+              <PieChart width={600} height={430}>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                  outerRadius={170} // un poco más grande para aprovechar el alto
+                  dataKey="value"
+                  paddingAngle={2}
+                >
+                  {pieData.map((entry, idx) => (
+                    <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend verticalAlign="bottom" iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       )}
+
 
       {/* Último ticket creado */}
       {!loading && ultimo && (
