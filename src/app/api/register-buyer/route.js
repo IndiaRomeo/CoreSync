@@ -83,6 +83,7 @@ export async function POST(req) {
         values: [[
           codigo,
           data.nombre || "",
+          data.cedula || "", 
           data.telefono || "",
           data.email || "",
           data.estado || "",
