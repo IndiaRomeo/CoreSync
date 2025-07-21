@@ -41,7 +41,7 @@ export default function Validador() {
     }
 
     // Si el código YA fue escaneado en la sesión actual:
-    if (scannedCodesRef.current.has(codigo)) {
+    /*if (scannedCodesRef.current.has(codigo)) {
       setMsg("Este ticket ya fue validado.");
       setScanned(true);
       timeoutRef.current = setTimeout(() => {
@@ -49,7 +49,7 @@ export default function Validador() {
         setScanned(false);
       }, 4000); // 5 segundos visible
       return;
-    }
+    } */
 
     setScanned(true);
     setMsg("");
