@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
     const { data } = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: `${SHEET_NAME}!A:H`, // Usa el nombre real de la hoja
+      range: `${SHEET_NAME}!A:I`, // Usa el nombre real de la hoja
     });
 
     const rows = data.values || [];

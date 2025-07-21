@@ -20,7 +20,7 @@ export async function GET() {
     const sheets = google.sheets({ version: "v4", auth });
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: "A:H", // ajusta el rango
+      range: "A:I", // ajusta el rango
     });
     const rows = res.data.values || [];
     // La primera fila suele ser encabezados

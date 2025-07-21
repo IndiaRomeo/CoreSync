@@ -5,6 +5,7 @@ import confetti from "canvas-confetti";
 
 // Define el tipo de los datos del comprador
 type BuyerData = {
+  cedula: string,
   nombre: string;
   telefono: string;
   email: string;
@@ -126,6 +127,10 @@ export default function RegistrarForm() {
     if (form.observaciones.value.length > 200) {
       return "Observaciones máximo 200 caracteres.";
     }
+    // Cédula: solo números, 8-10 dígitos
+    if (!/^[0-9]{8,10}$/.test(form.cedula.value.trim())) {
+      return "La cédula debe contener solo números (8-10 dígitos).";
+    }
     return null; // Sin errores
   }
 
@@ -169,6 +174,7 @@ export default function RegistrarForm() {
     }
 
     const body: BuyerData = {
+      cedula: form.cedula.value,
       nombre: form.nombre.value,
       telefono: form.telefono.value,
       email: form.email.value,
@@ -256,6 +262,12 @@ export default function RegistrarForm() {
           onSubmit={handleSubmit}
           className="bg-gray-900/70 p-6 rounded-2xl shadow-2xl flex flex-col gap-4 w-full max-w-md border border-blue-500/80"
         >
+          <input
+            name="cedula"
+            required
+            placeholder="Cédula"
+            className="border border-gray-600 bg-black text-white p-2 rounded focus:outline-none focus:border-white transition"
+          />
           <input
             name="nombre"
             required

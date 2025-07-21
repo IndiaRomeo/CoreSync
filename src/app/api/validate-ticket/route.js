@@ -47,7 +47,7 @@ export async function GET(req) {
     // Leer la hoja
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: "A:H",
+      range: "A:I",
     });
 
     const rows = res.data.values || [];

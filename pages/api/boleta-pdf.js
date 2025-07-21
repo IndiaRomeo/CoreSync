@@ -172,7 +172,7 @@ export default async function handler(req, res) {
 
     const resSheet = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: "A:H",
+      range: "A:I",
     });
     const rows = resSheet.data.values || [];
     const idx = rows.findIndex(r => r[0] === codigo);

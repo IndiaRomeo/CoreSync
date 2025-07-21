@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: `${SHEET_NAME}!A:H`,
+      range: `${SHEET_NAME}!A:I`,
     });
     const rows = result.data.values || [];
     if (!rows.length) throw new Error("No data");
