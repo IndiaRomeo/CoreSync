@@ -274,11 +274,11 @@ export default function Home() {
               <div className="mb-4">
                 <strong>Evento:</strong> Core Sync Collective<br />
                 <strong>Lugar:</strong> San Sebastián de Mariquita<br />
-                <strong>Fecha:</strong> XX de agosto, 2025<br />
-                <strong>Hora:</strong> 8:00 PM
+                <strong>Fecha:</strong> 16 de agosto, 2025<br />
+                <strong>Hora:</strong> 9:00 PM
               </div>
               <div className="mb-4">
-                <strong>Precio:</strong> $XX.000 COP <span className="text-xs text-gray-400">(incluye entrada)</span>
+                <strong>Precio:</strong> $30.000 COP <span className="text-xs text-gray-400">(incluye entrada)</span>
               </div>
               <div className="mb-4 flex items-center gap-2">
                 <strong>Ubicación:</strong>
@@ -298,21 +298,22 @@ export default function Home() {
               <div className="mb-4">
                 <strong>Line-up:</strong>
                 <ul className="list-disc pl-6 text-sm mt-1">
-                  <li>XXXXX</li>
-                  <li>XXXXX</li>
-                  <li>XXXXX</li>
-                  <li>XXXXX</li>
+                  <li>DJ DANI P</li>
+                  <li>DJ DANZER</li>
+                  <li>DJ SARIAH</li>
+                  <li>DJ JAVB</li>
+                  <li>DJ BASTARD</li>
                 </ul>
               </div>
               <a
-                href="#"
+                href="https://wa.link/svqjia"
                 className="block mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200"
                 target="_blank"
                 rel="noopener"
               >
                 Comprar ahora
               </a>
-              <p className="text-xs text-gray-400 mt-2">Serás redirigido a la pasarela de pagos. Recibirás tu entrada por WhatsApp y correo.</p>
+              <p className="text-xs text-gray-400 mt-2">Serás redirigido a Whatsapp. Recibirás tu entrada por el mismo medio o correo.</p>
             </div>
             </div>
           </div>
@@ -321,7 +322,7 @@ export default function Home() {
 
       {/* Botón flotante de WhatsApp */}
       <a
-        href="https://wa.link/kerp6j"
+        href="https://wa.link/svqjia"
         target="_blank"
         rel="noopener"
         onClick={() => {
