@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     const rowNumber = idx + 1;
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `E${rowNumber}`, // Columna E (Estado)
+      range: `F${rowNumber}`, // Columna E (Estado)
       valueInputOption: "USER_ENTERED",
       requestBody: { values: [["Pagado"]] },
     });

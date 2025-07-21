@@ -95,7 +95,7 @@ export async function GET(req) {
     const rowNumber = idx + 1;
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `H${rowNumber}`,
+      range: `I${rowNumber}`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [["SI"]],
