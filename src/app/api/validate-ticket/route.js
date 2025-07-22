@@ -61,7 +61,7 @@ export async function GET(req) {
 
     // Bandera de "usado" (columna H, r[7])
     const usado = (rows[idx][7] || "").toUpperCase() === "SI";
-    const estado = (rows[idx][4] || "").toLowerCase(); // Columna E es estado
+    const estado = (rows[idx][5] || "").toLowerCase(); // Columna E es estado
     const baseLog = {
       codigo,
       nombre: rows[idx][1],
