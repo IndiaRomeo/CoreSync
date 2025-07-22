@@ -20,7 +20,7 @@ const SHEET_ID = '1zpO7v5Pu1TbWqbRmPxpOYb_E5w01irr0ZKe9_MFsxXo';
 
 export async function POST(req) {
   // --- BLOQUE DE PROTECCIÓN ADMIN ---
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const auth = cookieStore.get("admin_auth");
   if (!auth || auth.value !== "1") {
     return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
@@ -82,8 +82,8 @@ export async function POST(req) {
       requestBody: {
         values: [[
           codigo,
-          data.nombre || "",
           data.cedula || "", 
+          data.nombre || "",
           data.telefono || "",
           data.email || "",
           data.estado || "",
