@@ -60,13 +60,13 @@ export async function GET(req) {
     }
 
     // Bandera de "usado" (columna H, r[7])
-    const usado = (rows[idx][7] || "").toUpperCase() === "SI";
+    const usado = (rows[idx][8] || "").toUpperCase() === "SI";
     const estado = (rows[idx][5] || "").toLowerCase(); // Columna E es estado
     const baseLog = {
       codigo,
-      nombre: rows[idx][1],
-      email: rows[idx][3],
-      estado: rows[idx][4],
+      nombre: rows[idx][2],
+      email: rows[idx][4],
+      estado: rows[idx][5],
       validador: "", // Puedes poner aquí nombre de validador si tienes login/admin
     };
 
@@ -108,10 +108,11 @@ export async function GET(req) {
     return NextResponse.json({
       ok: true,
       codigo,
-      nombre: rows[idx][1],
-      telefono: rows[idx][2],
-      email: rows[idx][3],
-      estado: rows[idx][4],
+      cedula: rows[idx][1],
+      nombre: rows[idx][2],
+      telefono: rows[idx][3],
+      email: rows[idx][4],
+      estado: rows[idx][5],
       usado: true,
     });
 
