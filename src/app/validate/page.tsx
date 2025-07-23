@@ -171,11 +171,10 @@ export default function Validador() {
         <div className="bg-green-200 rounded p-3 text-center mt-3 flex flex-col items-center">
           <AiOutlineCheckCircle className="text-green-700 animate-pulse" size={48} />
           <div className="text-lg font-bold text-green-700">¡TICKET VÁLIDO!</div>
-          <p className="text-sm">Nombre: {data.nombre}</p>
-          <p className="text-sm">Teléfono: {data.telefono}</p>
-          <p className="text-sm">Email: {data.email}</p>
-          <p className="text-sm">Estado: {data.estado}</p>
-          {/* ...otros datos */}
+          <p className="text-sm text-green-900">Nombre: {data.nombre}</p>
+          <p className="text-sm text-green-900">Teléfono: {data.telefono}</p>
+          <p className="text-sm text-green-900">Email: {data.email}</p>
+          <p className="text-sm text-green-900">Estado: {data.estado}</p>
         </div>
       )}
       {msg && (
