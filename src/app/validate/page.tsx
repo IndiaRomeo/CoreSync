@@ -11,6 +11,12 @@ type TicketData = {
   estado: string;
 };
 
+const VALIDADORES: Record<string, string> = {
+  Ana: "1234",
+  Juan: "5678",
+  Luis: "0000",
+};
+
 function playBeep(type = "ok") {
   const url = type === "ok" ? "/ok.mp3" : "/fail.mp3";
   // Siempre crea un nuevo objeto Audio (mejor para móviles y Safari)
@@ -31,6 +37,10 @@ export default function Validador() {
     const scannedCodesRef = useRef<Set<string>>(new Set());
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    const [username, setUsername] = useState("");
+    const [pin, setPin] = useState("");
+    const [validador, setValidador] = useState("");
+
     function resetAfter(ms: number) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
@@ -44,6 +54,11 @@ export default function Validador() {
     const handleResult = async (qrValue: string) => {
 
     if (scanned || isFetching) return;
+    if (!validador) {
+      setMsg("Primero inicia sesión como validador");
+      resetAfter(3000);
+      return;
+    }
     setIsFetching(true);
     //if (scanned) return;
 
@@ -79,7 +94,8 @@ export default function Validador() {
     setData(null);
 
     try {
-      const res = await fetch(`/api/validate-ticket?codigo=${codigo}`);
+      const res = await fetch(`/api/validate-ticket?codigo=${codigo}&validador=${encodeURIComponent(validador)}`);
+      //const res = await fetch(`/api/validate-ticket?codigo=${codigo}`);
       const r = await res.json();
       if (r.ok) {
         setData(r);
@@ -114,10 +130,17 @@ export default function Validador() {
   return (
     <div className="flex flex-col items-center p-6">
       <h1 className="text-2xl font-bold mb-2">Validar Ticket QR</h1>
-      <div className="my-4">
-        {!scanned && <QrScanner onResult={handleResult} />}
-        {!scanned && <p className="text-gray-500 text-sm mt-2">Escaneando QR...</p>}
-      </div>
+      {validador && (
+        <p className="mb-2 text-sm text-gray-700">
+          Validador activo: <strong>{validador}</strong>
+        </p>
+      )}
+      {validador && (
+        <div className="my-4">
+          {!scanned && <QrScanner onResult={handleResult} />}
+          {!scanned && <p className="text-gray-500 text-sm mt-2">Escaneando QR...</p>}
+        </div>
+      )}
       {data && (
         <div className="bg-green-200 rounded p-3 text-center mt-3 flex flex-col items-center">
           <AiOutlineCheckCircle className="text-green-700 animate-pulse" size={48} />
@@ -133,6 +156,40 @@ export default function Validador() {
         <div className="bg-red-100 rounded p-3 text-center mt-3 flex flex-col items-center">
           <AiOutlineCloseCircle className="text-red-700" size={48} />
           <div className="text-lg font-bold text-red-700">{msg}</div>
+        </div>
+      )}
+
+      {!validador && (
+        <div className="w-full max-w-xs mb-6">
+          <h2 className="text-lg font-semibold mb-2">Inicia sesión como validador</h2>
+          <input
+            type="text"
+            placeholder="Nombre"
+            className="w-full mb-2 border p-2 rounded"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="PIN"
+            className="w-full mb-2 border p-2 rounded"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+          />
+          <button
+            className="w-full bg-blue-600 text-white rounded py-2"
+            onClick={() => {
+              const claveCorrecta = VALIDADORES[username];
+              if (claveCorrecta && claveCorrecta === pin) {
+                setValidador(username);
+              } else {
+                setMsg("Nombre o PIN incorrecto");
+                resetAfter(3000);
+              }
+            }}
+          >
+            Iniciar sesión
+          </button>
         </div>
       )}
     </div>
