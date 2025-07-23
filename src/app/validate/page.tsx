@@ -52,8 +52,9 @@ export default function Validador() {
     const codigo = parts[1];
 
     // Validar existencia y formato del código
-    if (!codigo || !/^[a-zA-Z0-9]+$/.test(codigo)) {
+    if (!codigo) {
       setMsg("Código QR inválido");
+      resetAfter(2500); // ← añade esto para limpiar el mensaje
       return;
     }
 
