@@ -21,24 +21,46 @@ function playBeep(type = "ok") {
   });
 }
 
+
+
 export default function Validador() {
     const [data, setData] = useState<TicketData | null>(null);
     const [msg, setMsg] = useState("");
     const [scanned, setScanned] = useState(false);
+    const [isFetching, setIsFetching] = useState(false);
     const scannedCodesRef = useRef<Set<string>>(new Set());
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    function resetAfter(ms: number) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        setMsg("");
+        setData(null);
+        setScanned(false);
+        setIsFetching(false);
+      }, ms);
+    }
+
     const handleResult = async (qrValue: string) => {
-    if (scanned) return;
+
+    if (scanned || isFetching) return;
+    setIsFetching(true);
+    //if (scanned) return;
 
     // Extraer el código
     const parts = qrValue.split("|");
     const codigo = parts[1];
 
-    if (!codigo) {
-      setMsg("QR inválido");
+    // Validar existencia y formato del código
+    if (!codigo || !/^[a-zA-Z0-9]+$/.test(codigo)) {
+      setMsg("Código QR inválido");
       return;
     }
+
+    /*if (!codigo) {
+      setMsg("QR inválido");
+      return;
+    }*/
 
     // Si el código YA fue escaneado en la sesión actual:
     /*if (scannedCodesRef.current.has(codigo)) {
@@ -64,10 +86,8 @@ export default function Validador() {
         playBeep("ok");
 
         scannedCodesRef.current.add(codigo); // GUARDAR CÓDIGO COMO USADO
-        timeoutRef.current = setTimeout(() => {
-          setData(null);
-          setScanned(false);
-        }, 5000); // Dura 5 segundos visible
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        resetAfter(5000);
       } else {
         setMsg(r.error || "No válido");
 
@@ -76,20 +96,16 @@ export default function Validador() {
 
         // Aquí: Si el mensaje ES "ya fue usado", da más tiempo
         if (r.error === "Este ticket ya fue usado.") {
-          timeoutRef.current = setTimeout(() => {
-            setMsg("");
-            setScanned(false);
-          }, 3000); // 5 segundos
+          resetAfter(3000);
         } else {
-          timeoutRef.current = setTimeout(() => {
-            setMsg("");
-            setScanned(false);
-          }, 2500); // Otros errores, menos tiempo
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          resetAfter(2500);
         }
       }
     } catch {
       setMsg("Error de red");
       setScanned(false);
+      setIsFetching(false);
     }
   };
 
@@ -99,11 +115,16 @@ export default function Validador() {
       <h1 className="text-2xl font-bold mb-2">Validar Ticket QR</h1>
       <div className="my-4">
         {!scanned && <QrScanner onResult={handleResult} />}
+        {!scanned && <p className="text-gray-500 text-sm mt-2">Escaneando QR...</p>}
       </div>
       {data && (
         <div className="bg-green-200 rounded p-3 text-center mt-3 flex flex-col items-center">
-          <AiOutlineCheckCircle className="text-green-700" size={48} />
+          <AiOutlineCheckCircle className="text-green-700 animate-pulse" size={48} />
           <div className="text-lg font-bold text-green-700">¡TICKET VÁLIDO!</div>
+          <p className="text-sm">Nombre: {data.nombre}</p>
+          <p className="text-sm">Teléfono: {data.telefono}</p>
+          <p className="text-sm">Email: {data.email}</p>
+          <p className="text-sm">Estado: {data.estado}</p>
           {/* ...otros datos */}
         </div>
       )}

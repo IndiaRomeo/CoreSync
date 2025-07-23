@@ -64,6 +64,7 @@ export async function GET(req) {
     const estado = (rows[idx][5] || "").toLowerCase(); // Columna E es estado
     const baseLog = {
       codigo,
+      cedula: rows[idx][1],
       nombre: rows[idx][2],
       email: rows[idx][4],
       estado: rows[idx][5],
