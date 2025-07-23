@@ -192,6 +192,12 @@ export default function AdminPanel() {
             className="bg-gray-800 text-xs rounded px-3 py-1 border border-gray-600 hover:bg-blue-800 transition cursor-pointer"
             onClick={() => setShowHelp(true)}
           >¿Cómo usar?</button>
+          <button
+            className="bg-gray-800 text-xs rounded px-3 py-1 border border-gray-600 hover:bg-teal-700 transition cursor-pointer"
+            onClick={() => window.location.href = "/admin/dashboard"}
+          >
+            Logs
+          </button>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <input
