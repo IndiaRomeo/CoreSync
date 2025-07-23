@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import QrScanner from "@/components/QrScanner";
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 
@@ -41,6 +41,13 @@ export default function Validador() {
     const [username, setUsername] = useState("");
     const [pin, setPin] = useState("");
     const [validador, setValidador] = useState("");
+
+    useEffect(() => {
+      const storedValidador = localStorage.getItem("validador");
+      if (storedValidador) {
+        setValidador(storedValidador);
+      }
+    }, []);
 
     function resetAfter(ms: number) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -142,6 +149,7 @@ export default function Validador() {
             className="text-red-600 text-sm underline ml-4"
             onClick={() => {
               setValidador("");
+              localStorage.removeItem("validador"); // ← AÑADIDO
               setUsername("");
               setPin("");
               setData(null);
@@ -200,6 +208,7 @@ export default function Validador() {
               const claveCorrecta = VALIDADORES[username];
               if (claveCorrecta && claveCorrecta === pin) {
                 setValidador(username);
+                localStorage.setItem("validador", username); // ← AÑADIDO
               } else {
                 setMsg("Nombre o PIN incorrecto");
                 resetAfter(3000);

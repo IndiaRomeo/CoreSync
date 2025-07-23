@@ -32,6 +32,7 @@ async function addLog(sheets, { codigo, cedula, nombre, email, estado, resultado
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const codigo = searchParams.get("codigo");
+  const validador = searchParams.get("validador") || "";
 
   if (!codigo) {
     return NextResponse.json({ ok: false, error: "Falta código" }, { status: 400 });
@@ -68,7 +69,7 @@ export async function GET(req) {
       nombre: rows[idx][2],
       email: rows[idx][4],
       estado: rows[idx][5],
-      validador: "", // Puedes poner aquí nombre de validador si tienes login/admin
+      validador, // Puedes poner aquí nombre de validador si tienes login/admin
     };
 
     if (usado) {
