@@ -36,6 +36,7 @@ export default function Validador() {
     const [isFetching, setIsFetching] = useState(false);
     const scannedCodesRef = useRef<Set<string>>(new Set());
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [contador, setContador] = useState(0);
 
     const [username, setUsername] = useState("");
     const [pin, setPin] = useState("");
@@ -99,6 +100,7 @@ export default function Validador() {
       const r = await res.json();
       if (r.ok) {
         setData(r);
+        setContador((prev) => prev + 1);
         // Vibración éxito
         playBeep("ok");
 
@@ -131,9 +133,25 @@ export default function Validador() {
     <div className="flex flex-col items-center p-6">
       <h1 className="text-2xl font-bold mb-2">Validar Ticket QR</h1>
       {validador && (
-        <p className="mb-2 text-sm text-gray-700">
-          Validador activo: <strong>{validador}</strong>
-        </p>
+        <div className="flex items-center justify-between w-full max-w-xs mb-4">
+          <div className="flex flex-col text-sm text-gray-700">
+            <p>Validador activo: <strong>{validador}</strong></p>
+            <p className="text-gray-600">Tickets validados: {contador}</p>
+          </div>
+          <button
+            className="text-red-600 text-sm underline ml-4"
+            onClick={() => {
+              setValidador("");
+              setUsername("");
+              setPin("");
+              setData(null);
+              setMsg("Sesión cerrada");
+              resetAfter(2000);
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
       )}
       {validador && (
         <div className="my-4">
