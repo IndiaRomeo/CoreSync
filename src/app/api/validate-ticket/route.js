@@ -15,7 +15,7 @@ if (process.env.GOOGLE_CREDENTIALS_JSON) {
 const SHEET_ID = '1zpO7v5Pu1TbWqbRmPxpOYb_E5w01irr0ZKe9_MFsxXo';
 
 // Agrega un log a la hoja Logs
-async function addLog(sheets, { codigo, nombre, email, estado, resultado, validador = "" }) {
+async function addLog(sheets, { codigo, cedula, nombre, email, estado, resultado, validador = "" }) {
   const now = new Date();
   // Ajusta hora local si tu servidor está en UTC (Colombia: UTC-5)
   const fecha = now.toLocaleString("es-CO", { timeZone: "America/Bogota" });
@@ -24,7 +24,7 @@ async function addLog(sheets, { codigo, nombre, email, estado, resultado, valida
     range: "Logs!A:G",
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [[fecha, codigo, nombre, email, estado, resultado, validador]],
+      values: [[fecha, codigo, cedula, nombre, email, estado, resultado, validador]],
     },
   });
 }
