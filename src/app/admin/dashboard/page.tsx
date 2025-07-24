@@ -2,6 +2,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useRouter } from "next/navigation";
 
 interface LogEntry {
   fecha: string;
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/admin-login")
@@ -69,15 +71,23 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <h1 className="text-2xl font-bold mb-4">📊 Dashboard de Validaciones</h1>
-      <button
-        className="mt-4 bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700"
-        onClick={async () => {
-          await fetch("/api/logout", { method: "POST" });
-          setIsAuth(false);
-        }}
-      >
-        Cerrar sesión
-      </button>
+      <div className="flex gap-4 mb-6">
+        <button
+          className="bg-gray-700 px-4 py-2 rounded text-white hover:bg-gray-600"
+          onClick={() => router.push("/admin")}
+        >
+          ← Volver al panel
+        </button>
+        <button
+          className="bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700"
+          onClick={async () => {
+            await fetch("/api/logout", { method: "POST" });
+            setIsAuth(false);
+          }}
+        >
+          Cerrar sesión
+        </button>
+      </div>
 
       {loading ? (
         <div className="text-center py-10">Cargando datos...</div>
