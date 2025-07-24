@@ -15,6 +15,32 @@ interface LogEntry {
 }
 
 export default function Dashboard() {
+  const [isAuth, setIsAuth] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin-login")
+      .then(res => setIsAuth(res.ok))
+      .catch(() => setIsAuth(false));
+  }, []);
+
+    // Mostrar pantalla restringida si no está autenticado
+  if (isAuth === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white text-xl">
+        Cargando...
+      </div>
+    );
+  }
+
+  if (!isAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white text-xl">
+        Acceso restringido. <br />
+        Debes iniciar sesión como administrador para registrar compradores.
+      </div>
+    );
+  }
+
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
