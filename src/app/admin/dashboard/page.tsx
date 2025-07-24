@@ -16,11 +16,22 @@ interface LogEntry {
 
 export default function Dashboard() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/admin-login")
       .then(res => setIsAuth(res.ok))
       .catch(() => setIsAuth(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/logs")
+      .then(res => res.json())
+      .then(data => {
+        setLogs(data.logs || []);
+        setLoading(false);
+      });
   }, []);
 
     // Mostrar pantalla restringida si no está autenticado
@@ -41,18 +52,6 @@ export default function Dashboard() {
     );
   }
 
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/logs")
-      .then(res => res.json())
-      .then(data => {
-        setLogs(data.logs || []);
-        setLoading(false);
-      });
-  }, []);
-
   const total = logs.length;
   const porValidador = logs.reduce((acc, log) => {
     acc[log.validador] = (acc[log.validador] || 0) + 1;
@@ -70,6 +69,15 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <h1 className="text-2xl font-bold mb-4">📊 Dashboard de Validaciones</h1>
+      <button
+        className="mt-4 bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700"
+        onClick={async () => {
+          await fetch("/api/logout", { method: "POST" });
+          setIsAuth(false);
+        }}
+      >
+        Cerrar sesión
+      </button>
 
       {loading ? (
         <div className="text-center py-10">Cargando datos...</div>
