@@ -43,9 +43,13 @@ export default function Validador() {
     const [validador, setValidador] = useState("");
 
     useEffect(() => {
-      const storedValidador = localStorage.getItem("validador");
-      if (storedValidador) {
-        setValidador(storedValidador);
+      const savedValidador = localStorage.getItem("validador");
+      if (savedValidador) {
+        setValidador(savedValidador);
+        const savedContador = localStorage.getItem(`contador_${savedValidador}`);
+        if (savedContador) {
+          setContador(parseInt(savedContador, 10));
+        }
       }
     }, []);
 
@@ -107,9 +111,14 @@ export default function Validador() {
       const r = await res.json();
       if (r.ok) {
         setData(r);
-        setContador((prev) => prev + 1);
         // Vibración éxito
         playBeep("ok");
+        // Contador
+        setContador((prev) => {
+          const nuevo = prev + 1;
+          localStorage.setItem(`contador_${validador}`, nuevo.toString()); // ← clave por usuario
+          return nuevo;
+        });
 
         scannedCodesRef.current.add(codigo); // GUARDAR CÓDIGO COMO USADO
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -149,10 +158,13 @@ export default function Validador() {
             className="text-red-600 text-sm underline ml-4"
             onClick={() => {
               setValidador("");
-              localStorage.removeItem("validador"); // ← AÑADIDO
               setUsername("");
               setPin("");
               setData(null);
+              setContador(0);
+              scannedCodesRef.current.clear(); // ← limpia códigos escaneados
+              localStorage.removeItem("validador");
+              localStorage.removeItem(`contador_${validador}`); // ← cambia aquí también
               setMsg("Sesión cerrada");
               resetAfter(2000);
             }}
