@@ -73,13 +73,13 @@ export default function Dashboard() {
       <h1 className="text-2xl font-bold mb-4">📊 Dashboard de Validaciones</h1>
       <div className="flex gap-4 mb-6">
         <button
-          className="bg-gray-700 px-4 py-2 rounded text-white hover:bg-gray-600"
+          className="bg-gray-700 px-4 py-2 rounded text-white hover:bg-gray-600 cursor-pointer"
           onClick={() => router.push("/admin")}
         >
           ← Volver al panel
         </button>
         <button
-          className="bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700"
+          className="bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700 cursor-pointer"
           onClick={async () => {
             await fetch("/api/logout", { method: "POST" });
             setIsAuth(false);
