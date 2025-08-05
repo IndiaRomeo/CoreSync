@@ -282,9 +282,8 @@ export default function Home() {
               </div>
               <div className="mb-4 flex items-center gap-2">
                 <strong>Ubicación:</strong>
-                {/*https://maps.app.goo.gl/BW8C2Rj1kDQN3pUj9*/}
                 <a
-                  href=""
+                  href="https://maps.app.goo.gl/BW8C2Rj1kDQN3pUj9"
                   target="_blank"
                   rel="noopener"
                   className="flex items-center gap-1 text-gray-700 hover:text-blue-900 font-semibold no-underline transition"
