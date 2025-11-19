@@ -120,8 +120,8 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
           <Text style={styles.number}>TICKET #{ticketNumber}</Text>
           <Text style={styles.name}>{nombre}</Text>
           <Text style={styles.event}>
-            16 de agosto, 9:00 PM{'\n'}
-            hasta 17 de agosto, 5:00 AM
+            6 de diciembre, 9:00 PM{'\n'}
+            hasta 7 de diciembre, 5:00 AM
           </Text>
           <View style={{ height: 40 }} />
           <Image src={qrBase64} style={styles.qr} />

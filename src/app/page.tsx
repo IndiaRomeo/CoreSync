@@ -1,22 +1,70 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Loader from "../components/Loader";
 
 const videoSrc = "/video.mp4"; // Usa el nombre real de tu video
+
+const pastEvents = [
+  {
+    title: "Core Sync Collective · Vol. 1",
+    date: "Marzo 2024",
+    location: "San Sebastián de Mariquita",
+    highlight: "Transformamos el antiguo teatro en un club inmersivo con visuales envolventes y sonidos analógicos.",
+    attendance: "200 asistentes",
+  },
+  {
+    title: "Core Sync Collective · Jungle Session",
+    date: "Junio 2024",
+    location: "Finca experimental, Honda",
+    highlight: "Montamos una cabina 360° al aire libre con back-to-back de DJ locales y proyección mapping.",
+    attendance: "150 asistentes",
+  },
+  {
+    title: "Core Sync Collective · Black Edition",
+    date: "Agosto 2024",
+    location: "Warehouse secreto, Ibagué",
+    highlight: "Tuvimos un takeover techno industrial con iluminación láser y performance de arte digital.",
+    attendance: "250 asistentes",
+  },
+];
+
+const pseudoRandom = (seed: number) => Math.abs(Math.sin(seed * 9999));
+
+type Snowflake = {
+  left: number;
+  delay: number;
+  duration: number;
+  size: number;
+  opacity: number;
+};
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [showTitle, setShowTitle] = useState(false);
   const [open, setOpen] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const eventDate = new Date("2025-08-16T21:00:00-05:00");
+  const eventDate = useMemo(() => new Date("2024-12-06T21:00:00-05:00"), []);
+  const eventDateLabel = "6 de diciembre, 2024";
+  const eventTimeLabel = "9:00 PM";
+  const shareText = `¡No te pierdas este evento! ${eventDateLabel}, San Sebastián de Mariquita.`;
   const [showUrgency, setShowUrgency] = useState(false);
   const [showShareCopied, setShowShareCopied] = useState(false);
   const [tapWhatsapp, setTapWhatsapp] = useState(false);
   const [tapShare, setTapShare] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [tapCountdown, setTapCountdown] = useState(false);
+  const snowflakes = useMemo<Snowflake[]>(
+    () =>
+      Array.from({ length: 45 }, (_, index) => ({
+        left: pseudoRandom(index + 1) * 100,
+        delay: pseudoRandom(index + 50) * 12,
+        duration: 8 + pseudoRandom(index + 100) * 10,
+        size: 10 + pseudoRandom(index + 150) * 18,
+        opacity: 0.25 + pseudoRandom(index + 200) * 0.55,
+      })),
+    []
+  );
 
   // Cuando el video termina de cargar, oculta el loader
   const handleLoadedData = () => setLoading(false);
@@ -83,7 +131,7 @@ export default function Home() {
     updateCountdown();
     const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [eventDate]);
 
   useEffect(() => {
     // Mostrar notificación en intervalos
@@ -107,6 +155,24 @@ export default function Home() {
   return (
     <main role="main" className="relative flex flex-col items-center justify-center min-h-screen w-full bg-black overflow-hidden">
       {loading && <Loader />}
+
+      <div className="pointer-events-none fixed inset-0 z-20 overflow-hidden" aria-hidden="true">
+        {snowflakes.map((flake, index) => (
+          <span
+            key={`${flake.left}-${index}`}
+            className="snowflake"
+            style={{
+              left: `${flake.left}%`,
+              animationDelay: `${flake.delay}s`,
+              animationDuration: `${flake.duration}s`,
+              fontSize: `${flake.size}px`,
+              opacity: flake.opacity,
+            }}
+          >
+            ❄
+          </span>
+        ))}
+      </div>
 
       {/* Video único, portada fullscreen */}
       <video
@@ -239,6 +305,45 @@ export default function Home() {
         </button>
       )}
 
+      <section className="relative z-30 mt-16 w-full max-w-5xl px-6 pb-32">
+        <div className="bg-black/70 border border-white/10 rounded-3xl shadow-2xl backdrop-blur-xl text-white p-6 sm:p-10">
+          <div className="flex flex-col gap-2 mb-8">
+            <p className="uppercase text-sm tracking-[0.3em] text-pink-400 font-semibold">Eventos anteriores</p>
+            <h3 className="text-3xl sm:text-4xl font-bold">Nuestro historial rave</h3>
+            <p className="text-base text-gray-200 max-w-3xl">
+              Documentamos cada experiencia para mejorar la próxima noche. Estos son algunos de los capítulos que han marcado
+              la energía de Core Sync Collective.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {pastEvents.map((event) => (
+              <article
+                key={`${event.title}-${event.date}`}
+                className="rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-6 shadow-lg hover:border-pink-400/60 transition-colors"
+              >
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs uppercase tracking-[0.25em] text-gray-300">{event.date}</span>
+                  <h4 className="text-2xl font-semibold">{event.title}</h4>
+                  <p className="text-sm text-gray-300">{event.location}</p>
+                </div>
+                <p className="text-base text-gray-100 mt-4 leading-relaxed">{event.highlight}</p>
+                <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-black/50 border border-white/5 px-4 py-1 text-sm text-gray-200">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                    <path
+                      d="M12 7a5 5 0 0 1 5 5v3h1.5a1.5 1.5 0 0 1 0 3H5.5a1.5 1.5 0 0 1 0-3H7v-3a5 5 0 0 1 5-5Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
+                    <path d="M8 19a4 4 0 0 0 8 0" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                  {event.attendance}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* --- MODAL FLOTANTE (ya corregido el scroll y bordes redondos) --- */}
       {open && (
         <div
@@ -274,8 +379,8 @@ export default function Home() {
               <div className="mb-4">
                 <strong>Evento:</strong> Core Sync Collective<br />
                 <strong>Lugar:</strong> San Sebastián de Mariquita<br />
-                <strong>Fecha:</strong> 16 de agosto, 2025<br />
-                <strong>Hora:</strong> 9:00 PM
+                <strong>Fecha:</strong> {eventDateLabel}<br />
+                <strong>Hora:</strong> {eventTimeLabel}
               </div>
               <div className="mb-4">
                 <strong>Precio:</strong> $30.000 COP <span className="text-xs text-gray-400">(incluye entrada)</span>
@@ -345,7 +450,7 @@ export default function Home() {
           setTimeout(() => setTapShare(false), 350);
           const shareData = {
             title: "Core Sync Collective - Evento Techno",
-            text: "¡No te pierdas este evento! 16 de agosto, San Sebastián de Mariquita.",
+            text: shareText,
             url: typeof window !== "undefined" ? window.location.href : "https://coresync.com",
           };
           if (navigator.share) {
