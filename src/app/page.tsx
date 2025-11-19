@@ -1,16 +1,65 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import Loader from "../components/Loader";
+import React from "react";
 
 const videoSrc = "/video.mp4"; // Usa el nombre real de tu video
+
+type SnowflakeStyle = CSSProperties & {
+  "--snow-drift"?: string;
+};
+
+const SNOWFLAKES = Array.from({ length: 42 }, (_, index) => ({
+  id: index,
+  left: (index * 17) % 100,
+  delay: (index * 0.73) % 12,
+  duration: 8 + ((index * 7) % 5),
+  size: 2 + (index % 4),
+  opacity: 0.35 + ((index % 5) * 0.1),
+  drift: ((index % 5) - 2) * 18,
+  blur: index % 4 === 0 ? 1.5 : 0,
+}));
+
+const PAST_EVENTS = [
+  {
+    title: "Core Sync: Genesis",
+    date: "Marzo 2024",
+    location: "Bodega 27 - Mariquita",
+    attendance: "200 ravers",
+    highlight:
+      "Convertimos una vieja bodega en un rave inmersivo con visuales analógicos y láseres sincronizados.",
+    badge: "Sold Out",
+    mood: "Industrial techno / Acid",
+  },
+  {
+    title: "Core Sync Sunset",
+    date: "Junio 2024",
+    location: "Mirador del Calvario - Mariquita",
+    attendance: "180 asistentes",
+    highlight:
+      "Sesión sunset que arrancó con house melódico y terminó con techno acelerado frente al amanecer.",
+    badge: "Sunset Edition",
+    mood: "House progresivo / Peak time",
+  },
+  {
+    title: "Core Sync Ritual",
+    date: "Octubre 2024",
+    location: "Bosque La Ceiba - Mariquita",
+    attendance: "220 asistentes",
+    highlight:
+      "Llevamos el sonido a un espacio natural con mapping sobre los árboles y performance visual en vivo.",
+    badge: "Edición especial",
+    mood: "Hypnotic techno / Live visuals",
+  },
+];
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [showTitle, setShowTitle] = useState(false);
   const [open, setOpen] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const eventDate = new Date("2025-08-16T21:00:00-05:00");
+  const eventDate = new Date("2025-12-06T21:00:00-05:00");
   const [showUrgency, setShowUrgency] = useState(false);
   const [showShareCopied, setShowShareCopied] = useState(false);
   const [tapWhatsapp, setTapWhatsapp] = useState(false);
@@ -104,8 +153,37 @@ export default function Home() {
     }
   }, [showTitle]);
 
+  //AÑADE ESTO DENTRO DEL COMPONENTE Home
+  const handlePay = async () => {
+    try {
+      const res = await fetch("/api/mp-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Entrada Core Sync Collective",
+          quantity: 1,
+          unit_price: 30000, // COP
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.init_point) {
+        window.location.href = data.init_point; // redirige al Checkout Pro
+      } else {
+        alert("No se pudo crear la preferencia de pago.");
+      }
+    } catch (error) {
+      console.error("Error al pagar:", error);
+      alert("Ocurrió un error al iniciar el pago.");
+    }
+  };
+
   return (
-    <main role="main" className="relative flex flex-col items-center justify-center min-h-screen w-full bg-black overflow-hidden">
+    <main
+      role="main"
+      className="relative flex flex-col items-center justify-center min-h-screen w-full bg-black overflow-x-hidden pb-48 md:pb-32"
+    >
       {loading && <Loader />}
 
       {/* Video único, portada fullscreen */}
@@ -124,6 +202,21 @@ export default function Home() {
       {/* Desenfoque y capa oscura */}
       <div className="absolute inset-0 backdrop-blur-[6px] z-10 pointer-events-none" />
       <div className="absolute inset-0 bg-black/40 z-20 pointer-events-none" />
+      <div className="snow-layer">
+        {SNOWFLAKES.map((flake) => {
+          const flakeStyle: SnowflakeStyle = {
+            left: `${flake.left}%`,
+            animationDelay: `${flake.delay}s`,
+            animationDuration: `${flake.duration}s`,
+            width: `${flake.size}px`,
+            height: `${flake.size}px`,
+            opacity: flake.opacity,
+            filter: flake.blur ? `blur(${flake.blur}px)` : undefined,
+            "--snow-drift": `${flake.drift}px`,
+          };
+          return <span key={flake.id} className="snowflake" style={flakeStyle} />;
+        })}
+      </div>
 
       {/* Título glitch + animación solo cuando loader termina */}
       {showTitle && (
@@ -239,6 +332,42 @@ export default function Home() {
         </button>
       )}
 
+      <section className="z-30 w-full max-w-5xl px-4 mt-14">
+        <div className="bg-black/60 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_25px_120px_rgba(0,0,0,0.45)]">
+          <div className="mb-8 text-center md:text-left">
+            <p className="text-xs uppercase tracking-[0.45em] text-pink-400 font-semibold">Eventos pasados</p>
+            <h2 className="mt-3 text-3xl md:text-4xl font-extrabold text-white">Así han vibrado las ediciones anteriores</h2>
+            <p className="mt-3 text-sm md:text-base text-gray-300">
+              Archivamos los rituales que nos trajeron hasta aquí. Cada fecha sumó más comunidad, visuales y energía.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {PAST_EVENTS.map((event) => (
+              <article
+                key={event.title}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-4 hover:border-white/40 transition duration-300"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.4em] text-gray-300">{event.date}</p>
+                    <h3 className="text-xl font-semibold text-white mt-2">{event.title}</h3>
+                  </div>
+                  <span className="px-2 py-1 text-[11px] font-semibold rounded-full bg-white/10 text-white whitespace-nowrap">
+                    {event.badge}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-200 leading-relaxed">{event.highlight}</p>
+                <div className="text-xs text-gray-400 flex flex-col gap-1">
+                  <span className="font-semibold text-white">{event.location}</span>
+                  <span>{event.attendance}</span>
+                  <span className="text-white/80">{event.mood}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* --- MODAL FLOTANTE (ya corregido el scroll y bordes redondos) --- */}
       {open && (
         <div
@@ -274,7 +403,7 @@ export default function Home() {
               <div className="mb-4">
                 <strong>Evento:</strong> Core Sync Collective<br />
                 <strong>Lugar:</strong> San Sebastián de Mariquita<br />
-                <strong>Fecha:</strong> 16 de agosto, 2025<br />
+                <strong>Fecha:</strong> 06 de diciembre, 2025<br />
                 <strong>Hora:</strong> 9:00 PM
               </div>
               <div className="mb-4">
@@ -305,13 +434,20 @@ export default function Home() {
                   <li>DJ BASTARD</li>
                 </ul>
               </div>
+              <button
+                onClick={handlePay}
+                className="block w-full mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200"
+              >
+                Pagar con Mercado Pago
+              </button>
+
               <a
                 href="https://wa.link/svqjia"
-                className="block mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200"
+                className="block w-full mt-3 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-green-600 transition-all duration-200"
                 target="_blank"
                 rel="noopener"
               >
-                Comprar ahora
+                Comprar por WhatsApp
               </a>
               <p className="text-xs text-gray-400 mt-2">Serás redirigido a Whatsapp. Recibirás tu entrada por el mismo medio o correo.</p>
             </div>
@@ -345,7 +481,7 @@ export default function Home() {
           setTimeout(() => setTapShare(false), 350);
           const shareData = {
             title: "Core Sync Collective - Evento Techno",
-            text: "¡No te pierdas este evento! 16 de agosto, San Sebastián de Mariquita.",
+            text: "¡No te pierdas este evento! 06 de diciembre, San Sebastián de Mariquita.",
             url: typeof window !== "undefined" ? window.location.href : "https://coresync.com",
           };
           if (navigator.share) {
