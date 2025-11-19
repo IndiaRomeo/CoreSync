@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Loader from "../components/Loader";
 
 const videoSrc = "/video.mp4"; // Usa el nombre real de tu video
@@ -10,13 +10,51 @@ export default function Home() {
   const [showTitle, setShowTitle] = useState(false);
   const [open, setOpen] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const eventDate = new Date("2025-08-16T21:00:00-05:00");
+  const eventDate = new Date("2025-12-06T21:00:00-05:00");
   const [showUrgency, setShowUrgency] = useState(false);
   const [showShareCopied, setShowShareCopied] = useState(false);
   const [tapWhatsapp, setTapWhatsapp] = useState(false);
   const [tapShare, setTapShare] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [tapCountdown, setTapCountdown] = useState(false);
+  const [snowflakes, setSnowflakes] = useState<
+    { id: number; left: number; delay: number; duration: number; size: number }[]
+  >([]);
+  const pastEvents = useMemo(
+    () => [
+      {
+        title: "Core Sync Collective · Acid Bloom",
+        dateLabel: "16 de agosto de 2024",
+        location: "San Sebastián de Mariquita",
+        highlight: "Sold out en 48 horas",
+        description:
+          "Fusionamos visuales generativos con un set de techno ácido que hizo vibrar la plaza principal.",
+        tags: ["320 ravers", "Techno ácido", "Visuales inmersivos"],
+        accent: "from-pink-500/50 via-purple-500/20 to-transparent",
+      },
+      {
+        title: "Core Sync Collective · Jungle Pulse",
+        dateLabel: "22 de abril de 2024",
+        location: "Finca La Cabaña · Mariquita",
+        highlight: "After party hasta el amanecer",
+        description:
+          "Montamos un escenario 360° rodeado de vegetación para un viaje entre hard groove y ritmos orgánicos.",
+        tags: ["After hours", "360° stage", "Live VJ"],
+        accent: "from-emerald-400/40 via-cyan-500/20 to-transparent",
+      },
+      {
+        title: "Core Sync Collective · Origins",
+        dateLabel: "3 de diciembre de 2023",
+        location: "Rooftop privado · Ibagué",
+        highlight: "Crew íntima & vinyl only",
+        description:
+          "Una edición boutique para coleccionistas con warmup analógico y selección de vinilos underground.",
+        tags: ["Vinyl only", "Ibagué", "Edición limitada"],
+        accent: "from-amber-400/40 via-red-500/20 to-transparent",
+      },
+    ],
+    []
+  );
 
   // Cuando el video termina de cargar, oculta el loader
   const handleLoadedData = () => setLoading(false);
@@ -86,7 +124,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Mostrar notificación en intervalos
+    // Mostrar notificación en intervalosf
     const show = () => {
       setShowUrgency(true);
       setTimeout(() => setShowUrgency(false), 2200);
@@ -104,8 +142,20 @@ export default function Home() {
     }
   }, [showTitle]);
 
+  useEffect(() => {
+    const flakes = Array.from({ length: 45 }, (_, index) => ({
+      id: index,
+      left: Math.random() * 100,
+      delay: Math.random() * 6,
+      duration: 8 + Math.random() * 6,
+      size: Math.random() * 4 + 2,
+    }));
+    setSnowflakes(flakes);
+  }, []);
+
   return (
-    <main role="main" className="relative flex flex-col items-center justify-center min-h-screen w-full bg-black overflow-hidden">
+    <>
+      <main role="main" className="relative flex flex-col items-center justify-start min-h-screen w-full bg-black overflow-x-hidden">
       {loading && <Loader />}
 
       {/* Video único, portada fullscreen */}
@@ -124,19 +174,39 @@ export default function Home() {
       {/* Desenfoque y capa oscura */}
       <div className="absolute inset-0 backdrop-blur-[6px] z-10 pointer-events-none" />
       <div className="absolute inset-0 bg-black/40 z-20 pointer-events-none" />
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{ zIndex: 25 }}
+        aria-hidden="true"
+      >
+        {snowflakes.map((flake) => (
+          <span
+            key={flake.id}
+            className="snowflake"
+            style={{
+              left: `${flake.left}%`,
+              animationDelay: `${flake.delay}s`,
+              animationDuration: `${flake.duration}s`,
+              width: flake.size,
+              height: flake.size,
+            }}
+          />
+        ))}
+      </div>
 
-      {/* Título glitch + animación solo cuando loader termina */}
-      {showTitle && (
-        <div className="w-full flex flex-col items-center z-30 animate-countdown-appear">
-          <h1 className="glitch animate-title-appear relative text-5xl md:text-7xl font-techno font-extrabold uppercase tracking-wider text-white text-center drop-shadow-2xl">
-            <span aria-hidden="true">Core Sync Collective</span>
-            Core Sync Collective
-            <span aria-hidden="true">Core Sync Collective</span>
-            <span aria-hidden="true">Core Sync Collective</span>
-          </h1>
+      <div className="relative z-30 flex min-h-screen w-full flex-col items-center justify-center px-4 text-center text-white">
+        {/* Título glitch + animación solo cuando loader termina */}
+        {showTitle && (
+          <div className="w-full max-w-4xl flex flex-col items-center animate-countdown-appear">
+            <h1 className="glitch animate-title-appear relative text-5xl md:text-7xl font-techno font-extrabold uppercase tracking-wider text-white text-center drop-shadow-2xl">
+              <span aria-hidden="true">Core Sync Collective</span>
+              Core Sync Collective
+              <span aria-hidden="true">Core Sync Collective</span>
+              <span aria-hidden="true">Core Sync Collective</span>
+            </h1>
 
-          {/* --- Conteo regresivo debajo del título --- */}
-          <div className={`
+            {/* --- Conteo regresivo debajo del título --- */}
+            <div className={`
             mt-7 mb-3 flex gap-4 text-center
             text-3xl md:text-4xl font-bold text-white tracking-wide
             font-mono
@@ -184,8 +254,66 @@ export default function Home() {
               </>
             )}
           </div>
-        </div>
-      )}
+          </div>
+        )}
+
+        {showButton && (
+          <button
+            onClick={() => setOpen(true)}
+            className="
+            mt-10
+            px-6 py-3
+            sm:px-8 sm:py-3
+            md:px-10 md:py-4
+            text-lg
+            sm:text-xl
+            md:text-2xl
+            bg-white text-black 
+            font-bold 
+            rounded-full shadow-xl
+            border-2 border-white
+            hover:bg-black hover:text-white 
+            hover:scale-105 active:scale-95
+            cursor-pointer transition-all transition-transform duration-200
+            relative
+            outline-none
+            animate-button-appear
+          "
+          >
+            Comprar boleta
+          </button>
+        )}
+
+        <footer className="absolute bottom-4 left-0 flex w-full items-center justify-center gap-8 text-white">
+          <a href="https://www.instagram.com/coresync_collective/" target="_blank" rel="noopener" className="hover:scale-110 transition">
+            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-white">
+              <rect x="2" y="2" width="20" height="20" rx="5" strokeWidth="2"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8a4 4 0 0 1 3.37 3.37z" strokeWidth="2"/>
+              <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
+            </svg>
+          </a>
+          <a
+            href="https://www.facebook.com/CoreSyncCollective/"
+            target="_blank"
+            rel="noopener"
+            className="hover:scale-110 transition"
+          >
+            <svg
+              width="28"
+              height="28"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              className="text-white"
+            >
+              <path
+                d="M18 2h-3a5 5 0 0 0-5 5v3H5v4h5v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"
+                strokeWidth="2"
+              />
+            </svg>
+          </a>
+        </footer>
+      </div>
 
       {showUrgency && (
         <div
@@ -209,34 +337,6 @@ export default function Home() {
           <svg className="w-5 h-5 text-white opacity-80" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M12 9v3m0 3h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0ZM12 6v2"/></svg>
           <span>¡Quedan pocas entradas disponibles!</span>
         </div>
-      )}
-
-      {/* El botón va aquí, FUERA del bloque anterior */}
-      {showButton && (
-        <button
-          onClick={() => setOpen(true)}
-          className="
-            mt-10
-            px-6 py-3
-            sm:px-8 sm:py-3
-            md:px-10 md:py-4
-            text-lg
-            sm:text-xl
-            md:text-2xl
-            bg-white text-black 
-            font-bold 
-            rounded-full shadow-xl
-            border-2 border-white
-            hover:bg-black hover:text-white 
-            hover:scale-105 active:scale-95
-            cursor-pointer transition-all transition-transform duration-200
-            z-30 relative
-            outline-none
-            animate-button-appear
-          "
-        >
-          Comprar boleta
-        </button>
       )}
 
       {/* --- MODAL FLOTANTE (ya corregido el scroll y bordes redondos) --- */}
@@ -274,7 +374,7 @@ export default function Home() {
               <div className="mb-4">
                 <strong>Evento:</strong> Core Sync Collective<br />
                 <strong>Lugar:</strong> San Sebastián de Mariquita<br />
-                <strong>Fecha:</strong> 16 de agosto, 2025<br />
+                <strong>Fecha:</strong> 6 de diciembre, 2025<br />
                 <strong>Hora:</strong> 9:00 PM
               </div>
               <div className="mb-4">
@@ -345,7 +445,7 @@ export default function Home() {
           setTimeout(() => setTapShare(false), 350);
           const shareData = {
             title: "Core Sync Collective - Evento Techno",
-            text: "¡No te pierdas este evento! 16 de agosto, San Sebastián de Mariquita.",
+            text: "¡No te pierdas este evento! 6 de diciembre, San Sebastián de Mariquita.",
             url: typeof window !== "undefined" ? window.location.href : "https://coresync.com",
           };
           if (navigator.share) {
@@ -390,54 +490,55 @@ export default function Home() {
         </svg>
       </button>
 
-      {/* Redes sociales */}
-      <footer className="w-full absolute bottom-4 flex items-center justify-center z-40 gap-8">
-        <a href="https://www.instagram.com/coresync_collective/" target="_blank" rel="noopener" className="hover:scale-110 transition">
-          <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-white">
-            <rect x="2" y="2" width="20" height="20" rx="5" strokeWidth="2"/>
-            <path d="M16 11.37A4 4 0 1 1 12.63 8a4 4 0 0 1 3.37 3.37z" strokeWidth="2"/>
-            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
-          </svg>
-        </a>
-        <a
-          href="https://www.facebook.com/CoreSyncCollective/"
-          target="_blank"
-          rel="noopener"
-          className="hover:scale-110 transition"
-        >
-          <svg
-            width="28"
-            height="28"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            className="text-white"
-          >
-            <path
-              d="M18 2h-3a5 5 0 0 0-5 5v3H5v4h5v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"
-              strokeWidth="2"
-            />
-          </svg>
-        </a>
-      </footer>
-
-      {/* Botón sticky de compra SOLO visible en móviles y tablets 
-      <button
-        onClick={() => setOpen(true)}
-        className={`
-          fixed bottom-4 left-1/2 -translate-x-1/2 z-50
-          w-[92vw] max-w-xs
-          bg-white text-black font-bold rounded-full shadow-xl
-          border-2 border-white
-          py-3 text-lg
-          flex items-center justify-center
-          transition-all duration-200
-          hover:bg-black hover:text-white active:scale-95
-          md:hidden
-        `}
-      >
-        Comprar boleta
-      </button>*/}
+      <section className="relative z-30 w-full px-6 pb-32 pt-16">
+        <div className="mx-auto max-w-5xl rounded-[32px] border border-white/10 bg-black/70 px-6 py-12 shadow-2xl backdrop-blur-3xl">
+          <div className="text-center text-white">
+            <p className="text-xs uppercase tracking-[0.5em] text-pink-200">Nuestro legado</p>
+            <h3 className="mt-2 text-3xl font-bold md:text-4xl">Eventos anteriores</h3>
+            <p className="mx-auto mt-4 max-w-3xl text-base text-gray-300">
+              Llevamos varias ediciones conectando a la comunidad techno con atmósferas inmersivas,
+              visuales hechas en casa y una curaduría que no pierde la esencia underground.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            {pastEvents.map((event) => (
+              <article
+                key={event.title}
+                className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 text-left text-white backdrop-blur-xl shadow-lg"
+              >
+                <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${event.accent}`} aria-hidden="true" />
+                <div className="relative">
+                  <div className="flex flex-col gap-1 text-xs uppercase tracking-[0.35em] text-gray-200/80">
+                    <span>{event.dateLabel}</span>
+                    <span className="text-pink-100">{event.highlight}</span>
+                  </div>
+                  <h4 className="mt-4 text-2xl font-bold">{event.title}</h4>
+                  <p className="mt-2 text-sm text-gray-200">{event.description}</p>
+                  <p className="mt-3 flex items-center gap-2 text-sm text-gray-300">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-pink-200">
+                      <path
+                        d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {event.location}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {event.tags.map((tag) => (
+                      <span
+                        key={`${event.title}-${tag}`}
+                        className="rounded-full border border-white/30 bg-black/40 px-3 py-1 text-xs uppercase tracking-wider text-gray-200"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {showShareCopied && (
         <div className="
@@ -452,5 +553,33 @@ export default function Home() {
       )}
 
     </main>
+    <style jsx global>{`
+        .snowflake {
+          position: absolute;
+          top: -10%;
+          border-radius: 9999px;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 60%, transparent 100%);
+          opacity: 0.8;
+          animation-name: snowfall;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+          will-change: transform, opacity;
+        }
+
+        @keyframes snowfall {
+          0% {
+            transform: translate3d(0, -10vh, 0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          100% {
+            transform: translate3d(0, 110vh, 0);
+            opacity: 0;
+          }
+        }
+      `}</style>
+    </>
   );
 }
