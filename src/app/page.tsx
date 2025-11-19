@@ -160,16 +160,16 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "Entrada Core Sync Collective",
+          title: "NOCHE DE VELITAS — Core Sync Collective",
           quantity: 1,
-          unit_price: 30000, // COP
+          unit_price: 25000,
         }),
       });
 
       const data = await res.json();
 
       if (data.init_point) {
-        window.location.href = data.init_point; // redirige al Checkout Pro
+        window.location.href = data.init_point;
       } else {
         alert("No se pudo crear la preferencia de pago.");
       }
@@ -436,7 +436,7 @@ export default function Home() {
               </div>
               <button
                 onClick={handlePay}
-                className="block w-full mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200"
+                className="block w-full mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200 cursor-pointer"
               >
                 Pagar con Mercado Pago
               </button>
