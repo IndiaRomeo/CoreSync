@@ -156,23 +156,39 @@ export default function Home() {
   //AÑADE ESTO DENTRO DEL COMPONENTE Home
   const handlePay = async () => {
     try {
-      const res = await fetch("/api/mp-preference", {
+      // 1. Crear entrada en la base de datos
+      const entradaRes = await fetch("/api/create-entrada", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "NOCHE DE VELITAS — Core Sync Collective",
-          quantity: 1,
-          unit_price: 1000,
+          nombre: "Cliente X",
+          email: "correo@example.com",
+          evento: "NOCHE DE VELITAS"
         }),
       });
 
-      const data = await res.json();
+      const entradaData = await entradaRes.json();
+      const entradaId = entradaData.entradaId; // 👈 ID REAL creado en Supabase
 
-      if (data.init_point) {
-        window.location.href = data.init_point;
+      // 2. Crear preferencia de pago usando ese entradaId
+      const prefRes = await fetch("/api/mp-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo: "NOCHE DE VELITAS — Core Sync Collective",
+          precio: 1000,
+          entradaId, // 👈 EL ID REAL
+        }),
+      });
+
+      const pref = await prefRes.json();
+
+      if (pref.init_point) {
+        window.location.href = pref.init_point; // Redirigir a Mercado Pago
       } else {
         alert("No se pudo crear la preferencia de pago.");
       }
+
     } catch (error) {
       console.error("Error al pagar:", error);
       alert("Ocurrió un error al iniciar el pago.");
