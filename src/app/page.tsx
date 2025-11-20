@@ -28,7 +28,7 @@ const PAST_EVENTS = [
     location: "Hotel Los Lagos — San Sebastián de Mariquita",
     attendance: "100 ravers",
     highlight:
-      "Nuestra primera Techno Night en un hotel campestre: un ritual íntimo con estética industrial, energía club y visuales que abrazaron a la escena local.",
+      "Nuestra primera Techno Night en un hotel campestre: una inmersión industrial con energía de club y visuales que hicieron vibrar a la escena local.",
     badge: "Primera edición",
     mood: "House / Industrial / Hard Techno",
   },
@@ -284,7 +284,7 @@ export default function Home() {
         <div className="bg-black/60 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_25px_120px_rgba(0,0,0,0.45)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="text-center md:text-left">
-              <p className="text-xs uppercase tracking-[0.45em] text-red-600 font-semibold">Eventos pasados</p>
+              <p className="text-xs uppercase tracking-[0.45em] text-red-700 font-semibold">Eventos pasados</p>
               <h2 className="mt-3 text-3xl md:text-4xl font-extrabold text-white">Así han vibrado las ediciones anteriores</h2>
               <p className="mt-3 text-sm md:text-base text-gray-300">
                 Archivamos los rituales que nos trajeron hasta aquí. Cada fecha sumó más comunidad, visuales y energía.
@@ -402,7 +402,7 @@ export default function Home() {
                 No hay devoluciones salvo cancelación del evento.
               </div>
               <div className="mb-4">
-                <strong>Line-up:</strong>
+                <strong>Cartel:</strong>
                 <ul className="list-disc pl-6 text-sm mt-1">
                   <li>DJ DANI P</li>
                   <li>DJ DANZER</li>
