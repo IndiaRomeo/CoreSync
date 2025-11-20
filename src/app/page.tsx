@@ -162,7 +162,7 @@ export default function Home() {
         body: JSON.stringify({
           title: "NOCHE DE VELITAS — Core Sync Collective",
           quantity: 1,
-          unit_price: 25000,
+          unit_price: 1000,
         }),
       });
 
