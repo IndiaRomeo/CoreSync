@@ -220,6 +220,17 @@ body {
   animation: countdown-zoom 0.34s cubic-bezier(.5,.9,.2,1) both;
 }
 
+.snowflake {
+  position: absolute;
+  top: -10%;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  animation-name: snow-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  user-select: none;
+  pointer-events: none;
+=======
 .snow-layer {
   position: absolute;
   inset: 0;
@@ -247,6 +258,20 @@ body {
 
 @keyframes snow-fall {
   0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(12px, 45vh, 0) rotate(180deg);
+  }
+  100% {
+    transform: translate3d(-12px, 110vh, 0) rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snowflake {
+    animation: none;
+    opacity: 0.2;
     transform: translate3d(0, -10%, 0) scale(1);
   }
   100% {
