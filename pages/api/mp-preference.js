@@ -57,8 +57,8 @@ export default async function handler(req, res) {
 
     // 👇 URL del webhook: siempre debe ser pública para que MP pueda entrar
     const notificationUrl = isDev
-      ? "https://collectivecoresync.com/api/mp-web-hook"
-      : `${process.env.NEXT_PUBLIC_BASE_URL}/api/mp-web-hook`;
+        ? "https://collectivecoresync.com/api/mp-webhook"
+        : `${process.env.NEXT_PUBLIC_BASE_URL}/api/mp-webhook`;
 
     const body = {
       items: [
