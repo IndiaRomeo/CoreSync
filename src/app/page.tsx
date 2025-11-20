@@ -441,7 +441,7 @@ export default function Home() {
 
                   <div>
                     <p className="text-base">
-                      <span className="font-semibold">Precio:</span> $27.000 COP{" "}
+                      <span className="font-semibold">Precio:</span> $1.000 COP{" "}
                       <span className="text-xs text-gray-500">
                         (entrada general digital)
                       </span>
