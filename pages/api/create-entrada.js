@@ -6,27 +6,44 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { nombre, email, evento } = req.body;
+    const {
+      buyer_email,
+      buyer_name,
+      buyer_phone,
+      importe,
+      event_name,
+      event_date,
+      event_location,
+    } = req.body;
 
     const { data, error } = await supabaseAdmin
       .from("entradas")
       .insert({
-        nombre,
-        email,
-        evento,
+        // Supabase genera "id" automáticamente (uuid)
+        mp_preference_id: null,
+        mp_payment_id: null,
         status_pago: "pendiente",
+        importe,
+        divisa: "COP",
+        buyer_email,
+        buyer_name,
+        buyer_phone,
+        event_name,
+        event_date,
+        event_location,
       })
-      .select()
+      .select("id") // solo necesitamos el id generado
       .single();
 
     if (error) {
       console.error("❌ Error creando entrada:", error);
-      return res.status(500).send("Error creando entrada");
+      return res.status(500).json({ message: "Error creando entrada" });
     }
 
+    // devolvemos el ID REAL de la tabla entradas
     return res.status(200).json({ entradaId: data.id });
   } catch (err) {
-    console.error(err);
-    return res.status(500).send("Server error");
+    console.error("❌ Error en create-entrada:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 }

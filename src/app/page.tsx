@@ -156,39 +156,51 @@ export default function Home() {
   //AÑADE ESTO DENTRO DEL COMPONENTE Home
   const handlePay = async () => {
     try {
-      // 1. Crear entrada en la base de datos
+      // 1) Crear la entrada en Supabase
       const entradaRes = await fetch("/api/create-entrada", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nombre: "Cliente X",
-          email: "correo@example.com",
-          evento: "NOCHE DE VELITAS"
+          buyer_email: "cliente@test.com",      // luego lo sacas de un form
+          buyer_name: "Cliente Test",
+          buyer_phone: "3000000000",
+          importe: 1000,
+          event_name: "NOCHE DE VELITAS — Core Sync Collective",
+          event_date: new Date().toISOString(), // o la fecha real del evento
+          event_location: "Core Sync Club",
         }),
       });
 
-      const entradaData = await entradaRes.json();
-      const entradaId = entradaData.entradaId; // 👈 ID REAL creado en Supabase
+      if (!entradaRes.ok) {
+        alert("No se pudo crear la entrada.");
+        return;
+      }
 
-      // 2. Crear preferencia de pago usando ese entradaId
+      const { entradaId } = await entradaRes.json();
+
+      // 2) Crear la preferencia de Mercado Pago con ese entradaId
       const prefRes = await fetch("/api/mp-preference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo: "NOCHE DE VELITAS — Core Sync Collective",
           precio: 1000,
-          entradaId, // 👈 EL ID REAL
+          entradaId, // 👈 AQUÍ VA EL ID REAL DE SUPABASE
         }),
       });
 
-      const pref = await prefRes.json();
-
-      if (pref.init_point) {
-        window.location.href = pref.init_point; // Redirigir a Mercado Pago
-      } else {
+      if (!prefRes.ok) {
         alert("No se pudo crear la preferencia de pago.");
+        return;
       }
 
+      const data = await prefRes.json();
+
+      if (data.initPoint || data.init_point) {
+        window.location.href = data.initPoint || data.init_point;
+      } else {
+        alert("No se pudo obtener el link de pago.");
+      }
     } catch (error) {
       console.error("Error al pagar:", error);
       alert("Ocurrió un error al iniciar el pago.");
