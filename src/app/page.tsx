@@ -383,20 +383,23 @@ export default function Home() {
           onClick={handleModalOverlayClick}
         >
           <div
-            className="bg-white rounded-2xl border border-gray-200 shadow-2xl text-gray-900 relative animate-modal-in max-w-lg w-full flex flex-col"
+            className="bg-white rounded-2xl border border-gray-200 shadow-2xl text-gray-900 relative animate-modal-in max-w-lg w-full flex flex-col overflow-hidden"
             onClick={handleModalClick}
             tabIndex={-1}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-8 pt-8 pb-2">
+            <div className="relative flex items-center justify-between px-8 pt-6 pb-4 border-b border-gray-100/80">
               <h2 className="text-2xl font-bold">Compra tu entrada</h2>
               <button
-                className="text-gray-400 hover:text-black text-2xl"
+                className="text-gray-400 hover:text-black text-2xl cursor-pointer"
                 onClick={() => setOpen(false)}
                 aria-label="Cerrar"
               >
                 &times;
               </button>
+
+              {/* Línea gris debajo del header */}
+              <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-[1px] bg-gradient-to-r from-[#615d5d] via-[#615d5d] to-[#615d5d]" />
             </div>
             {/* Contenido */}
             <div className="px-0 pt-0 pb-0 flex-1 overflow-hidden rounded-b-2xl">
@@ -418,7 +421,6 @@ export default function Home() {
                     </span>
                   </div>
 
-                  {/* Info de evento simplificada */}
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.28em] text-gray-500">
                       Evento especial
@@ -450,6 +452,23 @@ export default function Home() {
                     <span className="font-semibold">Política de devolución:</span>{" "}
                     No hay devoluciones salvo cancelación del evento.
                   </div>
+
+                  {/* Barcode / Línea de entrada digital */}
+                  {/*<div className="mt-6 flex justify-center">
+                    <div className="bg-black/90 px-4 pt-2 pb-2 rounded-lg shadow-md w-full max-w-[280px]">
+                      {/* barras llenando todo el rectángulo *
+                      <div
+                        className="h-8 w-full rounded-md"
+                        style={{
+                          backgroundImage:
+                            "repeating-linear-gradient(to right, #ffffff 0, #ffffff 1.5px, transparent 1.5px, transparent 4px)",
+                        }}
+                      />
+                      <p className="text-[9px] text-gray-300 mt-1 tracking-[0.25em] text-center uppercase">
+                        Entry Code • Core Sync • Digital Pass
+                      </p>
+                    </div>
+                  </div>*/}
                 </div>
 
                 {/* 🧾 Mini formulario de datos antes de pagar */}
