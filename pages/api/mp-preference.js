@@ -14,6 +14,8 @@ export default async function handler(req, res) {
   try {
     const { titulo, precio, entradaId } = req.body;
 
+    const baseUrl = "https://collectivecoresync.com"; // o process.env.NEXT_PUBLIC_BASE_URL
+
     const result = await preference.create({
       body: {
         items: [
@@ -24,8 +26,16 @@ export default async function handler(req, res) {
             currency_id: "COP",
           },
         ],
-        external_reference: entradaId, // ID de tu tabla "entradas"
-        notification_url: "https://collectivecoresync.com/api/mp-webhook",
+        external_reference: entradaId,
+        notification_url: `${baseUrl}/api/mp-webhook`,
+
+        // 👇 NUEVO: redirecciones después del pago
+        back_urls: {
+          success: `${baseUrl}/pago-exitoso`,
+          failure: `${baseUrl}/pago-fallido`,
+          pending: `${baseUrl}/pago-pendiente`,
+        },
+        auto_return: "approved", // vuelve solo cuando el pago quede aprobado
       },
     });
 
