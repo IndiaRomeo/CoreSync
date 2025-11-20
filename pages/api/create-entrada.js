@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         event_name,
         event_date,
         event_location,
-        codigo,        // 👈 NUEVO
+        codigo,
         qr_base64: null,
         qr_used_at: null,
         qr_used_by: null,
@@ -56,16 +56,15 @@ export default async function handler(req, res) {
 
     const entradaId = data.id;
 
-    // 3) Generar el texto del QR
-    // Mantengo tu formato para el scanner: core-sync|CODIGO|ID
+    // 3) Texto dentro del QR
     const qrText = `core-sync|${data.codigo}|${entradaId}`;
 
-    // 4) Generar imagen QR en base64
+    // 4) Generar imagen QR
     const qr_base64 = await QRCode.toDataURL(qrText, {
       errorCorrectionLevel: "H",
     });
 
-    // 5) Guardar el qr_base64 en la fila
+    // 5) Guardar QR
     const { error: updError } = await supabaseAdmin
       .from("entradas")
       .update({ qr_base64 })
@@ -73,10 +72,9 @@ export default async function handler(req, res) {
 
     if (updError) {
       console.error("⚠️ Entrada creada pero error guardando qr_base64:", updError);
-      // No rompemos el flujo; igual devolvemos la entrada
     }
 
-    // 6) Devolvemos ID REAL + código (por si lo quieres usar)
+    // 6) Devolvemos ID + código
     return res.status(200).json({
       entradaId,
       codigo: data.codigo,

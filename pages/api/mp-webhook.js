@@ -39,6 +39,12 @@ export default async function handler(req, res) {
       return res.status(200).send("No external_reference");
     }
 
+    // Datos del comprador que vengan desde MP (por si quieres completarlos)
+    const payer = paymentInfo.payer || {};
+    const buyer_email = payer.email || null;
+    const buyer_name =
+      [payer.first_name, payer.last_name].filter(Boolean).join(" ") || null;
+
     // 2) Traducimos el status de MP al nuestro
     let status_pago = "pendiente";
     switch (mpStatus) {
@@ -55,6 +61,7 @@ export default async function handler(req, res) {
         break;
     }
 
+    // 👈 SIN anotación de tipo, JS normal
     const updateData = {
       status_pago,
       mp_payment_id: mpPaymentId,
@@ -65,6 +72,10 @@ export default async function handler(req, res) {
       updateData.paid_at =
         paymentInfo.date_approved || new Date().toISOString();
     }
+
+    // Si MP trae nombre/correo, puedes completar lo que falte en la BD
+    if (buyer_email) updateData.buyer_email = buyer_email;
+    if (buyer_name) updateData.buyer_name = buyer_name;
 
     // 3) Actualizar la fila correspondiente en Supabase
     const { error: updateError } = await supabaseAdmin

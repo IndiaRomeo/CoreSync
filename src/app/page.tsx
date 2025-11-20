@@ -67,6 +67,81 @@ export default function Home() {
   const [showCountdown, setShowCountdown] = useState(false);
   const [tapCountdown, setTapCountdown] = useState(false);
 
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [buyerPhone, setBuyerPhone] = useState("");
+  const [payLoading, setPayLoading] = useState(false);
+
+
+  const handlePay = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (payLoading) return;
+
+    if (!buyerName || !buyerEmail || !buyerPhone) {
+      alert("Por favor completa tu nombre, correo y teléfono.");
+      return;
+    }
+
+    setPayLoading(true);
+
+    try {
+      // 1) Crear entrada en Supabase con datos del formulario
+      const entradaRes = await fetch("/api/create-entrada", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buyer_email: buyerEmail,
+          buyer_name: buyerName,
+          buyer_phone: buyerPhone,
+          importe: 30000,
+          event_name: "Core Sync Collective - Noche de Velitas",
+          event_date: "2025-12-06T21:00:00.000-05:00",
+          event_location: "San Sebastián de Mariquita",
+        }),
+      });
+
+      if (!entradaRes.ok) {
+        console.error("❌ Error creando entrada:", await entradaRes.text());
+        alert("No se pudo crear la entrada. Intenta de nuevo.");
+        setPayLoading(false);
+        return;
+      }
+
+      const { entradaId } = await entradaRes.json();
+
+      // 2) Crear preferencia de Mercado Pago
+      const prefRes = await fetch("/api/mp-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo: "NOCHE DE VELITAS — Core Sync Collective",
+          precio: 30000,
+          entradaId,
+        }),
+      });
+
+      if (!prefRes.ok) {
+        console.error("❌ Error creando preferencia MP:", await prefRes.text());
+        alert("No se pudo iniciar el pago. Intenta de nuevo.");
+        setPayLoading(false);
+        return;
+      }
+
+      const data = await prefRes.json();
+
+      if (data.initPoint || data.init_point) {
+        window.location.href = data.initPoint || data.init_point;
+      } else {
+        alert("No se pudo obtener el link de pago.");
+        setPayLoading(false);
+      }
+    } catch (err) {
+      console.error("Error al iniciar el pago:", err);
+      alert("Ocurrió un error al iniciar el pago.");
+      setPayLoading(false);
+    }
+  };
+
   // Cuando el video termina de cargar, oculta el loader
   const handleLoadedData = () => setLoading(false);
 
@@ -152,60 +227,7 @@ export default function Home() {
       setShowCountdown(false);
     }
   }, [showTitle]);
-
-  //AÑADE ESTO DENTRO DEL COMPONENTE Home
-  const handlePay = async () => {
-    try {
-      // 1) Crear la entrada en Supabase
-      const entradaRes = await fetch("/api/create-entrada", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          buyer_email: "cliente@test.com",      // luego lo sacas de un form
-          buyer_name: "Cliente Test",
-          buyer_phone: "3000000000",
-          importe: 1000,
-          event_name: "NOCHE DE VELITAS — Core Sync Collective",
-          event_date: new Date().toISOString(), // o la fecha real del evento
-          event_location: "Core Sync Club",
-        }),
-      });
-
-      if (!entradaRes.ok) {
-        alert("No se pudo crear la entrada.");
-        return;
-      }
-
-      const { entradaId } = await entradaRes.json();
-
-      // 2) Crear la preferencia de Mercado Pago con ese entradaId
-      const prefRes = await fetch("/api/mp-preference", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          titulo: "NOCHE DE VELITAS — Core Sync Collective",
-          precio: 1000,
-          entradaId, // 👈 AQUÍ VA EL ID REAL DE SUPABASE
-        }),
-      });
-
-      if (!prefRes.ok) {
-        alert("No se pudo crear la preferencia de pago.");
-        return;
-      }
-
-      const data = await prefRes.json();
-
-      if (data.initPoint || data.init_point) {
-        window.location.href = data.initPoint || data.init_point;
-      } else {
-        alert("No se pudo obtener el link de pago.");
-      }
-    } catch (error) {
-      console.error("Error al pagar:", error);
-      alert("Ocurrió un error al iniciar el pago.");
-    }
-  };
+  
 
   return (
     <main
@@ -435,7 +457,8 @@ export default function Home() {
                 <strong>Hora:</strong> 9:00 PM
               </div>
               <div className="mb-4">
-                <strong>Precio:</strong> $30.000 COP <span className="text-xs text-gray-400">(incluye entrada)</span>
+                <strong>Precio:</strong> $30.000 COP{" "}
+                <span className="text-xs text-gray-400">(incluye entrada)</span>
               </div>
               <div className="mb-4 flex items-center gap-2">
                 <strong>Ubicación:</strong>
@@ -446,11 +469,17 @@ export default function Home() {
                   className="flex items-center gap-1 text-gray-700 hover:text-blue-900 font-semibold no-underline transition"
                 >
                   Ver mapa
-                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5Z"/></svg>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5Z"
+                    />
+                  </svg>
                 </a>
               </div>
               <div className="mb-2 text-xs text-gray-500">
-                <span className="font-bold">Política de devolución:</span> No hay devoluciones salvo cancelación del evento.
+                <span className="font-bold">Política de devolución:</span>{" "}
+                No hay devoluciones salvo cancelación del evento.
               </div>
               <div className="mb-4">
                 <strong>Line-up:</strong>
@@ -462,13 +491,56 @@ export default function Home() {
                   <li>DJ BASTARD</li>
                 </ul>
               </div>
-              <button
-                onClick={handlePay}
-                className="block w-full mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200 cursor-pointer"
-              >
-                Pagar con Mercado Pago
-              </button>
 
+              {/* 🧾 Mini formulario de datos antes de pagar */}
+              <form
+                onSubmit={handlePay}
+                className="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4"
+              >
+                <p className="text-sm text-gray-700 mb-1">
+                  Completa tus datos para generar tu entrada digital:
+                </p>
+
+                <input
+                  required
+                  placeholder="Nombre completo"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70"
+                  value={buyerName}
+                  onChange={(e) => setBuyerName(e.target.value)}
+                />
+
+                <input
+                  required
+                  type="email"
+                  placeholder="Correo electrónico"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70"
+                  value={buyerEmail}
+                  onChange={(e) => setBuyerEmail(e.target.value)}
+                />
+
+                <input
+                  required
+                  placeholder="Teléfono (WhatsApp)"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70"
+                  value={buyerPhone}
+                  onChange={(e) => setBuyerPhone(e.target.value)}
+                />
+
+                <button
+                  type="submit"
+                  disabled={payLoading}
+                  className={`block w-full mt-2 px-6 py-3 rounded-lg text-lg text-center font-bold border-2
+                    ${
+                      payLoading
+                        ? "bg-gray-300 text-gray-600 border-gray-400 cursor-wait"
+                        : "bg-black text-white border-black hover:bg-white hover:text-black hover:border-black cursor-pointer"
+                    }
+                    transition-all duration-200
+                  `}
+                >
+                  {payLoading ? "Redirigiendo a Mercado Pago..." : "Pagar con Mercado Pago"}
+                </button>
+              </form>
               <a
                 href="https://wa.link/svqjia"
                 className="block w-full mt-3 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-green-600 transition-all duration-200"
@@ -477,7 +549,9 @@ export default function Home() {
               >
                 Comprar por WhatsApp
               </a>
-              <p className="text-xs text-gray-400 mt-2">Serás redirigido a Whatsapp. Recibirás tu entrada por el mismo medio o correo.</p>
+              <p className="text-xs text-gray-400 mt-2">
+                Serás redirigido a Whatsapp. Recibirás tu entrada por el mismo medio o correo.
+              </p>
             </div>
             </div>
           </div>
