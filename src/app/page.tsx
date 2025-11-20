@@ -23,34 +23,14 @@ const SNOWFLAKES = Array.from({ length: 42 }, (_, index) => ({
 
 const PAST_EVENTS = [
   {
-    title: "Core Sync: Genesis",
-    date: "Marzo 2024",
-    location: "Bodega 27 - Mariquita",
-    attendance: "200 ravers",
+    title: "Techno Night",
+    date: "26 de agosto 2024",
+    location: "Hotel Los Lagos — San Sebastián de Mariquita",
+    attendance: "100 ravers",
     highlight:
-      "Convertimos una vieja bodega en un rave inmersivo con visuales analógicos y láseres sincronizados.",
-    badge: "Sold Out",
-    mood: "Industrial techno / Acid",
-  },
-  {
-    title: "Core Sync Sunset",
-    date: "Junio 2024",
-    location: "Mirador del Calvario - Mariquita",
-    attendance: "180 asistentes",
-    highlight:
-      "Sesión sunset que arrancó con house melódico y terminó con techno acelerado frente al amanecer.",
-    badge: "Sunset Edition",
-    mood: "House progresivo / Peak time",
-  },
-  {
-    title: "Core Sync Ritual",
-    date: "Octubre 2024",
-    location: "Bosque La Ceiba - Mariquita",
-    attendance: "220 asistentes",
-    highlight:
-      "Llevamos el sonido a un espacio natural con mapping sobre los árboles y performance visual en vivo.",
-    badge: "Edición especial",
-    mood: "Hypnotic techno / Live visuals",
+      "Nuestra primera Techno Night en un hotel campestre: una inmersión industrial con energía de club y visuales que hicieron vibrar a la escena local.",
+    badge: "Primera edición",
+    mood: "House / Industrial / Hard Techno",
   },
 ];
 
@@ -237,7 +217,9 @@ export default function Home() {
       {/* Título glitch + animación solo cuando loader termina */}
       {showTitle && (
         <div className="w-full flex flex-col items-center z-30 animate-countdown-appear">
-          <h1 className="glitch animate-title-appear relative text-5xl md:text-7xl font-techno font-extrabold uppercase tracking-wider text-white text-center drop-shadow-2xl">
+          <h1
+            className="glitch animate-title-appear relative text-6xl md:text-8xl font-techno font-extrabold uppercase tracking-[0.35em] text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-white to-red-700 text-center drop-shadow-[0_20px_70px_rgba(0,0,0,0.65)]"
+          >
             <span aria-hidden="true">Core Sync Collective</span>
             Core Sync Collective
             <span aria-hidden="true">Core Sync Collective</span>
@@ -302,6 +284,7 @@ export default function Home() {
         <div className="bg-black/60 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_25px_120px_rgba(0,0,0,0.45)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="text-center md:text-left">
+              <p className="text-xs uppercase tracking-[0.45em] text-red-700 font-semibold">Eventos pasados</p>
               <p className="text-xs uppercase tracking-[0.45em] text-pink-400 font-semibold">Eventos pasados</p>
               <h2 className="mt-3 text-3xl md:text-4xl font-extrabold text-white">Así han vibrado las ediciones anteriores</h2>
               <p className="mt-3 text-sm md:text-base text-gray-300">
@@ -310,6 +293,8 @@ export default function Home() {
             </div>
             <button
               onClick={() => setPastEventsOpen((prev) => !prev)}
+
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white bg-white/10 hover:bg-white/20 transition cursor-pointer"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white bg-white/10 hover:bg-white/20 transition"
               aria-expanded={pastEventsOpen}
               aria-controls="past-events-panel"
@@ -323,12 +308,17 @@ export default function Home() {
 
           {!pastEventsOpen && (
             <p className="mt-4 text-sm text-gray-400 text-center md:text-left">
+
+              Haz clic en “Ver ediciones” para desplegar nuestra primera Techno Night.
               Haz clic en “Ver ediciones” para desplegar los eventos realizados.
             </p>
           )}
 
           {pastEventsOpen && (
+            <div id="past-events-panel" className="mt-6 grid gap-4 grid-cols-1 md:grid-cols-1 lg:grid-cols-2 max-w-4xl mx-auto">
+
             <div id="past-events-panel" className="mt-6 grid gap-4 md:grid-cols-3">
+
               {PAST_EVENTS.map((event) => (
                 <article
                   key={event.title}
@@ -420,7 +410,7 @@ export default function Home() {
                 No hay devoluciones salvo cancelación del evento.
               </div>
               <div className="mb-4">
-                <strong>Line-up:</strong>
+                <strong>Cartel:</strong>
                 <ul className="list-disc pl-6 text-sm mt-1">
                   <li>DJ DANI P</li>
                   <li>DJ DANZER</li>
