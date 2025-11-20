@@ -1,4 +1,3 @@
-// pages/api/mp-web-hook.js
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
