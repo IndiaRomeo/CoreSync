@@ -285,6 +285,7 @@ export default function Home() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="text-center md:text-left">
               <p className="text-xs uppercase tracking-[0.45em] text-red-700 font-semibold">Eventos pasados</p>
+              <p className="text-xs uppercase tracking-[0.45em] text-pink-400 font-semibold">Eventos pasados</p>
               <h2 className="mt-3 text-3xl md:text-4xl font-extrabold text-white">Así han vibrado las ediciones anteriores</h2>
               <p className="mt-3 text-sm md:text-base text-gray-300">
                 Archivamos los rituales que nos trajeron hasta aquí. Cada fecha sumó más comunidad, visuales y energía.
@@ -292,7 +293,9 @@ export default function Home() {
             </div>
             <button
               onClick={() => setPastEventsOpen((prev) => !prev)}
+
               className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white bg-white/10 hover:bg-white/20 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white bg-white/10 hover:bg-white/20 transition"
               aria-expanded={pastEventsOpen}
               aria-controls="past-events-panel"
             >
@@ -305,12 +308,17 @@ export default function Home() {
 
           {!pastEventsOpen && (
             <p className="mt-4 text-sm text-gray-400 text-center md:text-left">
+
               Haz clic en “Ver ediciones” para desplegar nuestra primera Techno Night.
+              Haz clic en “Ver ediciones” para desplegar los eventos realizados.
             </p>
           )}
 
           {pastEventsOpen && (
             <div id="past-events-panel" className="mt-6 grid gap-4 grid-cols-1 md:grid-cols-1 lg:grid-cols-2 max-w-4xl mx-auto">
+
+            <div id="past-events-panel" className="mt-6 grid gap-4 md:grid-cols-3">
+
               {PAST_EVENTS.map((event) => (
                 <article
                   key={event.title}
