@@ -6,7 +6,7 @@ type Props = {
   searchParams?: { [key: string]: string | string[] | undefined };
 };
 
-export default function PagoExitosoPage({ searchParams }: Props) {
+export default function PagoExitosoPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   const externalRef = searchParams?.external_reference as string | undefined;
 
   return (

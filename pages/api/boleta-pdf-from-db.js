@@ -1,7 +1,7 @@
 import React from "react";
 import { pdf } from "@react-pdf/renderer";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import TicketPDF from "@/pdf/TicketPDF"; // mismo componente que ya usabas
+import TicketPDF from "../../pdf/TicketPDF"; // mismo componente que ya usabas
 
 async function generarPDF({ nombre, codigo, qrBase64 }) {
   const pdfDoc = pdf(
