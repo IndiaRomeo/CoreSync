@@ -1,4 +1,3 @@
-// pages/api/mp-preference.js
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -15,7 +14,7 @@ export default async function handler(req, res) {
     const {
       title = "NOCHE DE VELITAS — Core Sync Collective",
       quantity = 1,
-      unit_price = 25000, // COP
+      unit_price = 1000, // COP
       currency_id = "COP",
       buyer_email,
       buyer_name,
@@ -24,7 +23,7 @@ export default async function handler(req, res) {
 
     // 1) Insertar la entrada en Supabase y obtener el id generado
     const { data, error: insertError } = await supabaseAdmin
-      .from("entradas") // 👈 tabla en minúsculas
+      .from("entradas")
       .insert({
         importe: unit_price,
         divisa: currency_id,
@@ -48,9 +47,18 @@ export default async function handler(req, res) {
 
     const preference = new Preference(client);
 
-    // En dev usamos localhost, luego en producción se pone tu dominio
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL || "http://www.collectivecoresync.com";
+    // 👇 Detectamos si estamos en dev o producción
+    const isDev = process.env.NODE_ENV !== "production";
+
+    // 👇 URL a la que el usuario vuelve (local en dev, dominio en prod)
+    const baseUrl = isDev
+      ? "http://localhost:3000"
+      : process.env.NEXT_PUBLIC_BASE_URL;
+
+    // 👇 URL del webhook: siempre debe ser pública para que MP pueda entrar
+    const notificationUrl = isDev
+      ? "https://collectivecoresync.com/api/mp-web-hook"
+      : `${process.env.NEXT_PUBLIC_BASE_URL}/api/mp-web-hook`;
 
     const body = {
       items: [
@@ -66,10 +74,9 @@ export default async function handler(req, res) {
         failure: `${baseUrl}/pago-fallido`,
         pending: `${baseUrl}/pago-pendiente`,
       },
-      // ❌ Quitamos auto_return para evitar el error por ahora
-      // auto_return: "approved",
+      // auto_return lo dejamos apagado por ahora
       external_reference: ticketId,
-      notification_url: `${baseUrl}/api/mp-web-hook`,
+      notification_url: notificationUrl,
     };
 
     console.log("MP Preference body:", body);
