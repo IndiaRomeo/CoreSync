@@ -29,7 +29,7 @@ export default async function handler(req, res) {
         external_reference: entradaId,
         notification_url: `${baseUrl}/api/mp-webhook`,
 
-        // 👇 NUEVO: redirecciones después del pago
+        // NUEVO: redirecciones después del pago
         back_urls: {
           success: `${baseUrl}/pago-exitoso`,
           failure: `${baseUrl}/pago-fallido`,

@@ -20,16 +20,16 @@ const orbitron = Orbitron({
 });
 
 export const metadata: Metadata = {
-  title: "Core Sync Collective - Evento Techno en Mariquita",
-  description: "Fiesta Techno | Core Sync Collective | 16 Agosto 2025 | San Sebastián de Mariquita | ¡Compra tu entrada ya!",
+  title: "Core Sync Collective - Noche de Velitas",
+  description: "Fiesta Techno | Core Sync Collective | 6 Diciembre 2025 | San Sebastián de Mariquita | ¡Compra tu entrada ya!",
   openGraph: {
-    title: "Core Sync Collective - Fiesta Techno",
-    description: "No te pierdas el evento del año: Agosto, Mariquita. Boletas limitadas. ¡Compra ahora!",
+    title: "Core Sync Collective - Noche de Velitas",
+    description: "No te pierdas el evento del año: Diciembre, Mariquita. Boletas limitadas. ¡Compra ahora!",
     url: "https://collectivecoresync.com/",
     siteName: "Core Sync Collective",
     images: [
       {
-        url: "https://collectivecoresync.com/evento-foto.jpg",
+        url: "https://collectivecoresync.com/evento-foto-velitas.png",
         width: 1200,
         height: 630,
         alt: "Flyer Core Sync Collective",
