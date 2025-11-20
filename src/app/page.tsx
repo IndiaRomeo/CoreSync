@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import Loader from "../components/Loader";
+import React from "react";
 
 const videoSrc = "/video.mp4"; // Usa el nombre real de tu video
 
@@ -38,6 +39,54 @@ type Snowflake = {
   size: number;
   opacity: number;
 };
+
+type SnowflakeStyle = CSSProperties & {
+  "--snow-drift"?: string;
+};
+
+const SNOWFLAKES = Array.from({ length: 42 }, (_, index) => ({
+  id: index,
+  left: (index * 17) % 100,
+  delay: (index * 0.73) % 12,
+  duration: 8 + ((index * 7) % 5),
+  size: 2 + (index % 4),
+  opacity: 0.35 + ((index % 5) * 0.1),
+  drift: ((index % 5) - 2) * 18,
+  blur: index % 4 === 0 ? 1.5 : 0,
+}));
+
+const PAST_EVENTS = [
+  {
+    title: "Core Sync: Genesis",
+    date: "Marzo 2024",
+    location: "Bodega 27 - Mariquita",
+    attendance: "200 ravers",
+    highlight:
+      "Convertimos una vieja bodega en un rave inmersivo con visuales analógicos y láseres sincronizados.",
+    badge: "Sold Out",
+    mood: "Industrial techno / Acid",
+  },
+  {
+    title: "Core Sync Sunset",
+    date: "Junio 2024",
+    location: "Mirador del Calvario - Mariquita",
+    attendance: "180 asistentes",
+    highlight:
+      "Sesión sunset que arrancó con house melódico y terminó con techno acelerado frente al amanecer.",
+    badge: "Sunset Edition",
+    mood: "House progresivo / Peak time",
+  },
+  {
+    title: "Core Sync Ritual",
+    date: "Octubre 2024",
+    location: "Bosque La Ceiba - Mariquita",
+    attendance: "220 asistentes",
+    highlight:
+      "Llevamos el sonido a un espacio natural con mapping sobre los árboles y performance visual en vivo.",
+    badge: "Edición especial",
+    mood: "Hypnotic techno / Live visuals",
+  },
+];
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -189,20 +238,37 @@ export default function Home() {
     }
   }, [showTitle]);
 
-  useEffect(() => {
-    const flakes = Array.from({ length: 45 }, (_, index) => ({
-      id: index,
-      left: Math.random() * 100,
-      delay: Math.random() * 6,
-      duration: 8 + Math.random() * 6,
-      size: Math.random() * 4 + 2,
-    }));
-    setSnowflakes(flakes);
-  }, []);
+  //AÑADE ESTO DENTRO DEL COMPONENTE Home
+  const handlePay = async () => {
+    try {
+      const res = await fetch("/api/mp-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "NOCHE DE VELITAS — Core Sync Collective",
+          quantity: 1,
+          unit_price: 1000,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.init_point) {
+        window.location.href = data.init_point;
+      } else {
+        alert("No se pudo crear la preferencia de pago.");
+      }
+    } catch (error) {
+      console.error("Error al pagar:", error);
+      alert("Ocurrió un error al iniciar el pago.");
+    }
+  };
 
   return (
-    <>
-      <main role="main" className="relative flex flex-col items-center justify-start min-h-screen w-full bg-black overflow-x-hidden">
+    <main
+      role="main"
+      className="relative flex flex-col items-center justify-center min-h-screen w-full bg-black overflow-x-hidden pb-48 md:pb-32"
+    >
       {loading && <Loader />}
 
       <div className="pointer-events-none fixed inset-0 z-20 overflow-hidden" aria-hidden="true">
@@ -239,39 +305,34 @@ export default function Home() {
       {/* Desenfoque y capa oscura */}
       <div className="absolute inset-0 backdrop-blur-[6px] z-10 pointer-events-none" />
       <div className="absolute inset-0 bg-black/40 z-20 pointer-events-none" />
-      <div
-        className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ zIndex: 25 }}
-        aria-hidden="true"
-      >
-        {snowflakes.map((flake) => (
-          <span
-            key={flake.id}
-            className="snowflake"
-            style={{
-              left: `${flake.left}%`,
-              animationDelay: `${flake.delay}s`,
-              animationDuration: `${flake.duration}s`,
-              width: flake.size,
-              height: flake.size,
-            }}
-          />
-        ))}
+      <div className="snow-layer">
+        {SNOWFLAKES.map((flake) => {
+          const flakeStyle: SnowflakeStyle = {
+            left: `${flake.left}%`,
+            animationDelay: `${flake.delay}s`,
+            animationDuration: `${flake.duration}s`,
+            width: `${flake.size}px`,
+            height: `${flake.size}px`,
+            opacity: flake.opacity,
+            filter: flake.blur ? `blur(${flake.blur}px)` : undefined,
+            "--snow-drift": `${flake.drift}px`,
+          };
+          return <span key={flake.id} className="snowflake" style={flakeStyle} />;
+        })}
       </div>
 
-      <div className="relative z-30 flex min-h-screen w-full flex-col items-center justify-center px-4 text-center text-white">
-        {/* Título glitch + animación solo cuando loader termina */}
-        {showTitle && (
-          <div className="w-full max-w-4xl flex flex-col items-center animate-countdown-appear">
-            <h1 className="glitch animate-title-appear relative text-5xl md:text-7xl font-techno font-extrabold uppercase tracking-wider text-white text-center drop-shadow-2xl">
-              <span aria-hidden="true">Core Sync Collective</span>
-              Core Sync Collective
-              <span aria-hidden="true">Core Sync Collective</span>
-              <span aria-hidden="true">Core Sync Collective</span>
-            </h1>
+      {/* Título glitch + animación solo cuando loader termina */}
+      {showTitle && (
+        <div className="w-full flex flex-col items-center z-30 animate-countdown-appear">
+          <h1 className="glitch animate-title-appear relative text-5xl md:text-7xl font-techno font-extrabold uppercase tracking-wider text-white text-center drop-shadow-2xl">
+            <span aria-hidden="true">Core Sync Collective</span>
+            Core Sync Collective
+            <span aria-hidden="true">Core Sync Collective</span>
+            <span aria-hidden="true">Core Sync Collective</span>
+          </h1>
 
-            {/* --- Conteo regresivo debajo del título --- */}
-            <div className={`
+          {/* --- Conteo regresivo debajo del título --- */}
+          <div className={`
             mt-7 mb-3 flex gap-4 text-center
             text-3xl md:text-4xl font-bold text-white tracking-wide
             font-mono
@@ -319,66 +380,8 @@ export default function Home() {
               </>
             )}
           </div>
-          </div>
-        )}
-
-        {showButton && (
-          <button
-            onClick={() => setOpen(true)}
-            className="
-            mt-10
-            px-6 py-3
-            sm:px-8 sm:py-3
-            md:px-10 md:py-4
-            text-lg
-            sm:text-xl
-            md:text-2xl
-            bg-white text-black 
-            font-bold 
-            rounded-full shadow-xl
-            border-2 border-white
-            hover:bg-black hover:text-white 
-            hover:scale-105 active:scale-95
-            cursor-pointer transition-all transition-transform duration-200
-            relative
-            outline-none
-            animate-button-appear
-          "
-          >
-            Comprar boleta
-          </button>
-        )}
-
-        <footer className="absolute bottom-4 left-0 flex w-full items-center justify-center gap-8 text-white">
-          <a href="https://www.instagram.com/coresync_collective/" target="_blank" rel="noopener" className="hover:scale-110 transition">
-            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-white">
-              <rect x="2" y="2" width="20" height="20" rx="5" strokeWidth="2"/>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8a4 4 0 0 1 3.37 3.37z" strokeWidth="2"/>
-              <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
-            </svg>
-          </a>
-          <a
-            href="https://www.facebook.com/CoreSyncCollective/"
-            target="_blank"
-            rel="noopener"
-            className="hover:scale-110 transition"
-          >
-            <svg
-              width="28"
-              height="28"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              className="text-white"
-            >
-              <path
-                d="M18 2h-3a5 5 0 0 0-5 5v3H5v4h5v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"
-                strokeWidth="2"
-              />
-            </svg>
-          </a>
-        </footer>
-      </div>
+        </div>
+      )}
 
       {showUrgency && (
         <div
@@ -431,7 +434,6 @@ export default function Home() {
           Comprar boleta
         </button>
       )}
-
       <section className="relative z-30 mt-16 w-full max-w-5xl px-6 pb-32">
         <div className="bg-black/70 border border-white/10 rounded-3xl shadow-2xl backdrop-blur-xl text-white p-6 sm:p-10">
           <div className="flex flex-col gap-2 mb-8">
@@ -464,6 +466,35 @@ export default function Home() {
                     <path d="M8 19a4 4 0 0 0 8 0" stroke="currentColor" strokeWidth="1.5" />
                   </svg>
                   {event.attendance}
+      <section className="z-30 w-full max-w-5xl px-4 mt-14">
+        <div className="bg-black/60 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_25px_120px_rgba(0,0,0,0.45)]">
+          <div className="mb-8 text-center md:text-left">
+            <p className="text-xs uppercase tracking-[0.45em] text-pink-400 font-semibold">Eventos pasados</p>
+            <h2 className="mt-3 text-3xl md:text-4xl font-extrabold text-white">Así han vibrado las ediciones anteriores</h2>
+            <p className="mt-3 text-sm md:text-base text-gray-300">
+              Archivamos los rituales que nos trajeron hasta aquí. Cada fecha sumó más comunidad, visuales y energía.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {PAST_EVENTS.map((event) => (
+              <article
+                key={event.title}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-4 hover:border-white/40 transition duration-300"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.4em] text-gray-300">{event.date}</p>
+                    <h3 className="text-xl font-semibold text-white mt-2">{event.title}</h3>
+                  </div>
+                  <span className="px-2 py-1 text-[11px] font-semibold rounded-full bg-white/10 text-white whitespace-nowrap">
+                    {event.badge}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-200 leading-relaxed">{event.highlight}</p>
+                <div className="text-xs text-gray-400 flex flex-col gap-1">
+                  <span className="font-semibold text-white">{event.location}</span>
+                  <span>{event.attendance}</span>
+                  <span className="text-white/80">{event.mood}</span>
                 </div>
               </article>
             ))}
@@ -509,6 +540,7 @@ export default function Home() {
                 <strong>Fecha:</strong> {eventDateLabel}<br />
                 <strong>Hora:</strong> {eventTimeLabel}
                 <strong>Fecha:</strong> 6 de diciembre, 2025<br />
+                <strong>Fecha:</strong> 06 de diciembre, 2025<br />
                 <strong>Hora:</strong> 9:00 PM
               </div>
               <div className="mb-4">
@@ -539,13 +571,20 @@ export default function Home() {
                   <li>DJ BASTARD</li>
                 </ul>
               </div>
+              <button
+                onClick={handlePay}
+                className="block w-full mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200 cursor-pointer"
+              >
+                Pagar con Mercado Pago
+              </button>
+
               <a
                 href="https://wa.link/svqjia"
-                className="block mt-4 bg-black hover:bg-white text-white hover:text-black px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-black hover:border-black transition-all duration-200"
+                className="block w-full mt-3 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-green-600 transition-all duration-200"
                 target="_blank"
                 rel="noopener"
               >
-                Comprar ahora
+                Comprar por WhatsApp
               </a>
               <p className="text-xs text-gray-400 mt-2">Serás redirigido a Whatsapp. Recibirás tu entrada por el mismo medio o correo.</p>
             </div>
@@ -581,6 +620,7 @@ export default function Home() {
             title: "Core Sync Collective - Evento Techno",
             text: shareText,
             text: "¡No te pierdas este evento! 6 de diciembre, San Sebastián de Mariquita.",
+            text: "¡No te pierdas este evento! 06 de diciembre, San Sebastián de Mariquita.",
             url: typeof window !== "undefined" ? window.location.href : "https://coresync.com",
           };
           if (navigator.share) {
@@ -625,55 +665,54 @@ export default function Home() {
         </svg>
       </button>
 
-      <section className="relative z-30 w-full px-6 pb-32 pt-16">
-        <div className="mx-auto max-w-5xl rounded-[32px] border border-white/10 bg-black/70 px-6 py-12 shadow-2xl backdrop-blur-3xl">
-          <div className="text-center text-white">
-            <p className="text-xs uppercase tracking-[0.5em] text-pink-200">Nuestro legado</p>
-            <h3 className="mt-2 text-3xl font-bold md:text-4xl">Eventos anteriores</h3>
-            <p className="mx-auto mt-4 max-w-3xl text-base text-gray-300">
-              Llevamos varias ediciones conectando a la comunidad techno con atmósferas inmersivas,
-              visuales hechas en casa y una curaduría que no pierde la esencia underground.
-            </p>
-          </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
-            {pastEvents.map((event) => (
-              <article
-                key={event.title}
-                className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 text-left text-white backdrop-blur-xl shadow-lg"
-              >
-                <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${event.accent}`} aria-hidden="true" />
-                <div className="relative">
-                  <div className="flex flex-col gap-1 text-xs uppercase tracking-[0.35em] text-gray-200/80">
-                    <span>{event.dateLabel}</span>
-                    <span className="text-pink-100">{event.highlight}</span>
-                  </div>
-                  <h4 className="mt-4 text-2xl font-bold">{event.title}</h4>
-                  <p className="mt-2 text-sm text-gray-200">{event.description}</p>
-                  <p className="mt-3 flex items-center gap-2 text-sm text-gray-300">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-pink-200">
-                      <path
-                        d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    {event.location}
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {event.tags.map((tag) => (
-                      <span
-                        key={`${event.title}-${tag}`}
-                        className="rounded-full border border-white/30 bg-black/40 px-3 py-1 text-xs uppercase tracking-wider text-gray-200"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Redes sociales */}
+      <footer className="w-full absolute bottom-4 flex items-center justify-center z-40 gap-8">
+        <a href="https://www.instagram.com/coresync_collective/" target="_blank" rel="noopener" className="hover:scale-110 transition">
+          <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-white">
+            <rect x="2" y="2" width="20" height="20" rx="5" strokeWidth="2"/>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8a4 4 0 0 1 3.37 3.37z" strokeWidth="2"/>
+            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
+          </svg>
+        </a>
+        <a
+          href="https://www.facebook.com/CoreSyncCollective/"
+          target="_blank"
+          rel="noopener"
+          className="hover:scale-110 transition"
+        >
+          <svg
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            className="text-white"
+          >
+            <path
+              d="M18 2h-3a5 5 0 0 0-5 5v3H5v4h5v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"
+              strokeWidth="2"
+            />
+          </svg>
+        </a>
+      </footer>
+
+      {/* Botón sticky de compra SOLO visible en móviles y tablets 
+      <button
+        onClick={() => setOpen(true)}
+        className={`
+          fixed bottom-4 left-1/2 -translate-x-1/2 z-50
+          w-[92vw] max-w-xs
+          bg-white text-black font-bold rounded-full shadow-xl
+          border-2 border-white
+          py-3 text-lg
+          flex items-center justify-center
+          transition-all duration-200
+          hover:bg-black hover:text-white active:scale-95
+          md:hidden
+        `}
+      >
+        Comprar boleta
+      </button>*/}
 
       {showShareCopied && (
         <div className="
@@ -688,33 +727,5 @@ export default function Home() {
       )}
 
     </main>
-    <style jsx global>{`
-        .snowflake {
-          position: absolute;
-          top: -10%;
-          border-radius: 9999px;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 60%, transparent 100%);
-          opacity: 0.8;
-          animation-name: snowfall;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
-          will-change: transform, opacity;
-        }
-
-        @keyframes snowfall {
-          0% {
-            transform: translate3d(0, -10vh, 0);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          100% {
-            transform: translate3d(0, 110vh, 0);
-            opacity: 0;
-          }
-        }
-      `}</style>
-    </>
   );
 }
