@@ -23,34 +23,14 @@ const SNOWFLAKES = Array.from({ length: 42 }, (_, index) => ({
 
 const PAST_EVENTS = [
   {
-    title: "Core Sync: Genesis",
-    date: "Marzo 2024",
-    location: "Bodega 27 - Mariquita",
-    attendance: "200 ravers",
+    title: "Techno Night",
+    date: "26 de agosto 2024",
+    location: "Hotel Los Lagos — San Sebastián de Mariquita",
+    attendance: "100 ravers",
     highlight:
-      "Convertimos una vieja bodega en un rave inmersivo con visuales analógicos y láseres sincronizados.",
-    badge: "Sold Out",
-    mood: "Industrial techno / Acid",
-  },
-  {
-    title: "Core Sync Sunset",
-    date: "Junio 2024",
-    location: "Mirador del Calvario - Mariquita",
-    attendance: "180 asistentes",
-    highlight:
-      "Sesión sunset que arrancó con house melódico y terminó con techno acelerado frente al amanecer.",
-    badge: "Sunset Edition",
-    mood: "House progresivo / Peak time",
-  },
-  {
-    title: "Core Sync Ritual",
-    date: "Octubre 2024",
-    location: "Bosque La Ceiba - Mariquita",
-    attendance: "220 asistentes",
-    highlight:
-      "Llevamos el sonido a un espacio natural con mapping sobre los árboles y performance visual en vivo.",
-    badge: "Edición especial",
-    mood: "Hypnotic techno / Live visuals",
+      "Nuestra primera Techno Night en un hotel campestre: un ritual íntimo con estética industrial, energía club y visuales que abrazaron a la escena local.",
+    badge: "Primera edición",
+    mood: "House / Industrial / Hard Techno",
   },
 ];
 
@@ -59,13 +39,11 @@ export default function Home() {
   const [showTitle, setShowTitle] = useState(false);
   const [open, setOpen] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const eventDate = new Date("2025-12-06T21:00:00-05:00");
   const [showUrgency, setShowUrgency] = useState(false);
   const [showShareCopied, setShowShareCopied] = useState(false);
   const [tapWhatsapp, setTapWhatsapp] = useState(false);
   const [tapShare, setTapShare] = useState(false);
-  const [showCountdown, setShowCountdown] = useState(false);
-  const [tapCountdown, setTapCountdown] = useState(false);
+  const [pastEventsOpen, setPastEventsOpen] = useState(false);
 
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
@@ -174,10 +152,6 @@ export default function Home() {
   const handleModalClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
   };
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0, hours: 0, minutes: 0, seconds: 0,
-    expired: false,
-  });
 
   // Cierre con tecla ESC
   useEffect(() => {
@@ -190,26 +164,6 @@ export default function Home() {
   }, [open]);
 
   useEffect(() => {
-    function updateCountdown() {
-      const now = new Date();
-      const diff = eventDate.getTime() - now.getTime();
-      if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
-        return;
-      }
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
-      setTimeLeft({ days, hours, minutes, seconds, expired: false });
-    }
-
-    updateCountdown();
-    const timer = setInterval(updateCountdown, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
     // Mostrar notificación en intervalosf
     const show = () => {
       setShowUrgency(true);
@@ -219,14 +173,6 @@ export default function Home() {
     const interval = setInterval(show, 7000);
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (showTitle) {
-      setTimeout(() => setShowCountdown(true), 100);
-    } else {
-      setShowCountdown(false);
-    }
-  }, [showTitle]);
   
 
   return (
@@ -271,62 +217,14 @@ export default function Home() {
       {/* Título glitch + animación solo cuando loader termina */}
       {showTitle && (
         <div className="w-full flex flex-col items-center z-30 animate-countdown-appear">
-          <h1 className="glitch animate-title-appear relative text-5xl md:text-7xl font-techno font-extrabold uppercase tracking-wider text-white text-center drop-shadow-2xl">
+          <h1
+            className="glitch animate-title-appear relative text-6xl md:text-8xl font-techno font-extrabold uppercase tracking-[0.35em] text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-white to-red-700 text-center drop-shadow-[0_20px_70px_rgba(0,0,0,0.65)]"
+          >
             <span aria-hidden="true">Core Sync Collective</span>
             Core Sync Collective
             <span aria-hidden="true">Core Sync Collective</span>
             <span aria-hidden="true">Core Sync Collective</span>
           </h1>
-
-          {/* --- Conteo regresivo debajo del título --- */}
-          <div className={`
-            mt-7 mb-3 flex gap-4 text-center
-            text-3xl md:text-4xl font-bold text-white tracking-wide
-            font-mono
-            rounded-2xl px-4 py-3
-            bg-black/70 shadow-lg border border-white/10
-            ${showCountdown ? "animate-countdown-appear" : ""}
-            cursor-pointer
-            transition-transform duration-300
-            hover:scale-110
-            ${tapCountdown ? "scale-110" : ""}
-          `}
-          onClick={() => {
-            // Esto sigue para el efecto click en PC/tablet (puedes dejarlo)
-            setTapCountdown(true);
-            setTimeout(() => setTapCountdown(false), 300);
-          }}
-          onTouchStart={() => {
-            setTapCountdown(true);
-            setTimeout(() => setTapCountdown(false), 300);
-          }}
-          >
-            {timeLeft.expired ? (
-              <span className="text-pink-600">¡El evento ha comenzado!</span>
-            ) : (
-              <>
-                <div>
-                  <span className="block">{String(timeLeft.days).padStart(2, "0")}</span>
-                  <span className="text-base font-normal uppercase tracking-widest text-gray-300">días</span>
-                </div>
-                <div>:</div>
-                <div>
-                  <span className="block">{String(timeLeft.hours).padStart(2, "0")}</span>
-                  <span className="text-base font-normal uppercase tracking-widest text-gray-300">horas</span>
-                </div>
-                <div>:</div>
-                <div>
-                  <span className="block">{String(timeLeft.minutes).padStart(2, "0")}</span>
-                  <span className="text-base font-normal uppercase tracking-widest text-gray-300">min</span>
-                </div>
-                <div>:</div>
-                <div>
-                  <span className="block">{String(timeLeft.seconds).padStart(2, "0")}</span>
-                  <span className="text-base font-normal uppercase tracking-widest text-gray-300">seg</span>
-                </div>
-              </>
-            )}
-          </div>
         </div>
       )}
 
@@ -384,37 +282,59 @@ export default function Home() {
 
       <section className="z-30 w-full max-w-5xl px-4 mt-14">
         <div className="bg-black/60 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_25px_120px_rgba(0,0,0,0.45)]">
-          <div className="mb-8 text-center md:text-left">
-            <p className="text-xs uppercase tracking-[0.45em] text-pink-400 font-semibold">Eventos pasados</p>
-            <h2 className="mt-3 text-3xl md:text-4xl font-extrabold text-white">Así han vibrado las ediciones anteriores</h2>
-            <p className="mt-3 text-sm md:text-base text-gray-300">
-              Archivamos los rituales que nos trajeron hasta aquí. Cada fecha sumó más comunidad, visuales y energía.
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="text-center md:text-left">
+              <p className="text-xs uppercase tracking-[0.45em] text-red-600 font-semibold">Eventos pasados</p>
+              <h2 className="mt-3 text-3xl md:text-4xl font-extrabold text-white">Así han vibrado las ediciones anteriores</h2>
+              <p className="mt-3 text-sm md:text-base text-gray-300">
+                Archivamos los rituales que nos trajeron hasta aquí. Cada fecha sumó más comunidad, visuales y energía.
+              </p>
+            </div>
+            <button
+              onClick={() => setPastEventsOpen((prev) => !prev)}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white bg-white/10 hover:bg-white/20 transition cursor-pointer"
+              aria-expanded={pastEventsOpen}
+              aria-controls="past-events-panel"
+            >
+              {pastEventsOpen ? "Ocultar ediciones" : "Ver ediciones"}
+              <span className={`transition-transform duration-200 ${pastEventsOpen ? "rotate-180" : "rotate-0"}`}>
+                ▾
+              </span>
+            </button>
+          </div>
+
+          {!pastEventsOpen && (
+            <p className="mt-4 text-sm text-gray-400 text-center md:text-left">
+              Haz clic en “Ver ediciones” para desplegar nuestra primera Techno Night.
             </p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {PAST_EVENTS.map((event) => (
-              <article
-                key={event.title}
-                className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-4 hover:border-white/40 transition duration-300"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.4em] text-gray-300">{event.date}</p>
-                    <h3 className="text-xl font-semibold text-white mt-2">{event.title}</h3>
+          )}
+
+          {pastEventsOpen && (
+            <div id="past-events-panel" className="mt-6 grid gap-4 grid-cols-1 md:grid-cols-1 lg:grid-cols-2 max-w-4xl mx-auto">
+              {PAST_EVENTS.map((event) => (
+                <article
+                  key={event.title}
+                  className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-4 hover:border-white/40 transition duration-300"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.4em] text-gray-300">{event.date}</p>
+                      <h3 className="text-xl font-semibold text-white mt-2">{event.title}</h3>
+                    </div>
+                    <span className="px-2 py-1 text-[11px] font-semibold rounded-full bg-white/10 text-white whitespace-nowrap">
+                      {event.badge}
+                    </span>
                   </div>
-                  <span className="px-2 py-1 text-[11px] font-semibold rounded-full bg-white/10 text-white whitespace-nowrap">
-                    {event.badge}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-200 leading-relaxed">{event.highlight}</p>
-                <div className="text-xs text-gray-400 flex flex-col gap-1">
-                  <span className="font-semibold text-white">{event.location}</span>
-                  <span>{event.attendance}</span>
-                  <span className="text-white/80">{event.mood}</span>
-                </div>
-              </article>
-            ))}
-          </div>
+                  <p className="text-sm text-gray-200 leading-relaxed">{event.highlight}</p>
+                  <div className="text-xs text-gray-400 flex flex-col gap-1">
+                    <span className="font-semibold text-white">{event.location}</span>
+                    <span>{event.attendance}</span>
+                    <span className="text-white/80">{event.mood}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
