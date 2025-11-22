@@ -1,12 +1,14 @@
-// pages/api/boleta-pdf-from-db.js (ejemplo)
+// pages/api/boleta-pdf-from-db.js
+
 import { pdf } from "@react-pdf/renderer";
-import TicketPDF from "@/pdf/TicketPDF";
+import TicketPDF from "../../pdf/TicketPDF";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
-  const { id } = req.query; // id = uuid de entradas
+  const { id } = req.query;
+  if (!id) return res.status(400).send("Falta id");
 
   const { data, error } = await supabaseAdmin
     .from("entradas")
@@ -18,10 +20,16 @@ export default async function handler(req, res) {
 
   if (error || !data) return res.status(404).send("Ticket no encontrado");
 
+  // ✔ Usar eventDate para evitar warnings
   const eventDate = new Date(data.event_date);
 
-  // Formatea la fecha como string bonito (hazlo a tu gusto)
-  const eventDateLabel = `06 diciembre 2025 — 9:00 PM`; // o usa dayjs/Intl en tu backend
+  const eventDateLabel = eventDate.toLocaleString("es-CO", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   const priceLabel = `${data.divisa} $${data.importe.toLocaleString("es-CO")}`;
 
@@ -34,7 +42,7 @@ export default async function handler(req, res) {
       codigo={data.codigo}
       priceLabel={priceLabel}
       qrBase64={data.qr_base64}
-      logoUrl="/core-sync-logo.png" // pon tu logo aquí (por ejemplo en /public)
+      logoUrl="/core-sync-logo.png"
     />
   );
 
@@ -45,5 +53,6 @@ export default async function handler(req, res) {
     "Content-Disposition",
     `inline; filename="ticket-${data.codigo}.pdf"`
   );
+
   return res.send(pdfBuffer);
 }
