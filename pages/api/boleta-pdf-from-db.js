@@ -1,5 +1,3 @@
-// pages/api/boleta-pdf-from-db.js
-
 import { pdf } from "@react-pdf/renderer";
 import TicketPDF from "../../pdf/TicketPDF";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -13,14 +11,13 @@ export default async function handler(req, res) {
   const { data, error } = await supabaseAdmin
     .from("entradas")
     .select(
-      "buyer_name, event_name, event_date, event_location, codigo, importe, divisa, qr_base64"
+      "buyer_name, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code"
     )
     .eq("id", id)
     .single();
 
   if (error || !data) return res.status(404).send("Ticket no encontrado");
 
-  // ✔ Usar eventDate para evitar warnings
   const eventDate = new Date(data.event_date);
 
   const eventDateLabel = eventDate.toLocaleString("es-CO", {
@@ -33,6 +30,28 @@ export default async function handler(req, res) {
 
   const priceLabel = `${data.divisa} $${data.importe.toLocaleString("es-CO")}`;
 
+  // -----------------------------------------------------------
+  // GENERAR CÓDIGO DE SEGURIDAD (solo si no existe en la BD)
+  // -----------------------------------------------------------
+  let securityCode = data.security_code;
+
+  if (!securityCode) {
+    const codigoString = String(data.codigo ?? "");
+    const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
+
+    securityCode =
+      securityBase.length >= 6
+        ? securityBase.slice(-6)
+        : securityBase.padStart(6, "0");
+
+    // Guardarlo en la BD (para admin/check-in)
+    await supabaseAdmin
+      .from("entradas")
+      .update({ security_code: securityCode })
+      .eq("id", id);
+  }
+  // -----------------------------------------------------------
+
   const doc = (
     <TicketPDF
       buyerName={data.buyer_name}
@@ -43,6 +62,7 @@ export default async function handler(req, res) {
       priceLabel={priceLabel}
       qrBase64={data.qr_base64}
       logoUrl="/core-sync-logo.png"
+      securityCode={securityCode}
     />
   );
 
@@ -53,6 +73,5 @@ export default async function handler(req, res) {
     "Content-Disposition",
     `inline; filename="ticket-${data.codigo}.pdf"`
   );
-
   return res.send(pdfBuffer);
 }

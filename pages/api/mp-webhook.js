@@ -1,9 +1,16 @@
+import React from "react";
 import { MercadoPagoConfig, Payment } from "mercadopago";
+import { pdf } from "@react-pdf/renderer";
+import { Resend } from "resend";
+
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import TicketPDF from "../../pdf/TicketPDF"; // mismo componente que usas en boleta-pdf-from-db
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
 });
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -30,7 +37,7 @@ export default async function handler(req, res) {
 
     console.log("✅ Detalle del pago MP:", paymentInfo);
 
-    const externalRef = paymentInfo.external_reference; // id de nuestra tabla
+    const externalRef = paymentInfo.external_reference; // id de nuestra tabla entradas
     const mpStatus = paymentInfo.status;               // approved / rejected / pending...
     const mpPaymentId = paymentInfo.id?.toString();
 
@@ -61,7 +68,7 @@ export default async function handler(req, res) {
         break;
     }
 
-    // 👈 SIN anotación de tipo, JS normal
+    // Datos para actualizar en Supabase
     const updateData = {
       status_pago,
       mp_payment_id: mpPaymentId,
@@ -90,6 +97,105 @@ export default async function handler(req, res) {
     }
 
     console.log(`🎟️ Entrada ${externalRef} marcada como ${status_pago}`);
+
+    // 4) Si el pago quedó APROBADO ⇒ generar PDF y enviarlo por correo
+    if (status_pago === "aprobado" && buyer_email) {
+      try {
+        // (Opcional pero recomendable: tener una columna ticket_email_sent_at para evitar duplicados)
+        const { data: ticketRow, error: ticketError } = await supabaseAdmin
+          .from("entradas")
+          .select(
+            "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code"
+          )
+          .eq("id", externalRef)
+          .single();
+
+        if (ticketError || !ticketRow) {
+          console.error("⚠️ No se pudo leer la entrada para generar el PDF:", ticketError);
+        } else {
+          // Formatear fecha
+          const eventDate = new Date(ticketRow.event_date);
+          const eventDateLabel = eventDate.toLocaleString("es-CO", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          const priceLabel = `${ticketRow.divisa} $${ticketRow.importe.toLocaleString(
+            "es-CO"
+          )}`;
+
+          // Código de seguridad (si no está guardado, lo derivamos del código)
+          const codigoString = String(ticketRow.codigo ?? "");
+          const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
+          const derivedSecurity =
+            securityBase.length >= 6
+              ? securityBase.slice(-6)
+              : securityBase.padStart(6, "0");
+
+          const securityCode = ticketRow.security_code || derivedSecurity;
+
+          // Construir el PDF con el mismo diseño premium
+          const doc = (
+            <TicketPDF
+              buyerName={ticketRow.buyer_name}
+              eventName={ticketRow.event_name}
+              eventDateLabel={eventDateLabel}
+              eventLocation={ticketRow.event_location}
+              codigo={ticketRow.codigo}
+              priceLabel={priceLabel}
+              qrBase64={ticketRow.qr_base64}
+              logoUrl="/core-sync-logo.png"
+              securityCode={securityCode}
+            />
+          );
+
+          const pdfBuffer = await pdf(doc).toBuffer();
+
+          // Enviar email con Resend
+          await resend.emails.send({
+            from:
+              process.env.TICKETS_FROM_EMAIL ||
+              "Core Sync <onboarding@resend.dev>",
+            to: ticketRow.buyer_email || buyer_email,
+            subject: `Tu ticket para ${ticketRow.event_name}`,
+            html: `
+              <p>Hola ${ticketRow.buyer_name || ""},</p>
+              <p>Gracias por tu compra. Adjuntamos tu ticket en PDF para <b>${
+                ticketRow.event_name
+              }</b>.</p>
+              <p>Puedes presentarlo en tu celular o impreso en la entrada.</p>
+              <p style="margin-top:16px;font-size:12px;color:#555">
+                Si tienes algún problema con tu ticket, responde a este correo con el código <b>${
+                  ticketRow.codigo
+                }</b>.
+              </p>
+            `,
+            attachments: [
+              {
+                filename: `ticket-${ticketRow.codigo}.pdf`,
+                content: pdfBuffer.toString("base64"),
+                type: "application/pdf",
+                disposition: "attachment",
+              },
+            ],
+          });
+
+          console.log(`📧 Ticket enviado a ${ticketRow.buyer_email || buyer_email}`);
+
+          // (Opcional) marca en BD que ya se envió el mail para no duplicar
+          await supabaseAdmin
+            .from("entradas")
+            .update({ ticket_email_sent_at: new Date().toISOString() })
+            .eq("id", externalRef);
+        }
+      } catch (mailErr) {
+        console.error("❌ Error enviando ticket por email:", mailErr);
+        // IMPORTANTE: aun si falla el correo, respondemos 200 para que MP no reintente
+      }
+    }
 
     return res.status(200).send("OK");
   } catch (error) {
