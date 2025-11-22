@@ -1,39 +1,49 @@
-import React from "react";
+// pages/api/boleta-pdf-from-db.js (ejemplo)
 import { pdf } from "@react-pdf/renderer";
+import TicketPDF from "@/pdf/TicketPDF";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import TicketPDF from "../../pdf/TicketPDF"; // mismo componente que ya usabas
-
-async function generarPDF({ nombre, codigo, qrBase64 }) {
-  const pdfDoc = pdf(
-    <TicketPDF nombre={nombre} codigo={codigo} qrBase64={qrBase64} />
-  );
-  return await pdfDoc.toBuffer();
-}
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
-  const { id } = req.query; // este id = uuid de entradas
-  if (!id) return res.status(400).send("Falta id");
+  const { id } = req.query; // id = uuid de entradas
 
   const { data, error } = await supabaseAdmin
     .from("entradas")
-    .select("buyer_name, codigo, qr_base64")
+    .select(
+      "buyer_name, event_name, event_date, event_location, codigo, importe, divisa, qr_base64"
+    )
     .eq("id", id)
     .single();
 
-  if (error || !data) return res.status(404).send("Entrada no encontrada");
+  if (error || !data) return res.status(404).send("Ticket no encontrado");
 
-  const pdfBuffer = await generarPDF({
-    nombre: data.buyer_name,
-    codigo: data.codigo,
-    qrBase64: data.qr_base64,
-  });
+  const eventDate = new Date(data.event_date);
+
+  // Formatea la fecha como string bonito (hazlo a tu gusto)
+  const eventDateLabel = `06 diciembre 2025 — 9:00 PM`; // o usa dayjs/Intl en tu backend
+
+  const priceLabel = `${data.divisa} $${data.importe.toLocaleString("es-CO")}`;
+
+  const doc = (
+    <TicketPDF
+      buyerName={data.buyer_name}
+      eventName={data.event_name}
+      eventDateLabel={eventDateLabel}
+      eventLocation={data.event_location}
+      codigo={data.codigo}
+      priceLabel={priceLabel}
+      qrBase64={data.qr_base64}
+      logoUrl="/core-sync-logo.png" // pon tu logo aquí (por ejemplo en /public)
+    />
+  );
+
+  const pdfBuffer = await pdf(doc).toBuffer();
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename="ticket#${data.codigo}.pdf"`
+    `inline; filename="ticket-${data.codigo}.pdf"`
   );
-  return res.status(200).send(pdfBuffer);
+  return res.send(pdfBuffer);
 }

@@ -1,122 +1,223 @@
-import { Page, Text, View, Document, StyleSheet, Image } from "@react-pdf/renderer";
+import React from "react";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  StyleSheet,
+} from "@react-pdf/renderer";
 
-const PRIMARY = "#0e0638";
+type TicketPDFProps = {
+  buyerName: string;
+  eventName: string;
+  eventDateLabel: string;     // Ej: "06 diciembre 2025 — 9:00 PM"
+  eventLocation: string;      // Ej: "San Sebastián de Mariquita"
+  codigo: string;             // Ej: "CS-390388"
+  priceLabel: string;         // Ej: "COP $22.000"
+  qrBase64: string;           // solo el base64, sin el prefijo
+  logoUrl?: string;           // opcional: url o ruta estática de tu logo
+};
 
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: "#fff",
-    width: 320,
-    height: 420,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: 0,
-    position: "relative",
+    paddingTop: 32,
+    paddingBottom: 32,
+    paddingHorizontal: 32,
+    backgroundColor: "#F4F4F6",
+    fontFamily: "Helvetica",
+  },
+  container: {
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#222222",
   },
   header: {
-    width: "100%",
-    height: 50,
-    backgroundColor: PRIMARY,
+    backgroundColor: "#04030A", // oscuro techno
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
-    textAlign: "center",
-    display: "flex",
   },
-  headerText: {
-    color: "#fff",
-    fontSize: 19,
-    fontWeight: 700,
-    letterSpacing: 1.5,
-    marginTop: 12,
+  logo: {
+    width: 60,
+    height: 60,
+    marginBottom: 8,
+    borderRadius: 30,
   },
-  main: {
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 16,
-  },
-  number: {
+  eventTitle: {
     fontSize: 16,
-    color: "#111",
-    fontWeight: 700,
-    letterSpacing: 1.2,
-    textAlign: "center",
-    marginBottom: 6,
+    letterSpacing: 3,
+    textTransform: "uppercase",
+    color: "#FFFFFF",
   },
-  name: {
-    fontSize: 15,
-    color: "#111",
-    textAlign: "center",
+  body: {
+    paddingVertical: 24,
+    paddingHorizontal: 28,
+  },
+  ticketLabel: {
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    color: "#777777",
     marginBottom: 4,
-    fontWeight: 700,
   },
-  event: {
-    fontSize: 12,
-    color: "#111",
-    textAlign: "center",
+  ticketCode: {
+    fontSize: 16,
+    fontWeight: 700,
     marginBottom: 12,
-    lineHeight: 1.4,
-    fontWeight: 600,
+    color: "#111111",
   },
-  qr: {
-    width: 110,
-    height: 110,
+  buyerLabel: {
+    fontSize: 9,
+    textTransform: "uppercase",
+    color: "#999999",
+    marginBottom: 2,
+  },
+  buyerName: {
+    fontSize: 13,
+    fontWeight: 600,
+    marginBottom: 12,
+    color: "#111111",
+  },
+  infoRow: {
     marginBottom: 4,
-    alignSelf: "center",
-    border: "1.5 solid #222",
-    borderRadius: 10,
-    backgroundColor: "#fff",
+  },
+  infoLabel: {
+    fontSize: 9,
+    textTransform: "uppercase",
+    color: "#999999",
+  },
+  infoText: {
+    fontSize: 11,
+    color: "#222222",
+  },
+  priceRow: {
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  priceLabel: {
+    fontSize: 9,
+    textTransform: "uppercase",
+    color: "#999999",
+  },
+  priceText: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#111111",
+  },
+  qrContainer: {
+    marginTop: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  qrBox: {
+    padding: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#DDDDDD",
+    backgroundColor: "#FFFFFF",
+  },
+  qrImage: {
+    width: 160,
+    height: 160,
   },
   footer: {
-    width: "100%",
-    height: 28,
-    backgroundColor: PRIMARY,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    display: "flex",
+    marginTop: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderColor: "#EEEEEE",
+    backgroundColor: "#05030F",
   },
-  footerText: {
-    color: "#fff",
-    fontSize: 10,
-    letterSpacing: 1.2,
+  footerTextMain: {
+    fontSize: 9,
+    color: "#FFFFFF",
     textAlign: "center",
-    marginTop: 8,
+    marginBottom: 4,
+  },
+  footerTextSub: {
+    fontSize: 7.5,
+    color: "#AAAAAA",
+    textAlign: "center",
+    lineHeight: 1.3,
+  },
+  hashtag: {
+    fontWeight: 600,
   },
 });
 
-export default function TicketPDF({ nombre, codigo, qrBase64 }) {
-  let ticketNumber = "";
-  if (codigo && codigo.split("-").length >= 2) {
-    ticketNumber = codigo.split("-")[1];
-  }
-
-  return (
-    <Document>
-      <Page size={{ width: 318, height: 420 }} style={styles.page}>
+const TicketPDF: React.FC<TicketPDFProps> = ({
+  buyerName,
+  eventName,
+  eventDateLabel,
+  eventLocation,
+  codigo,
+  priceLabel,
+  qrBase64,
+  logoUrl,
+}) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <View style={styles.container}>
+        {/* HEADER */}
         <View style={styles.header}>
-          <Text style={styles.headerText}>Core Sync Collective</Text>
+          {logoUrl ? (
+            <Image style={styles.logo} src={logoUrl} />
+          ) : null}
+          <Text style={styles.eventTitle}>{eventName}</Text>
         </View>
 
-        <View style={styles.main}>
-          <Text style={styles.number}>TICKET #{ticketNumber}</Text>
-          <Text style={styles.name}>{nombre}</Text>
-          <Text style={styles.event}>
-            06 diciembre 2025 — 9:00 PM{"\n"}
-            San Sebastián de Mariquita
-          </Text>
+        {/* BODY */}
+        <View style={styles.body}>
+          <Text style={styles.ticketLabel}>Ticket</Text>
+          <Text style={styles.ticketCode}>#{codigo}</Text>
 
-          <Image src={qrBase64} style={styles.qr} />
+          <Text style={styles.buyerLabel}>Titular</Text>
+          <Text style={styles.buyerName}>{buyerName}</Text>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Fecha y hora</Text>
+            <Text style={styles.infoText}>{eventDateLabel}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Lugar</Text>
+            <Text style={styles.infoText}>{eventLocation}</Text>
+          </View>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Precio</Text>
+            <Text style={styles.priceText}>{priceLabel}</Text>
+          </View>
+
+          <View style={styles.qrContainer}>
+            <View style={styles.qrBox}>
+              <Image
+                style={styles.qrImage}
+                src={`data:image/png;base64,${qrBase64}`}
+              />
+            </View>
+          </View>
         </View>
 
+        {/* FOOTER */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>#CoreSync | Presenta tu ticket en la entrada</Text>
+          <Text style={styles.footerTextMain}>
+            <Text style={styles.hashtag}>#CoreSync</Text> | Presenta este ticket
+            en la entrada.
+          </Text>
+          <Text style={styles.footerTextSub}>
+            Entrada personal e intransferible. Prohibida su reventa. El código
+            QR es único y será validado una sola vez en el punto de acceso. La
+            organización se reserva el derecho de admisión.
+          </Text>
         </View>
-      </Page>
-    </Document>
-  );
-}
+      </View>
+    </Page>
+  </Document>
+);
+
+export default TicketPDF;
