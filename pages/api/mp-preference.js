@@ -14,28 +14,40 @@ export default async function handler(req, res) {
   try {
     const { titulo, precio, entradaId } = req.body;
 
-    const baseUrl = "https://collectivecoresync.com"; // o process.env.NEXT_PUBLIC_BASE_URL
+    const baseUrl = "https://collectivecoresync.com";
 
     const result = await preference.create({
       body: {
         items: [
           {
+            // ⬅️ CÓDIGO DEL ÍTEM (obligatorio para subir puntos)
+            id: entradaId || "ticket-general", 
+
             title: titulo ?? "Entrada evento",
+
+            // ⬅️ DESCRIPCIÓN DEL ÍTEM (obligatorio)
+            description:
+              "Entrada digital oficial para el evento Core Sync Collective. Incluye QR único y validación en puerta.",
+
             quantity: 1,
             unit_price: Number(precio),
             currency_id: "COP",
+
+            // ⬅️ CATEGORÍA DEL ÍTEM (obligatorio)
+            category_id: "tickets",
           },
         ],
+
         external_reference: entradaId,
         notification_url: `${baseUrl}/api/mp-webhook`,
 
-        // NUEVO: redirecciones después del pago
         back_urls: {
           success: `${baseUrl}/pago-exitoso`,
           failure: `${baseUrl}/pago-fallido`,
           pending: `${baseUrl}/pago-pendiente`,
         },
-        auto_return: "approved", // vuelve solo cuando el pago quede aprobado
+
+        auto_return: "approved",
       },
     });
 
