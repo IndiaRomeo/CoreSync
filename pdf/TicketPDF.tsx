@@ -23,7 +23,7 @@ type TicketPDFProps = {
 
 const styles = StyleSheet.create({
   page: {
-    padding: 24,
+    padding: 8,
     backgroundColor: "#050509",
     fontFamily: "Helvetica",
   },
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     borderColor: "#262737",
     position: "relative",
     width: 520, // ancho fijo del ticket
-    minHeight: 0,
+    minHeight: 760,
   },
 
   // ---------- WATERMARK ----------
