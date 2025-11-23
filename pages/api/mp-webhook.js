@@ -89,34 +89,29 @@ export default async function handler(req, res) {
     // 5) Solo si quedó aprobada intentamos enviar ticket
     if (status_pago === "aprobado") {
       try {
-        // 5.1 Intentamos marcar ticket_email_sent_at SOLO si estaba en null
-        const nowIso = new Date().toISOString();
-
-        const { data: rows, error: ticketError } = await supabaseAdmin
+        // 5.1 Leer la entrada
+        const { data: ticketRow, error: ticketError } = await supabaseAdmin
           .from("entradas")
-          .update({ ticket_email_sent_at: nowIso })
-          .eq("id", externalRef)
-          .is("ticket_email_sent_at", null)
           .select(
-            "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code"
-          );
+            "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code, ticket_email_sent_at"
+          )
+          .eq("id", externalRef)
+          .single();
 
-        // Si no se actualizó ninguna fila, significa que otro webhook ya lo envió
-        if (ticketError) {
-          console.error("⚠️ Error leyendo/actualizando entrada:", ticketError);
+        if (ticketError || !ticketRow) {
+          console.error("⚠️ No se pudo leer la entrada:", ticketError);
           return res.status(200).send("No ticket row");
         }
 
-        if (!rows || rows.length === 0) {
+        // 5.2 Si ya tiene fecha de envío, no mandamos otro
+        if (ticketRow.ticket_email_sent_at) {
           console.log(
-            `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at, no reenviamos.`
+            `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at=${ticketRow.ticket_email_sent_at}, no reenviamos.`
           );
           return res.status(200).send("Email already sent");
         }
 
-        const ticketRow = rows[0];
-
-        // 5.2 Correo destino (BD primero, luego MP payer.email)
+        // 5.3 Correo destino (BD primero, luego MP payer.email)
         const payer = paymentInfo.payer || {};
         const payerEmail = payer.email || null;
         const toEmail = ticketRow.buyer_email || payerEmail;
@@ -126,7 +121,7 @@ export default async function handler(req, res) {
           return res.status(200).send("No buyer email");
         }
 
-        // 5.3 Fecha formateada
+        // 5.4 Fecha formateada
         const eventDate = new Date(ticketRow.event_date);
         const eventDateLabel = eventDate.toLocaleString("es-CO", {
           day: "2-digit",
@@ -140,11 +135,11 @@ export default async function handler(req, res) {
           "es-CO"
         )}`;
 
-        // 5.4 Limpiar base64 del QR
+        // 5.5 Limpiar base64 del QR
         let qrBase64 = ticketRow.qr_base64 || "";
         qrBase64 = qrBase64.replace(/^data:image\/\w+;base64,/, "");
 
-        // 5.5 Código de seguridad derivado si hace falta
+        // 5.6 Código de seguridad derivado si hace falta
         const codigoString = String(ticketRow.codigo ?? "");
         const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
         const derivedSecurity =
@@ -153,7 +148,7 @@ export default async function handler(req, res) {
             : securityBase.padStart(6, "0");
         const securityCode = ticketRow.security_code || derivedSecurity;
 
-        // 5.6 Construir PDF
+        // 5.7 Construir PDF
         const doc = (
           <TicketPDF
             buyerName={ticketRow.buyer_name}
@@ -170,8 +165,9 @@ export default async function handler(req, res) {
 
         const pdfBuffer = await pdf(doc).toBuffer();
 
-        // 5.7 HTML del correo (igual que ya lo tienes)
+        // 5.8 HTML del correo (igual que ya lo tienes)
         const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
+
         const htmlBody = `
         <!doctype html>
         <html lang="es">
@@ -298,6 +294,7 @@ export default async function handler(req, res) {
         </html>
         `;
 
+        // 5.9 Enviar correo
         await resend.emails.send({
           from:
             process.env.TICKETS_FROM_EMAIL ||
@@ -308,13 +305,19 @@ export default async function handler(req, res) {
           attachments: [
             {
               filename: `ticket-${ticketRow.codigo}.pdf`,
-              content: pdfBuffer,
+              content: pdfBuffer,            // 👈 Buffer SIN toString
               contentType: "application/pdf",
             },
           ],
         });
 
         console.log(`📧 Ticket enviado a ${toEmail}`);
+
+        // 5.10 Marcar que ya se envió
+        await supabaseAdmin
+          .from("entradas")
+          .update({ ticket_email_sent_at: new Date().toISOString() })
+          .eq("id", externalRef);
       } catch (mailErr) {
         console.error("❌ Error enviando ticket por email:", mailErr);
       }
