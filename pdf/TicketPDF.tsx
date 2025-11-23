@@ -28,6 +28,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     backgroundColor: "#050509",
     fontFamily: "Helvetica",
+    justifyContent: "center",
+    alignItems: "center",
   },
   container: {
     flexDirection: "row",
@@ -37,7 +39,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#262737",
     position: "relative",
-    minHeight: 500,
   },
 
   // ---------- WATERMARK ----------
