@@ -22,19 +22,14 @@ type TicketPDFProps = {
 };
 
 const styles = StyleSheet.create({
+  // Página más pequeña (tipo flyer) + poco padding
   page: {
-    padding: 8,
+    padding: 16,
     backgroundColor: "#050509",
     fontFamily: "Helvetica",
   },
 
-  // wrapper que centra el ticket en la hoja
-  pageInner: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
+  // El ticket ahora ocupa casi todo el ancho de la página A5
   container: {
     flexDirection: "row",
     borderRadius: 14,
@@ -43,8 +38,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#262737",
     position: "relative",
-    width: 520, // ancho fijo del ticket
-    minHeight: 760,
+    width: "100%",
+    minHeight: 0,
   },
 
   // ---------- WATERMARK ----------
@@ -69,8 +64,8 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#05040C",
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderColor: "#292A3A",
     flexDirection: "row",
@@ -86,7 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eventTitle: {
-    fontSize: 16,
+    fontSize: 15,
     letterSpacing: 3,
     textTransform: "uppercase",
     color: "#FFFFFF",
@@ -97,14 +92,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // textura industrial con franjas
+  // textura “industrial” con franjas
   body: {
-    paddingVertical: 22,
-    paddingHorizontal: 26,
+    paddingVertical: 18,
+    paddingHorizontal: 22,
   },
   textureStrip: {
     height: 6,
-    marginBottom: 14,
+    marginBottom: 12,
     flexDirection: "row",
   },
   textureBlock: {
@@ -126,7 +121,7 @@ const styles = StyleSheet.create({
   ticketCode: {
     fontSize: 16,
     fontWeight: 700,
-    marginBottom: 12,
+    marginBottom: 10,
     color: "#F5F5FA",
   },
   buyerLabel: {
@@ -138,11 +133,11 @@ const styles = StyleSheet.create({
   buyerName: {
     fontSize: 13,
     fontWeight: 600,
-    marginBottom: 12,
+    marginBottom: 10,
     color: "#FFFFFF",
   },
   infoRow: {
-    marginBottom: 6,
+    marginBottom: 5,
   },
   infoLabel: {
     fontSize: 9,
@@ -154,8 +149,8 @@ const styles = StyleSheet.create({
     color: "#E4E4F2",
   },
   priceRow: {
-    marginTop: 10,
-    marginBottom: 18,
+    marginTop: 8,
+    marginBottom: 14,
   },
   priceLabel: {
     fontSize: 9,
@@ -172,25 +167,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginTop: 8,
+    marginTop: 6,
   },
   qrContainer: {
     alignItems: "center",
     justifyContent: "center",
   },
   qrBox: {
-    padding: 8,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#3A3B4D",
     backgroundColor: "#15161E",
   },
   qrImage: {
-    width: 150,
-    height: 150,
+    width: 180,     // QR más grande tipo MedellinStyle
+    height: 180,
   },
 
-  // ---------- HOLOGRAMA FALSO + CÓDIGO SEGURIDAD ----------
+  // ---------- HOLOGRAMA + CÓDIGO SEGURIDAD ----------
   securityBlock: {
     flex: 1,
   },
@@ -209,14 +204,13 @@ const styles = StyleSheet.create({
   },
 
   hologramOuter: {
-    width: 90,
+    width: 92,
     height: 40,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#38bdf8", // borde cian suave
-    backgroundColor: "#020617", // fondo muy dark
+    borderColor: "#38bdf8",
+    backgroundColor: "#020617",
     overflow: "hidden",
-    position: "relative",
   },
   hologramInner: {
     flex: 1,
@@ -226,7 +220,6 @@ const styles = StyleSheet.create({
   hologramStrip2: { flex: 1, backgroundColor: "#0f172a" },
   hologramStrip3: { flex: 1, backgroundColor: "#1e293b" },
 
-  // brillos suaves
   hologramGloss: {
     position: "absolute",
     left: -10,
@@ -234,24 +227,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 60,
     backgroundColor: "#38bdf8",
-    opacity: 0.16,
-  },
-  hologramGloss2: {
-    position: "absolute",
-    right: -10,
-    top: 0,
-    bottom: 0,
-    width: 50,
-    backgroundColor: "#0ea5e9",
-    opacity: 0.1,
-  },
-
-  // líneas de seguridad
-  hologramLine: {
-    position: "absolute",
-    width: "130%",
-    height: 1,
-    backgroundColor: "rgba(248,250,252,0.08)",
+    opacity: 0.18,
   },
 
   hologramOverlay: {
@@ -268,13 +244,13 @@ const styles = StyleSheet.create({
     color: "#e5e7eb",
     textTransform: "uppercase",
     letterSpacing: 1.2,
-    opacity: 0.9,
+    opacity: 0.85,
   },
 
   footer: {
-    marginTop: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 22,
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     borderTopWidth: 1,
     borderColor: "#2A2B3A",
     backgroundColor: "#111119",
@@ -283,7 +259,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#FFFFFF",
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   footerTextSub: {
     fontSize: 7.5,
@@ -365,135 +341,127 @@ const TicketPDF: React.FC<TicketPDFProps> = ({
   securityCode,
 }) => (
   <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.pageInner}>
-        <View style={styles.container}>
-          {/* Línea de perforación del talonario */}
-          <View style={styles.perforation} />
+    {/* Usamos A5 para que el contenido se vea más grande en el visor */}
+    <Page size="A5" style={styles.page}>
+      <View style={styles.container}>
+        {/* Línea de perforación del talonario */}
+        <View style={styles.perforation} />
 
-          {/* Marca de agua central */}
-          {logoUrl && (
-            <View style={styles.watermarkContainer}>
-              <Image style={styles.watermarkImage} src={logoUrl} />
-            </View>
-          )}
+        {/* Marca de agua central */}
+        {logoUrl && (
+          <View style={styles.watermarkContainer}>
+            <Image style={styles.watermarkImage} src={logoUrl} />
+          </View>
+        )}
 
-          {/* LADO PRINCIPAL */}
-          <View style={styles.ticketLeft}>
-            {/* HEADER */}
-            <View style={styles.header}>
-              {logoUrl ? <Image style={styles.logo} src={logoUrl} /> : null}
-              <View style={styles.headerTextBlock}>
-                <Text style={styles.eventTitle}>{eventName}</Text>
-                <Text style={styles.eventSubtitle}>Core Sync Collective</Text>
-              </View>
-            </View>
-
-            {/* BODY */}
-            <View style={styles.body}>
-              {/* textura industrial */}
-              <View style={styles.textureStrip}>
-                <View style={styles.textureBlock} />
-                <View style={styles.textureBlockAlt} />
-                <View style={styles.textureBlock} />
-                <View style={styles.textureBlockAlt} />
-              </View>
-
-              <Text style={styles.ticketLabel}>Ticket</Text>
-              <Text style={styles.ticketCode}>#{codigo}</Text>
-
-              <Text style={styles.buyerLabel}>Titular</Text>
-              <Text style={styles.buyerName}>{buyerName}</Text>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Fecha y hora</Text>
-                <Text style={styles.infoText}>{eventDateLabel}</Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Lugar</Text>
-                <Text style={styles.infoText}>{eventLocation}</Text>
-              </View>
-
-              <View style={styles.priceRow}>
-                <Text style={styles.priceLabel}>Precio</Text>
-                <Text style={styles.priceText}>{priceLabel}</Text>
-              </View>
-
-              {/* QR + seguridad + holograma */}
-              <View style={styles.qrAndSecurityRow}>
-                <View style={styles.qrContainer}>
-                  <View style={styles.qrBox}>
-                    <Image
-                      style={styles.qrImage}
-                      src={`data:image/png;base64,${qrBase64}`}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.securityBlock}>
-                  <Text style={styles.securityLabel}>Código de seguridad</Text>
-                  <Text style={styles.securityCode}>{securityCode}</Text>
-
-                  <View style={styles.hologramOuter}>
-                    <View style={styles.hologramInner}>
-                      <View style={styles.hologramStrip1} />
-                      <View style={styles.hologramStrip2} />
-                      <View style={styles.hologramStrip3} />
-                    </View>
-
-                    {/* brillos suaves */}
-                    <View style={styles.hologramGloss} />
-                    <View style={styles.hologramGloss2} />
-
-                    {/* líneas de seguridad */}
-                    <View style={[styles.hologramLine, { top: 6 }]} />
-                    <View style={[styles.hologramLine, { top: 18 }]} />
-                    <View style={[styles.hologramLine, { top: 30 }]} />
-
-                    <View style={styles.hologramOverlay}>
-                      <Text style={styles.hologramText}>CORE SYNC AUTH</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* FOOTER */}
-            <View style={styles.footer}>
-              <Text style={styles.footerTextMain}>
-                <Text style={styles.hashtag}>#CoreSync</Text> | Presenta este
-                ticket en la entrada.
-              </Text>
-              <Text style={styles.footerTextSub}>
-                Entrada personal e intransferible. Prohibida su reventa. El
-                código QR y el código de seguridad son únicos y serán validados
-                una sola vez en el punto de acceso. La organización se reserva
-                el derecho de admisión.
-              </Text>
+        {/* LADO PRINCIPAL */}
+        <View style={styles.ticketLeft}>
+          {/* HEADER */}
+          <View style={styles.header}>
+            {logoUrl ? <Image style={styles.logo} src={logoUrl} /> : null}
+            <View style={styles.headerTextBlock}>
+              <Text style={styles.eventTitle}>{eventName}</Text>
+              <Text style={styles.eventSubtitle}>Core Sync Collective</Text>
             </View>
           </View>
 
-          {/* TALONARIO LATERAL */}
-          <View style={styles.ticketRight}>
-            <View style={styles.stubTop}>
-              <Text style={styles.stubEventShort}>Core Sync</Text>
-              <Text style={styles.stubCode}>#{codigo}</Text>
-              <Text style={styles.stubSecurity}>SEC: {securityCode}</Text>
-
-              <View style={styles.stubQRBox}>
-                <Image
-                  style={styles.stubQRImage}
-                  src={`data:image/png;base64,${qrBase64}`}
-                />
-              </View>
+          {/* BODY */}
+          <View style={styles.body}>
+            {/* textura industrial */}
+            <View style={styles.textureStrip}>
+              <View style={styles.textureBlock} />
+              <View style={styles.textureBlockAlt} />
+              <View style={styles.textureBlock} />
+              <View style={styles.textureBlockAlt} />
             </View>
 
-            <Text style={styles.stubBottomText}>
-              Cortar por la línea punteada. Conservar este talón para control
-              interno.
+            <Text style={styles.ticketLabel}>Ticket</Text>
+            <Text style={styles.ticketCode}>#{codigo}</Text>
+
+            <Text style={styles.buyerLabel}>Titular</Text>
+            <Text style={styles.buyerName}>{buyerName}</Text>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Fecha y hora</Text>
+              <Text style={styles.infoText}>{eventDateLabel}</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Lugar</Text>
+              <Text style={styles.infoText}>{eventLocation}</Text>
+            </View>
+
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Precio</Text>
+              <Text style={styles.priceText}>{priceLabel}</Text>
+            </View>
+
+            {/* QR + seguridad + holograma */}
+            <View style={styles.qrAndSecurityRow}>
+              <View style={styles.qrContainer}>
+                <View style={styles.qrBox}>
+                  <Image
+                    style={styles.qrImage}
+                    src={`data:image/png;base64,${qrBase64}`}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.securityBlock}>
+                <Text style={styles.securityLabel}>Código de seguridad</Text>
+                <Text style={styles.securityCode}>{securityCode}</Text>
+
+                <View style={styles.hologramOuter}>
+                  <View style={styles.hologramInner}>
+                    <View style={styles.hologramStrip1} />
+                    <View style={styles.hologramStrip2} />
+                    <View style={styles.hologramStrip3} />
+                  </View>
+
+                  <View style={styles.hologramGloss} />
+
+                  <View style={styles.hologramOverlay}>
+                    <Text style={styles.hologramText}>CORE SYNC AUTH</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* FOOTER */}
+          <View style={styles.footer}>
+            <Text style={styles.footerTextMain}>
+              <Text style={styles.hashtag}>#CoreSync</Text> | Presenta este
+              ticket en la entrada.
+            </Text>
+            <Text style={styles.footerTextSub}>
+              Entrada personal e intransferible. Prohibida su reventa. El código
+              QR y el código de seguridad son únicos y serán validados una sola
+              vez en el punto de acceso. La organización se reserva el derecho
+              de admisión.
             </Text>
           </View>
+        </View>
+
+        {/* TALONARIO LATERAL */}
+        <View style={styles.ticketRight}>
+          <View style={styles.stubTop}>
+            <Text style={styles.stubEventShort}>Core Sync</Text>
+            <Text style={styles.stubCode}>#{codigo}</Text>
+            <Text style={styles.stubSecurity}>SEC: {securityCode}</Text>
+
+            <View style={styles.stubQRBox}>
+              <Image
+                style={styles.stubQRImage}
+                src={`data:image/png;base64,${qrBase64}`}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.stubBottomText}>
+            Cortar por la línea punteada. Conservar este talón para control
+            interno.
+          </Text>
         </View>
       </View>
     </Page>
