@@ -18,12 +18,12 @@ type TicketPDFProps = {
   priceLabel: string;
   qrBase64: string;
   logoUrl?: string;
-  securityCode: string; // código de seguridad secundario
+  securityCode: string;
 };
 
 const styles = StyleSheet.create({
   page: {
-  padding: 24,            // en vez de paddingTop/paddingBottom/paddingHorizontal
+  padding: 24,
   backgroundColor: "#050509",
   fontFamily: "Helvetica",
 },
@@ -207,21 +207,35 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginBottom: 10,
   },
-  hologramOuter: {
+   hologramOuter: {
     width: 90,
     height: 40,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#777BFF",
+    borderColor: "#38bdf8",      // borde cian suave
+    backgroundColor: "#020617",  // fondo muy dark
     overflow: "hidden",
   },
   hologramInner: {
     flex: 1,
     flexDirection: "row",
   },
-  hologramStrip1: { flex: 1, backgroundColor: "#3E3B9B" },
-  hologramStrip2: { flex: 1, backgroundColor: "#54B9FF" },
-  hologramStrip3: { flex: 1, backgroundColor: "#9CFFCB" },
+  // franjas más sobrias, tipo tarjeta bancaria
+  hologramStrip1: { flex: 1, backgroundColor: "#020617" },
+  hologramStrip2: { flex: 1, backgroundColor: "#0f172a" },
+  hologramStrip3: { flex: 1, backgroundColor: "#1e293b" },
+
+  // brillo suave encima (simula efecto holograma)
+  hologramGloss: {
+    position: "absolute",
+    left: -10,
+    top: 0,
+    bottom: 0,
+    width: 60,
+    backgroundColor: "#38bdf8",
+    opacity: 0.18,
+  },
+
   hologramOverlay: {
     position: "absolute",
     left: 0,
@@ -233,9 +247,10 @@ const styles = StyleSheet.create({
   },
   hologramText: {
     fontSize: 7,
-    color: "#FFFFFF",
+    color: "#e5e7eb",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 1.2,
+    opacity: 0.85,
   },
 
   footer: {
@@ -410,6 +425,10 @@ const TicketPDF: React.FC<TicketPDFProps> = ({
                     <View style={styles.hologramStrip2} />
                     <View style={styles.hologramStrip3} />
                   </View>
+
+                  {/* brillo diagonal suave */}
+                  <View style={styles.hologramGloss} />
+
                   <View style={styles.hologramOverlay}>
                     <Text style={styles.hologramText}>CORE SYNC</Text>
                   </View>
