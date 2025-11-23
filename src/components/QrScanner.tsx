@@ -16,16 +16,20 @@ export default function QrScanner({ onResult, style }: QrScannerProps) {
     if (!qrRef.current) return;
 
     scannerRef.current = new Html5Qrcode(qrRef.current.id);
+
     scannerRef.current.start(
       { facingMode: "environment" },
       {
         fps: 10,
-        qrbox: 220,
+        // OJO: sin `qrbox` para que NO dibuje el marco blanco
+        // si algún día quieres recortar el área de lectura,
+        // se puede volver a poner, pero tocaría ocultar el borde con CSS.
+        disableFlip: true,
       },
       (decodedText) => {
         onResult(decodedText);
       },
-      () => {} // <--- cuarto argumento, callback de error vacío
+      () => {}
     );
 
     return () => {
@@ -34,10 +38,27 @@ export default function QrScanner({ onResult, style }: QrScannerProps) {
   }, [onResult]);
 
   return (
-    <div
-      ref={qrRef}
-      id="reader"
-      style={{ width: 250, height: 250, ...style }}
-    />
+    <div className="relative flex items-center justify-center">
+      {/* Cámara */}
+      <div
+        ref={qrRef}
+        id="reader"
+        style={{ width: 260, height: 260, ...style }}
+        className="rounded-3xl overflow-hidden"
+      />
+
+      {/* 🟩 Marco verde premium */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          w-[220px]
+          h-[220px]
+          rounded-[28px]
+          border-[4px]
+          border-emerald-400
+        "
+      />
+    </div>
   );
 }
