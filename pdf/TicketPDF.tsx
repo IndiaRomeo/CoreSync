@@ -22,11 +22,11 @@ type TicketPDFProps = {
 };
 
 const styles = StyleSheet.create({
-  // Página A5 con poco padding para que quepa todo
   page: {
-    padding: 10,
+    padding: 20,
     backgroundColor: "#050509",
     fontFamily: "Helvetica",
+    flexDirection: "row",   // muy importante para landscape
   },
 
   container: {
@@ -346,7 +346,7 @@ const TicketPDF: React.FC<TicketPDFProps> = ({
   securityCode,
 }) => (
   <Document>
-    <Page size="A5" style={styles.page}>
+    <Page size="A4" orientation="landscape" style={styles.page}>
       <View style={styles.container}>
         {/* Línea de perforación del talonario */}
         <View style={styles.perforation} />
