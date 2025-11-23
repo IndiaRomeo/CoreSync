@@ -22,14 +22,13 @@ type TicketPDFProps = {
 };
 
 const styles = StyleSheet.create({
-  // Página más pequeña (tipo flyer) + poco padding
+  // Página A5 con poco padding para que quepa todo
   page: {
-    padding: 16,
+    padding: 10,
     backgroundColor: "#050509",
     fontFamily: "Helvetica",
   },
 
-  // El ticket ahora ocupa casi todo el ancho de la página A5
   container: {
     flexDirection: "row",
     borderRadius: 14,
@@ -45,15 +44,15 @@ const styles = StyleSheet.create({
   // ---------- WATERMARK ----------
   watermarkContainer: {
     position: "absolute",
-    top: "10%",
+    top: "12%",
     left: 0,
     right: 0,
     alignItems: "center",
     opacity: 0.06,
   },
   watermarkImage: {
-    width: 320,
-    height: 320,
+    width: 260,
+    height: 260,
     transform: "rotate(-25deg)",
   },
 
@@ -64,42 +63,42 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#05040C",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 10,          // ↓ antes 14
+    paddingHorizontal: 16,        // ↓ antes 20
     borderBottomWidth: 1,
     borderColor: "#292A3A",
     flexDirection: "row",
     alignItems: "center",
   },
   logo: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    marginRight: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
   },
   headerTextBlock: {
     flex: 1,
   },
   eventTitle: {
-    fontSize: 15,
+    fontSize: 14,
     letterSpacing: 3,
     textTransform: "uppercase",
     color: "#FFFFFF",
   },
   eventSubtitle: {
-    fontSize: 9,
+    fontSize: 8,
     color: "#A0A1B8",
-    marginTop: 2,
+    marginTop: 1,
   },
 
-  // textura “industrial” con franjas
+  // textura “industrial” con franjas + cuerpo
   body: {
-    paddingVertical: 18,
-    paddingHorizontal: 22,
+    paddingVertical: 12,          // ↓ antes 18
+    paddingHorizontal: 16,        // ↓ antes 22
   },
   textureStrip: {
-    height: 6,
-    marginBottom: 12,
+    height: 5,
+    marginBottom: 10,
     flexDirection: "row",
   },
   textureBlock: {
@@ -112,61 +111,62 @@ const styles = StyleSheet.create({
   },
 
   ticketLabel: {
-    fontSize: 9,
+    fontSize: 8,
     letterSpacing: 2,
     textTransform: "uppercase",
     color: "#8587A0",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   ticketCode: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 700,
-    marginBottom: 10,
+    marginBottom: 8,
     color: "#F5F5FA",
   },
   buyerLabel: {
-    fontSize: 9,
+    fontSize: 8,
     textTransform: "uppercase",
     color: "#8587A0",
     marginBottom: 2,
   },
   buyerName: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 600,
-    marginBottom: 10,
+    marginBottom: 8,
     color: "#FFFFFF",
   },
   infoRow: {
-    marginBottom: 5,
+    marginBottom: 4,
   },
   infoLabel: {
-    fontSize: 9,
+    fontSize: 8,
     textTransform: "uppercase",
     color: "#8587A0",
   },
   infoText: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#E4E4F2",
   },
   priceRow: {
-    marginTop: 8,
-    marginBottom: 14,
+    marginTop: 6,
+    marginBottom: 10,            // ↓ antes 14
   },
   priceLabel: {
-    fontSize: 9,
+    fontSize: 8,
     textTransform: "uppercase",
     color: "#8587A0",
   },
   priceText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 600,
     color: "#FFFFFF",
   },
 
+  // ---------- QR + Seguridad ----------
   qrAndSecurityRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+    alignItems: "flex-start",
+    gap: 10,
     marginTop: 6,
   },
   qrContainer: {
@@ -174,15 +174,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   qrBox: {
-    padding: 10,
-    borderRadius: 14,
+    padding: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#3A3B4D",
     backgroundColor: "#15161E",
   },
   qrImage: {
-    width: 180,     // QR más grande tipo MedellinStyle
-    height: 180,
+    width: 160,   // un poco más pequeño que 180 para que quepa todo
+    height: 160,
   },
 
   // ---------- HOLOGRAMA + CÓDIGO SEGURIDAD ----------
@@ -196,16 +196,16 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   securityCode: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 600,
     color: "#FFFFFF",
     letterSpacing: 2,
-    marginBottom: 10,
+    marginBottom: 8,
   },
 
   hologramOuter: {
-    width: 92,
-    height: 40,
+    width: 90,
+    height: 36,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#38bdf8",
@@ -247,25 +247,26 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
 
+  // ---------- FOOTER ----------
   footer: {
-    marginTop: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    marginTop: 6,                // ↓ antes 10
+    paddingVertical: 6,
+    paddingHorizontal: 14,
     borderTopWidth: 1,
     borderColor: "#2A2B3A",
     backgroundColor: "#111119",
   },
   footerTextMain: {
-    fontSize: 9,
+    fontSize: 8,                 // ↓ un punto
     color: "#FFFFFF",
     textAlign: "center",
-    marginBottom: 3,
+    marginBottom: 2,
   },
   footerTextSub: {
-    fontSize: 7.5,
+    fontSize: 7,
     color: "#A0A1B8",
     textAlign: "center",
-    lineHeight: 1.3,
+    lineHeight: 1.25,
   },
   hashtag: {
     fontWeight: 600,
@@ -277,8 +278,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#0C0C13",
     borderLeftWidth: 1,
     borderColor: "#2F3040",
-    paddingVertical: 16,
-    paddingHorizontal: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
     justifyContent: "space-between",
   },
   perforation: {
@@ -294,32 +295,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   stubEventShort: {
-    fontSize: 9,
+    fontSize: 8,
     color: "#D8D9F5",
     textTransform: "uppercase",
     letterSpacing: 2,
     marginBottom: 4,
   },
   stubCode: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#FFFFFF",
     fontWeight: 600,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   stubSecurity: {
     fontSize: 8,
     color: "#A0A1C0",
   },
   stubQRBox: {
-    marginTop: 8,
+    marginTop: 6,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#3A3B4D",
     padding: 4,
   },
   stubQRImage: {
-    width: 60,
-    height: 60,
+    width: 54,
+    height: 54,
   },
   stubBottomText: {
     fontSize: 7,
@@ -341,7 +342,6 @@ const TicketPDF: React.FC<TicketPDFProps> = ({
   securityCode,
 }) => (
   <Document>
-    {/* Usamos A5 para que el contenido se vea más grande en el visor */}
     <Page size="A5" style={styles.page}>
       <View style={styles.container}>
         {/* Línea de perforación del talonario */}
