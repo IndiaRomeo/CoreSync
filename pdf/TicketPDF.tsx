@@ -164,30 +164,34 @@ const styles = StyleSheet.create({
 
   // ---------- QR + Seguridad ----------
   qrAndSecurityRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    marginTop: 6,
+    // antes tenía flexDirection: "row"
+    marginTop: 10,
+    alignItems: "center", // centramos todo
   },
   qrContainer: {
     alignItems: "center",
     justifyContent: "center",
   },
   qrBox: {
-    padding: 8,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#3A3B4D",
     backgroundColor: "#15161E",
   },
   qrImage: {
-    width: 160,   // un poco más pequeño que 180 para que quepa todo
-    height: 160,
+    width: 170,
+    height: 170,
+  },
+
+  // NUEVO: wrapper para el bloque de seguridad/holograma
+  securityWrapper: {
+    marginTop: 10,
+    alignItems: "center",
   },
 
   // ---------- HOLOGRAMA + CÓDIGO SEGURIDAD ----------
   securityBlock: {
-    flex: 1,
   },
   securityLabel: {
     fontSize: 8,
@@ -407,7 +411,8 @@ const TicketPDF: React.FC<TicketPDFProps> = ({
                 </View>
               </View>
 
-              <View style={styles.securityBlock}>
+              {/* Bloque de seguridad apilado debajo */}
+              <View style={styles.securityWrapper}>
                 <Text style={styles.securityLabel}>Código de seguridad</Text>
                 <Text style={styles.securityCode}>{securityCode}</Text>
 
