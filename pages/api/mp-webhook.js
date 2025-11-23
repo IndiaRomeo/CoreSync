@@ -1,9 +1,10 @@
+// pages/api/mp-webhook.js
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { pdf } from "@react-pdf/renderer";
 import { Resend } from "resend";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import TicketPDF from "../../pdf/TicketPDF"; // mismo componente que usas en boleta-pdf-from-db
+import TicketPDF from "../../pdf/TicketPDF";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -19,7 +20,7 @@ export default async function handler(req, res) {
   try {
     console.log("📩 Webhook Mercado Pago — body:", req.body, "query:", req.query);
 
-    // MP puede enviar el id del pago en distintos lugares:
+    // 1) Obtener id de pago
     const paymentId =
       req.body?.data?.id ||
       req.body?.id ||
@@ -30,13 +31,13 @@ export default async function handler(req, res) {
       return res.status(200).send("No payment id");
     }
 
-    // 1) Consultar el pago en Mercado Pago
+    // 2) Consultar el pago en MP
     const payment = new Payment(client);
     const paymentInfo = await payment.get({ id: String(paymentId) });
 
     console.log("✅ Detalle del pago MP:", paymentInfo);
 
-    const externalRef = paymentInfo.external_reference; // id de nuestra tabla entradas
+    const externalRef = paymentInfo.external_reference; // id en tabla entradas
     const mpStatus = paymentInfo.status;               // approved / rejected / pending...
     const mpPaymentId = paymentInfo.id?.toString();
 
@@ -45,13 +46,7 @@ export default async function handler(req, res) {
       return res.status(200).send("No external_reference");
     }
 
-    // Datos del comprador que vengan desde MP (por si quieres completarlos)
-    const payer = paymentInfo.payer || {};
-    const buyer_email = payer.email || null;
-    const buyer_name =
-      [payer.first_name, payer.last_name].filter(Boolean).join(" ") || null;
-
-    // 2) Traducimos el status de MP al nuestro
+    // 3) Traducir status
     let status_pago = "pendiente";
     switch (mpStatus) {
       case "approved":
@@ -67,7 +62,7 @@ export default async function handler(req, res) {
         break;
     }
 
-    // Datos para actualizar en Supabase
+    // 4) Actualizar fila con status de MP
     const updateData = {
       status_pago,
       mp_payment_id: mpPaymentId,
@@ -79,11 +74,6 @@ export default async function handler(req, res) {
         paymentInfo.date_approved || new Date().toISOString();
     }
 
-    // Si MP trae nombre/correo, puedes completar lo que falte en la BD
-    if (buyer_email) updateData.buyer_email = buyer_email;
-    if (buyer_name) updateData.buyer_name = buyer_name;
-
-    // 3) Actualizar la fila correspondiente en Supabase
     const { error: updateError } = await supabaseAdmin
       .from("entradas")
       .update(updateData)
@@ -91,51 +81,47 @@ export default async function handler(req, res) {
 
     if (updateError) {
       console.error("❌ Error actualizando entrada en Supabase:", updateError);
-      // devolvemos 200 igual para que MP no reintente infinito
       return res.status(200).send("Error updating entry");
     }
 
     console.log(`🎟️ Entrada ${externalRef} marcada como ${status_pago}`);
 
-    // 4) Si el pago quedó APROBADO ⇒ generar PDF y enviarlo por correo
+    // 5) Solo si quedó aprobada intentamos enviar ticket
     if (status_pago === "aprobado") {
       try {
-        // 4.1 Intentar "reservar" el envío:
-        // solo el PRIMER webhook que llegue con ticket_email_sent_at NULL lo consigue.
-        const nowIso = new Date().toISOString();
-
-        const { data: updatedRows, error: lockError } = await supabaseAdmin
+        // 5.1 Leer fila con flag ticket_email_sent_at
+        const { data: ticketRow, error: ticketError } = await supabaseAdmin
           .from("entradas")
-          .update({ ticket_email_sent_at: nowIso })
-          .eq("id", externalRef)
-          .is("ticket_email_sent_at", null) // solo si aún NO se ha enviado
           .select(
             "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code, ticket_email_sent_at"
-          );
+          )
+          .eq("id", externalRef)
+          .single();
 
-        if (lockError) {
-          console.error("❌ Error marcando ticket_email_sent_at:", lockError);
-          return res.status(200).send("Error locking email");
+        if (ticketError || !ticketRow) {
+          console.error("⚠️ No se pudo leer la entrada:", ticketError);
+          return res.status(200).send("No ticket row");
         }
 
-        // Si no volvió ninguna fila, alguien más ya lo envió antes
-        if (!updatedRows || updatedRows.length === 0) {
+        // 5.2 Si ya tiene fecha de envío, no mandamos otro
+        if (ticketRow.ticket_email_sent_at) {
           console.log(
-            `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at, no reenviamos correo.`
+            `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at=${ticketRow.ticket_email_sent_at}, no reenviamos.`
           );
           return res.status(200).send("Email already sent");
         }
 
-        const ticketRow = updatedRows[0];
+        // 5.3 Correo destino (BD primero, luego MP payer.email)
+        const payer = paymentInfo.payer || {};
+        const payerEmail = payer.email || null;
+        const toEmail = ticketRow.buyer_email || payerEmail;
 
-        // Aseguramos correo destino (prioridad BD, fallback payer.email)
-        const toEmail = ticketRow.buyer_email || buyer_email;
         if (!toEmail) {
           console.log("⚠️ No hay buyer_email para enviar el ticket.");
           return res.status(200).send("No buyer email");
         }
 
-        // 4.2 Formatear fecha
+        // 5.4 Fecha formateada
         const eventDate = new Date(ticketRow.event_date);
         const eventDateLabel = eventDate.toLocaleString("es-CO", {
           day: "2-digit",
@@ -149,21 +135,20 @@ export default async function handler(req, res) {
           "es-CO"
         )}`;
 
-        // 4.3 Limpiar el base64 del QR (por si viene con "data:image/png;base64,")
+        // 5.5 Limpiar base64 del QR
         let qrBase64 = ticketRow.qr_base64 || "";
         qrBase64 = qrBase64.replace(/^data:image\/\w+;base64,/, "");
 
-        // 4.4 Código de seguridad (si no está guardado, lo derivamos del código)
+        // 5.6 Código de seguridad derivado si hace falta
         const codigoString = String(ticketRow.codigo ?? "");
         const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
         const derivedSecurity =
           securityBase.length >= 6
             ? securityBase.slice(-6)
             : securityBase.padStart(6, "0");
-
         const securityCode = ticketRow.security_code || derivedSecurity;
 
-        // 4.5 Construir el PDF con el mismo diseño premium
+        // 5.7 Construir PDF
         const doc = (
           <TicketPDF
             buyerName={ticketRow.buyer_name}
@@ -180,7 +165,7 @@ export default async function handler(req, res) {
 
         const pdfBuffer = await pdf(doc).toBuffer();
 
-        // 4.6 HTML del correo (tema dark completo)
+        // 5.8 HTML del correo (todo dark)
         const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
 
         const htmlBody = `
@@ -319,7 +304,7 @@ export default async function handler(req, res) {
           attachments: [
             {
               filename: `ticket-${ticketRow.codigo}.pdf`,
-              content: pdfBuffer,          // Buffer directo, no base64
+              content: pdfBuffer, // Buffer directo
               type: "application/pdf",
               disposition: "attachment",
             },
@@ -327,16 +312,20 @@ export default async function handler(req, res) {
         });
 
         console.log(`📧 Ticket enviado a ${toEmail}`);
+
+        // 5.9 Marcamos que ya se envió
+        await supabaseAdmin
+          .from("entradas")
+          .update({ ticket_email_sent_at: new Date().toISOString() })
+          .eq("id", externalRef);
       } catch (mailErr) {
         console.error("❌ Error enviando ticket por email:", mailErr);
-        // IMPORTANTE: aun si falla el correo, respondemos 200 para que MP no reintente
       }
     }
 
     return res.status(200).send("OK");
   } catch (error) {
     console.error("❌ Error en webhook MP:", error);
-    // importante devolver 200 para que MP no haga retry eterno
     return res.status(200).send("OK");
   }
 }
