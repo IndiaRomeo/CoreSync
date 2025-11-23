@@ -1,4 +1,3 @@
-import React from "react";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { pdf } from "@react-pdf/renderer";
 import { Resend } from "resend";
@@ -155,24 +154,143 @@ export default async function handler(req, res) {
           const pdfBuffer = await pdf(doc).toBuffer();
 
           // Enviar email con Resend
+          // URL del PDF (por si quieres incluir enlace además del adjunto)
+          const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
+
+          // Template completo estilo Core Sync
+          const htmlBody = `
+          <!doctype html>
+          <html lang="es">
+            <head>
+              <meta charset="utf-8" />
+              <title>Tu ticket para ${ticketRow.event_name}</title>
+            </head>
+            <body style="margin:0;padding:0;background:#050509;color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#050509;padding:24px 0;">
+                <tr>
+                  <td align="center">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#0b0b10;border-radius:18px;overflow:hidden;border:1px solid #1f2937;">
+                      
+                      <!-- Header -->
+                      <tr>
+                        <td style="padding:24px 24px 16px 24px;background:radial-gradient(circle at top,#22c55e33,#020617);border-bottom:1px solid #111827;">
+                          <table width="100%">
+                            <tr>
+                              <td align="left">
+                                <img
+                                  src="https://collectivecoresync.com/core-sync-logo.png"
+                                  alt="Core Sync Collective"
+                                  width="48"
+                                  height="48"
+                                  style="display:block;border-radius:999px;border:1px solid #22c55e33;"
+                                />
+                              </td>
+                              <td align="right">
+                                <div style="font-size:11px;color:#9ca3af;letter-spacing:0.08em;text-transform:uppercase;">
+                                  Core Sync Collective
+                                </div>
+                                <div style="margin-top:4px;font-size:13px;color:#e5e7eb;">
+                                  Tu ticket está listo ⚡
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- Mensaje principal -->
+                      <tr>
+                        <td style="padding:24px;">
+                          <h1 style="margin:0;font-size:22px;font-weight:700;color:#f9fafb;">
+                            Hola ${ticketRow.buyer_name || "raver"},
+                          </h1>
+                          <p style="margin:12px 0;font-size:14px;color:#e5e7eb;">
+                            Gracias por apoyar <strong>Core Sync Collective</strong>.
+                          </p>
+                          <p style="margin:0;font-size:13px;color:#9ca3af;">
+                            Adjuntamos tu ticket digital. Preséntalo en tu celular o impreso.
+                          </p>
+                        </td>
+                      </tr>
+
+                      <!-- Tarjeta de ticket -->
+                      <tr>
+                        <td style="padding:0 24px 24px 24px;">
+                          <table width="100%" style="border-radius:14px;background:linear-gradient(135deg,#020617,#111827);border:1px solid #1f2937;">
+                            <tr>
+                              <td style="padding:18px;">
+                                <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:0.16em;">Entrada digital</div>
+                                <div style="margin-top:4px;font-size:16px;font-weight:700;color:#f9fafb;">${ticketRow.event_name}</div>
+                                <div style="margin-top:4px;font-size:13px;color:#e5e7eb;">${eventDateLabel}</div>
+                                <div style="font-size:12px;color:#9ca3af;">${ticketRow.event_location}</div>
+                              </td>
+                              <td style="padding:18px;" align="right">
+                                <div style="font-size:11px;color:#9ca3af;">Importe</div>
+                                <div style="font-size:15px;font-weight:700;color:#a855f7;">
+                                  ${priceLabel}
+                                </div>
+                              </td>
+                            </tr>
+
+                            <tr>
+                              <td colspan="2" style="padding:14px 18px;">
+                                <table width="100%">
+                                  <tr>
+                                    <td>
+                                      <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Código de ticket</div>
+                                      <div style="font-family:monospace;font-size:15px;font-weight:700;color:#f97316;">${ticketRow.codigo}</div>
+                                    </td>
+                                    <td align="right">
+                                      <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Seguridad</div>
+                                      <div style="font-family:monospace;font-size:15px;font-weight:700;color:#22c55e;">${securityCode}</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- Botón -->
+                      <tr>
+                        <td align="center" style="padding:0 24px 24px 24px;">
+                          <a href="${ticketPdfUrl}"
+                            style="display:inline-block;padding:10px 22px;border-radius:999px;background:#f97316;color:#050509;font-size:13px;font-weight:700;text-decoration:none;letter-spacing:0.12em;">
+                            Descargar Ticket (PDF)
+                          </a>
+                          <div style="margin-top:10px;font-size:11px;color:#6b7280;">
+                            Si el botón no funciona, abre el archivo adjunto.
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Footer -->
+                      <tr>
+                        <td style="padding:24px;border-top:1px solid #111827;">
+                          <div style="font-size:11px;color:#4b5563;">
+                            Core Sync Collective · Producción Techno<br />
+                            Soporte: <a href="mailto:collectivecoresync@gmail.com" style="color:#9ca3af;">collectivecoresync@gmail.com</a>
+                          </div>
+                        </td>
+                      </tr>
+
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
+          `;
+
           await resend.emails.send({
             from:
               process.env.TICKETS_FROM_EMAIL ||
               "Core Sync <onboarding@resend.dev>",
             to: ticketRow.buyer_email || buyer_email,
             subject: `Tu ticket para ${ticketRow.event_name}`,
-            html: `
-              <p>Hola ${ticketRow.buyer_name || ""},</p>
-              <p>Gracias por tu compra. Adjuntamos tu ticket en PDF para <b>${
-                ticketRow.event_name
-              }</b>.</p>
-              <p>Puedes presentarlo en tu celular o impreso en la entrada.</p>
-              <p style="margin-top:16px;font-size:12px;color:#555">
-                Si tienes algún problema con tu ticket, responde a este correo con el código <b>${
-                  ticketRow.codigo
-                }</b>.
-              </p>
-            `,
+            html: htmlBody,
             attachments: [
               {
                 filename: `ticket-${ticketRow.codigo}.pdf`,
