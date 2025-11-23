@@ -111,6 +111,27 @@ export default async function handler(req, res) {
           return res.status(200).send("Email already sent");
         }
 
+        // 5.2.1 Bloquear reenvíos concurrentes marcando inmediatamente
+        const sendTimestamp = new Date().toISOString();
+        const { error: flagError, data: flagData } = await supabaseAdmin
+          .from("entradas")
+          .update({ ticket_email_sent_at: sendTimestamp })
+          .eq("id", externalRef)
+          .is("ticket_email_sent_at", null)
+          .select("id");
+
+        if (flagError) {
+          console.error("⚠️ No se pudo marcar ticket_email_sent_at:", flagError);
+          return res.status(200).send("Error flagging email send");
+        }
+
+        if (!flagData || !flagData.length) {
+          console.log(
+            `📨 Ticket ${externalRef} fue marcado por otro proceso, no reenviamos.`
+          );
+          return res.status(200).send("Already flagged");
+        }
+
         // 5.3 Correo destino (BD primero, luego MP payer.email)
         const payer = paymentInfo.payer || {};
         const payerEmail = payer.email || null;
@@ -175,15 +196,15 @@ export default async function handler(req, res) {
             <meta charset="utf-8" />
             <title>Tu ticket para ${ticketRow.event_name}</title>
           </head>
-          <body style="margin:0;padding:0;background:#050509;color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#050509;padding:24px 0;">
+          <body style="margin:0;padding:0;background:#050509;color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;" bgcolor="#050509">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#050509;padding:24px 0;" bgcolor="#050509">
               <tr>
-                <td align="center" style="background:#050509;">
-                  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#050509;border-radius:18px;overflow:hidden;border:1px solid #111827;">
+                <td align="center" style="background:#050509;" bgcolor="#050509">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#050509;border-radius:18px;overflow:hidden;border:1px solid #111827;" bgcolor="#050509">
                     
                     <!-- Header -->
                     <tr>
-                      <td style="padding:24px 24px 16px 24px;background:radial-gradient(circle at top,#22c55e33,#020617);border-bottom:1px solid #111827;">
+                      <td style="padding:24px 24px 16px 24px;background:radial-gradient(circle at top,#22c55e33,#020617);border-bottom:1px solid #111827;" bgcolor="#050509">
                         <table width="100%">
                           <tr>
                             <td align="left">
@@ -210,7 +231,7 @@ export default async function handler(req, res) {
 
                     <!-- Mensaje principal -->
                     <tr>
-                      <td style="padding:24px;background:#050509;">
+                      <td style="padding:24px;background:#050509;" bgcolor="#050509">
                         <h1 style="margin:0;font-size:22px;font-weight:700;color:#f9fafb;">
                           Hola ${ticketRow.buyer_name || "raver"},
                         </h1>
@@ -225,8 +246,8 @@ export default async function handler(req, res) {
 
                     <!-- Tarjeta de ticket -->
                     <tr>
-                      <td style="padding:0 24px 24px 24px;background:#050509;">
-                        <table width="100%" style="border-radius:14px;background:linear-gradient(135deg,#020617,#111827);border:1px solid #1f2937;">
+                      <td style="padding:0 24px 24px 24px;background:#050509;" bgcolor="#050509">
+                        <table width="100%" style="border-radius:14px;background:linear-gradient(135deg,#020617,#111827);border:1px solid #1f2937;" bgcolor="#0b1020">
                           <tr>
                             <td style="padding:18px;">
                               <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:0.16em;">Entrada digital</div>
@@ -265,7 +286,7 @@ export default async function handler(req, res) {
 
                     <!-- Botón -->
                     <tr>
-                      <td align="center" style="padding:0 24px 24px 24px;background:#050509;">
+                      <td align="center" style="padding:0 24px 24px 24px;background:#050509;" bgcolor="#050509">
                         <a href="${ticketPdfUrl}"
                           style="display:inline-block;padding:10px 22px;border-radius:999px;background:#f97316;color:#050509;font-size:13px;font-weight:700;text-decoration:none;letter-spacing:0.12em;">
                           Descargar Ticket (PDF)
@@ -278,7 +299,7 @@ export default async function handler(req, res) {
 
                     <!-- Footer -->
                     <tr>
-                      <td style="padding:24px;border-top:1px solid #111827;background:#050509;">
+                      <td style="padding:24px;border-top:1px solid #111827;background:#050509;" bgcolor="#050509">
                         <div style="font-size:11px;color:#4b5563;">
                           Core Sync Collective · Producción Techno<br />
                           Soporte: <a href="mailto:collectivecoresync@gmail.com" style="color:#9ca3af;">collectivecoresync@gmail.com</a>
@@ -297,15 +318,16 @@ export default async function handler(req, res) {
         await resend.emails.send({
           from:
             process.env.TICKETS_FROM_EMAIL ||
-            "Core Sync <tickets@collectivecoresync.com>",
+            "Core Sync Tickets <tickets@collectivecoresync.com>",
           to: toEmail,
           subject: `Tu ticket para ${ticketRow.event_name}`,
           html: htmlBody,
           attachments: [
             {
               filename: `ticket-${ticketRow.codigo}.pdf`,
-              content: pdfBuffer.toString("base64"), // 👈 ahora sí, base64
+              content: pdfBuffer.toString("base64"),
               contentType: "application/pdf",
+              encoding: "base64",
               // si quieres, puedes dejar la línea de abajo o quitarla,
               // pero no es necesaria para que funcione:
               // disposition: "attachment",
@@ -322,6 +344,10 @@ export default async function handler(req, res) {
           .eq("id", externalRef);
       } catch (mailErr) {
         console.error("❌ Error enviando ticket por email:", mailErr);
+        await supabaseAdmin
+          .from("entradas")
+          .update({ ticket_email_sent_at: null })
+          .eq("id", externalRef);
       }
     }
 
