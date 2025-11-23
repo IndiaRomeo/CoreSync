@@ -23,12 +23,10 @@ type TicketPDFProps = {
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 24,
-    paddingBottom: 24,
-    paddingHorizontal: 24,
-    backgroundColor: "#050509",
-    fontFamily: "Helvetica",
-  },
+  padding: 24,            // en vez de paddingTop/paddingBottom/paddingHorizontal
+  backgroundColor: "#050509",
+  fontFamily: "Helvetica",
+},
 
   // NUEVO: wrapper que centra el ticket
   pageInner: {
@@ -335,6 +333,7 @@ const TicketPDF: React.FC<TicketPDFProps> = ({
 }) => (
   <Document>
     <Page size="A4" style={styles.page}>
+      <View style={styles.pageInner}>
       <View style={styles.container}>
         {/* Línea de perforación del talonario */}
         <View style={styles.perforation} />
@@ -455,6 +454,7 @@ const TicketPDF: React.FC<TicketPDFProps> = ({
           </Text>
         </View>
       </View>
+    </View> 
     </Page>
   </Document>
 );
