@@ -158,13 +158,25 @@ export default async function handler(req, res) {
         <html lang="es">
           <head>
             <meta charset="utf-8" />
-            <title>Tu ticket para ${ticketRow.event_name}</title>
+            <title>Tu ticket digital — Core Sync Collective</title>
 
-            <!-- Ayuda en modo oscuro en iOS / Apple Mail -->
+            <!-- Responsive en móviles -->
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+            <!-- Modo oscuro amigable -->
             <meta name="color-scheme" content="dark">
             <meta name="supported-color-schemes" content="dark">
+
+            <style>
+              /* Algunos clientes respetan este pequeño CSS */
+              body {
+                margin: 0;
+                padding: 0;
+                background-color: #050509;
+              }
+            </style>
           </head>
-          <!-- Forzar fondo oscuro con bgcolor + style -->
+
           <body bgcolor="#050509" style="margin:0;padding:0;background-color:#050509;-webkit-text-size-adjust:100%;">
             <table
               width="100%"
@@ -174,8 +186,9 @@ export default async function handler(req, res) {
               style="background-color:#050509;padding:24px 0;"
             >
               <tr>
-                <!-- También reforzamos en el TD -->
                 <td align="center" bgcolor="#050509" style="background-color:#050509;">
+
+                  <!-- CONTENEDOR PRINCIPAL -->
                   <table
                     width="100%"
                     cellpadding="0"
@@ -186,9 +199,34 @@ export default async function handler(req, res) {
                       border-radius:18px;
                       overflow:hidden;
                       border:1px solid #111827;
+                      box-shadow:0 0 22px #00000044;
                     "
                   >
-                    <!-- Header -->
+
+                    <!-- Mini header superior -->
+                    <tr>
+                      <td
+                        style="
+                          padding:10px 0;
+                          text-align:center;
+                          background:#0a0a0f;
+                          border-bottom:1px solid #111827;
+                        "
+                      >
+                        <span style="color:#6b7280;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;">
+                          CORE SYNC DIGITAL TICKET • VERIFIED
+                        </span>
+                      </td>
+                    </tr>
+
+                    <!-- Barra de color branding -->
+                    <tr>
+                      <td>
+                        <div style="height:4px;background:linear-gradient(90deg,#f97316,#f43f5e,#8b5cf6);"></div>
+                      </td>
+                    </tr>
+
+                    <!-- Header principal -->
                     <tr>
                       <td
                         style="
@@ -197,18 +235,18 @@ export default async function handler(req, res) {
                           border-bottom:1px solid #111827;
                         "
                       >
-                        <table width="100%">
+                        <table width="100%" cellpadding="0" cellspacing="0">
                           <tr>
-                            <td align="left">
+                            <td align="left" valign="middle">
                               <img
                                 src="https://collectivecoresync.com/core-sync-log-navidad.png"
-                                alt="Core Sync Collective"
+                                alt="Logo Core Sync Collective"
                                 width="48"
                                 height="48"
                                 style="display:block;border-radius:999px;border:1px solid #22c55e33;"
                               />
                             </td>
-                            <td align="right">
+                            <td align="right" valign="middle">
                               <div style="font-size:11px;color:#9ca3af;letter-spacing:0.08em;text-transform:uppercase;">
                                 Core Sync Collective
                               </div>
@@ -231,7 +269,7 @@ export default async function handler(req, res) {
                           Gracias por apoyar <strong>Core Sync Collective</strong>.
                         </p>
                         <p style="margin:0;font-size:13px;color:#9ca3af;">
-                          Adjuntamos tu ticket digital. Preséntalo en tu celular o impreso.
+                          Adjuntamos tu ticket digital. Preséntalo en tu celular o impreso al ingreso del evento.
                         </p>
                       </td>
                     </tr>
@@ -241,6 +279,8 @@ export default async function handler(req, res) {
                       <td style="padding:0 24px 24px 24px;background:#050509;">
                         <table
                           width="100%"
+                          cellpadding="0"
+                          cellspacing="0"
                           style="
                             border-radius:14px;
                             background:linear-gradient(135deg,#020617,#111827);
@@ -248,13 +288,26 @@ export default async function handler(req, res) {
                           "
                         >
                           <tr>
-                            <td style="padding:18px;">
-                              <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:0.16em;">Entrada digital</div>
-                              <div style="margin-top:4px;font-size:16px;font-weight:700;color:#f9fafb;">${ticketRow.event_name}</div>
-                              <div style="margin-top:4px;font-size:13px;color:#e5e7eb;">${eventDateLabel}</div>
-                              <div style="font-size:12px;color:#9ca3af;">${ticketRow.event_location}</div>
+                            <td style="padding:18px;" valign="top">
+                              <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:0.16em;">
+                                Entrada digital
+                              </div>
+                              <div style="margin-top:4px;font-size:16px;font-weight:700;color:#f9fafb;">
+                                ${ticketRow.event_name}
+                              </div>
+                              <div style="margin-top:4px;font-size:13px;color:#e5e7eb;">
+                                ${eventDateLabel}
+                              </div>
+                              <div style="font-size:12px;color:#9ca3af;">
+                                ${ticketRow.event_location}
+                              </div>
+
+                              <div style="margin-top:8px;color:#6b7280;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;">
+                                EVENT ID: CS-${ticketRow.codigo}
+                              </div>
                             </td>
-                            <td style="padding:18px;" align="right">
+
+                            <td style="padding:18px;" align="right" valign="top">
                               <div style="font-size:11px;color:#9ca3af;">Importe</div>
                               <div style="font-size:15px;font-weight:700;color:#a855f7;">
                                 ${priceLabel}
@@ -264,15 +317,23 @@ export default async function handler(req, res) {
 
                           <tr>
                             <td colspan="2" style="padding:14px 18px;">
-                              <table width="100%">
+                              <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
-                                  <td>
-                                    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Código de ticket</div>
-                                    <div style="font-family:monospace;font-size:15px;font-weight:700;color:#f97316;">${ticketRow.codigo}</div>
+                                  <td valign="top">
+                                    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">
+                                      Código de ticket
+                                    </div>
+                                    <div style="font-family:monospace;font-size:15px;font-weight:700;color:#f97316;">
+                                      ${ticketRow.codigo}
+                                    </div>
                                   </td>
-                                  <td align="right">
-                                    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Seguridad</div>
-                                    <div style="font-family:monospace;font-size:15px;font-weight:700;color:#22c55e;">${securityCode}</div>
+                                  <td align="right" valign="top">
+                                    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">
+                                      Seguridad
+                                    </div>
+                                    <div style="font-family:monospace;font-size:15px;font-weight:700;color:#22c55e;">
+                                      ${securityCode}
+                                    </div>
                                   </td>
                                 </tr>
                               </table>
@@ -282,7 +343,7 @@ export default async function handler(req, res) {
                       </td>
                     </tr>
 
-                    <!-- Botón -->
+                    <!-- Botón de descarga -->
                     <tr>
                       <td align="center" style="padding:0 24px 24px 24px;background:#050509;">
                         <a
@@ -297,25 +358,54 @@ export default async function handler(req, res) {
                             font-weight:700;
                             text-decoration:none;
                             letter-spacing:0.12em;
+                            text-transform:uppercase;
                           "
                         >
                           Descargar Ticket (PDF)
                         </a>
                         <div style="margin-top:10px;font-size:11px;color:#6b7280;">
-                          Si el botón no funciona, abre el archivo adjunto.
+                          Si el botón no funciona, abre el archivo adjunto o copia y pega este enlace:
                         </div>
+                        <div style="margin-top:4px;font-size:11px;color:#9ca3af;word-break:break-all;">
+                          ${ticketPdfUrl}
+                        </div>
+                      </td>
+                    </tr>
+
+                    <!-- Línea de corte / divisor -->
+                    <tr>
+                      <td style="padding:0 24px;background:#050509;">
+                        <div
+                          style="
+                            margin:0 auto;
+                            height:1px;
+                            width:100%;
+                            margin-bottom:12px;
+                            background:repeating-linear-gradient(
+                              90deg,
+                              #4b5563 0px,
+                              #4b5563 6px,
+                              transparent 6px,
+                              transparent 12px
+                            );
+                          "
+                        ></div>
                       </td>
                     </tr>
 
                     <!-- Footer -->
                     <tr>
                       <td style="padding:24px;border-top:1px solid #111827;background:#050509;">
-                        <div style="font-size:11px;color:#4b5563;">
+                        <div style="font-size:11px;color:#4b5563;line-height:1.5;">
                           Core Sync Collective · Producción Techno<br />
                           Soporte:
-                          <a href="mailto:collectivecoresync@gmail.com" style="color:#9ca3af;">
+                          <a href="mailto:collectivecoresync@gmail.com" style="color:#9ca3af;text-decoration:none;">
                             collectivecoresync@gmail.com
                           </a>
+                          <br />
+                          <span style="color:#6b7280;font-size:10px;">
+                            Por favor no compartas este correo. Tu ticket es personal e intransferible.
+                          </span>
                         </div>
                       </td>
                     </tr>
@@ -326,7 +416,7 @@ export default async function handler(req, res) {
             </table>
           </body>
         </html>
-        `;
+      `;
 
       // 5.8 Enviar correo
       const { data, error: resendError } = await resend.emails.send({
