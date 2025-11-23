@@ -1,10 +1,8 @@
 // pages/api/mp-webhook.js
 import { MercadoPagoConfig, Payment } from "mercadopago";
-import { pdf } from "@react-pdf/renderer";
 import { Resend } from "resend";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import TicketPDF from "../../pdf/TicketPDF";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -135,11 +133,7 @@ export default async function handler(req, res) {
           "es-CO"
         )}`;
 
-        // 5.5 Limpiar base64 del QR
-        let qrBase64 = ticketRow.qr_base64 || "";
-        qrBase64 = qrBase64.replace(/^data:image\/\w+;base64,/, "");
-
-        // 5.6 Código de seguridad derivado si hace falta
+        // 5.5 Código de seguridad derivado si hace falta (solo para mostrarlo en el correo)
         const codigoString = String(ticketRow.codigo ?? "");
         const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
         const derivedSecurity =
@@ -148,26 +142,10 @@ export default async function handler(req, res) {
             : securityBase.padStart(6, "0");
         const securityCode = ticketRow.security_code || derivedSecurity;
 
-        // 5.7 Construir PDF
-        const doc = (
-          <TicketPDF
-            buyerName={ticketRow.buyer_name}
-            eventName={ticketRow.event_name}
-            eventDateLabel={eventDateLabel}
-            eventLocation={ticketRow.event_location}
-            codigo={ticketRow.codigo}
-            priceLabel={priceLabel}
-            qrBase64={qrBase64}
-            logoUrl="/core-sync-logo.png"
-            securityCode={securityCode}
-          />
-        );
-
-        const pdfBuffer = await pdf(doc).toBuffer();
-
-        // 5.8 HTML del correo (igual que ya lo tienes)
+        // 5.6 URL del PDF (ya generado por tu propia API)
         const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
 
+        // 5.7 HTML del correo (el mismo que ya tenías)
         const htmlBody = `
         <!doctype html>
         <html lang="es">
@@ -294,8 +272,8 @@ export default async function handler(req, res) {
         </html>
         `;
 
-        // 5.9 Enviar correo
-        await resend.emails.send({
+        // 5.8 Enviar correo usando la URL del PDF como attachment
+        const { data, error: resendError } = await resend.emails.send({
           from:
             process.env.TICKETS_FROM_EMAIL ||
             "Core Sync Collective - Tickets <tickets@collectivecoresync.com>",
@@ -305,21 +283,24 @@ export default async function handler(req, res) {
           attachments: [
             {
               filename: `ticket-${ticketRow.codigo}.pdf`,
-              content: pdfBuffer,            // 👈 Buffer SIN toString
-              contentType: "application/pdf",
+              path: ticketPdfUrl, // 👈 Resend descarga este PDF y lo adjunta
             },
           ],
         });
 
-        console.log(`📧 Ticket enviado a ${toEmail}`);
+        if (resendError) {
+          console.error("❌ Error enviando ticket por email (Resend):", resendError);
+        } else {
+          console.log(`📧 Ticket enviado a ${toEmail}`, data);
+        }
 
-        // 5.10 Marcar que ya se envió
+        // 5.9 Marcar que ya se envió (aunque Resend devuelva error, puedes decidir no marcar)
         await supabaseAdmin
           .from("entradas")
           .update({ ticket_email_sent_at: new Date().toISOString() })
           .eq("id", externalRef);
       } catch (mailErr) {
-        console.error("❌ Error enviando ticket por email:", mailErr);
+        console.error("❌ Error enviando ticket por email (try/catch):", mailErr);
       }
     }
 
