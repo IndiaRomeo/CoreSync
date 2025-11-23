@@ -63,7 +63,7 @@ export default async function handler(req, res) {
       codigo={data.codigo}
       priceLabel={priceLabel}
       qrBase64={qrBase64}
-      logoUrl="/core-sync-logo.png"
+      logoUrl="https://collectivecoresync.com/core-sync-log-navidad.png"
       securityCode={securityCode}
     />
   );

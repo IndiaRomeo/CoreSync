@@ -201,7 +201,7 @@ export default async function handler(req, res) {
                           <tr>
                             <td align="left">
                               <img
-                                src="https://collectivecoresync.com/core-sync-logo.png"
+                                src="https://collectivecoresync.com/core-sync-log-navidad.png"
                                 alt="Core Sync Collective"
                                 width="48"
                                 height="48"
