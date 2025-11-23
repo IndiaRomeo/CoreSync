@@ -1,7 +1,4 @@
 @import "tailwindcss";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -253,3 +250,47 @@ body {
     transform: translate3d(var(--snow-drift, 0px), 120vh, 0) scale(1.1);
   }
 }
+
+/* Animación de la línea láser del escáner */
+@keyframes qr-scan-line {
+  0% {
+    transform: translateY(-45%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(45%);
+    opacity: 0;
+  }
+}
+
+.qr-scan-line {
+  animation: qr-scan-line 2s ease-in-out infinite;
+}
+
+/* Flash cuando se detecta un QR válido */
+@keyframes qr-success-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+  50% {
+    box-shadow: 0 0 24px 6px rgba(34, 197, 94, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.qr-success-pulse {
+  animation: qr-success-flash 0.5s ease-out;
+}
+

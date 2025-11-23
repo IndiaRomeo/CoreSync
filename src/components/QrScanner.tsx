@@ -1,6 +1,5 @@
-// src/components/QrScanner.tsx
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
 interface QrScannerProps {
@@ -11,26 +10,31 @@ interface QrScannerProps {
 export default function QrScanner({ onResult, style }: QrScannerProps) {
   const qrRef = useRef<HTMLDivElement | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const [hitAnim, setHitAnim] = useState(false);
 
   useEffect(() => {
     if (!qrRef.current) return;
 
     scannerRef.current = new Html5Qrcode(qrRef.current.id);
 
-    scannerRef.current.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        // OJO: sin `qrbox` para que NO dibuje el marco blanco
-        // si algún día quieres recortar el área de lectura,
-        // se puede volver a poner, pero tocaría ocultar el borde con CSS.
-        disableFlip: true,
-      },
-      (decodedText) => {
-        onResult(decodedText);
-      },
-      () => {}
-    );
+    scannerRef.current
+      .start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 220, height: 220 },
+          disableFlip: true,
+        },
+        (decodedText) => {
+          // disparar animación de éxito
+          setHitAnim(true);
+          setTimeout(() => setHitAnim(false), 600);
+
+          onResult(decodedText);
+        },
+        () => {}
+      )
+      .catch(() => {});
 
     return () => {
       scannerRef.current?.stop().catch(() => {});
@@ -44,21 +48,37 @@ export default function QrScanner({ onResult, style }: QrScannerProps) {
         ref={qrRef}
         id="reader"
         style={{ width: 260, height: 260, ...style }}
-        className="rounded-3xl overflow-hidden"
+        className="rounded-[32px] overflow-hidden bg-black/60"
       />
 
-      {/* 🟩 Marco verde premium */}
-      <div
-        className="
-          pointer-events-none
-          absolute
-          w-[220px]
-          h-[220px]
-          rounded-[28px]
-          border-[4px]
-          border-emerald-400
-        "
-      />
+      {/* Overlay pro */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="relative w-[230px] h-[230px]">
+          {/* Borde verde con glow + flash de éxito */}
+          <div
+            className={
+              "absolute inset-0 rounded-[30px] border-[3px] border-emerald-400/90 shadow-[0_0_20px_rgba(16,185,129,0.65)] " +
+              (hitAnim ? "qr-success-pulse" : "")
+            }
+          />
+
+          {/* Línea láser animada */}
+          <div
+            className="
+              absolute 
+              inset-x-6 
+              qr-scan-line 
+              h-[3px] 
+              rounded-full 
+              bg-emerald-300/90 
+              shadow-[0_0_12px_rgba(16,185,129,0.9)]
+            "
+          />
+
+          {/* Sutil borde extra para look “glass” */}
+          <div className="absolute inset-1 rounded-[28px] ring-1 ring-emerald-400/35" />
+        </div>
+      </div>
     </div>
   );
 }
