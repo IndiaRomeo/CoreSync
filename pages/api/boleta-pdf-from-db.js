@@ -18,8 +18,8 @@ export default async function handler(req, res) {
 
   if (error || !data) return res.status(404).send("Ticket no encontrado");
 
+  // 1) Fecha formateada
   const eventDate = new Date(data.event_date);
-
   const eventDateLabel = eventDate.toLocaleString("es-CO", {
     day: "2-digit",
     month: "long",
@@ -28,13 +28,15 @@ export default async function handler(req, res) {
     minute: "2-digit",
   });
 
+  // 2) Precio formateado
   const priceLabel = `${data.divisa} $${data.importe.toLocaleString("es-CO")}`;
 
-  // -----------------------------------------------------------
-  // GENERAR CÓDIGO DE SEGURIDAD (solo si no existe en la BD)
-  // -----------------------------------------------------------
-  let securityCode = data.security_code;
+  // 3) QR: limpiar el base64 por si viene como data:image/png;base64,...
+  let qrBase64 = data.qr_base64 || "";
+  qrBase64 = qrBase64.replace(/^data:image\/\w+;base64,/, "");
 
+  // 4) Código de seguridad (si no existe aún en la BD)
+  let securityCode = data.security_code;
   if (!securityCode) {
     const codigoString = String(data.codigo ?? "");
     const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
@@ -44,14 +46,14 @@ export default async function handler(req, res) {
         ? securityBase.slice(-6)
         : securityBase.padStart(6, "0");
 
-    // Guardarlo en la BD (para admin/check-in)
+    // Guardarlo en BD para futuras validaciones / check-in
     await supabaseAdmin
       .from("entradas")
       .update({ security_code: securityCode })
       .eq("id", id);
   }
-  // -----------------------------------------------------------
 
+  // 5) Construir el PDF con el mismo diseño premium
   const doc = (
     <TicketPDF
       buyerName={data.buyer_name}
@@ -60,7 +62,7 @@ export default async function handler(req, res) {
       eventLocation={data.event_location}
       codigo={data.codigo}
       priceLabel={priceLabel}
-      qrBase64={data.qr_base64}
+      qrBase64={qrBase64}
       logoUrl="/core-sync-logo.png"
       securityCode={securityCode}
     />
@@ -68,6 +70,7 @@ export default async function handler(req, res) {
 
   const pdfBuffer = await pdf(doc).toBuffer();
 
+  // 6) Respuesta HTTP correcta
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
