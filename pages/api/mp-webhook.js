@@ -100,18 +100,29 @@ export default async function handler(req, res) {
     // 4) Si el pago quedó APROBADO ⇒ generar PDF y enviarlo por correo
     if (status_pago === "aprobado" && buyer_email) {
       try {
-        // (Opcional pero recomendable: tener una columna ticket_email_sent_at para evitar duplicados)
+        // Leer la fila + ticket_email_sent_at
         const { data: ticketRow, error: ticketError } = await supabaseAdmin
           .from("entradas")
           .select(
-            "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code"
+            "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code, ticket_email_sent_at"
           )
           .eq("id", externalRef)
           .single();
 
         if (ticketError || !ticketRow) {
-          console.error("⚠️ No se pudo leer la entrada para generar el PDF:", ticketError);
+          console.error(
+            "⚠️ No se pudo leer la entrada para generar el PDF:",
+            ticketError
+          );
         } else {
+          // ⛔ Candado anti-duplicados: si ya se envió antes, no mandamos otro correo
+          if (ticketRow.ticket_email_sent_at) {
+            console.log(
+              `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at=${ticketRow.ticket_email_sent_at}, no reenviamos correo.`
+            );
+            return res.status(200).send("Email already sent");
+          }
+
           // Formatear fecha
           const eventDate = new Date(ticketRow.event_date);
           const eventDateLabel = eventDate.toLocaleString("es-CO", {
@@ -154,10 +165,8 @@ export default async function handler(req, res) {
           const pdfBuffer = await pdf(doc).toBuffer();
 
           // Enviar email con Resend
-          // URL del PDF (por si quieres incluir enlace además del adjunto)
           const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
 
-          // Template completo estilo Core Sync
           const htmlBody = `
           <!doctype html>
           <html lang="es">
@@ -294,16 +303,18 @@ export default async function handler(req, res) {
             attachments: [
               {
                 filename: `ticket-${ticketRow.codigo}.pdf`,
-                content: pdfBuffer.toString("base64"),
+                content: pdfBuffer, // 👈 Buffer directo, no base64
                 type: "application/pdf",
                 disposition: "attachment",
               },
             ],
           });
 
-          console.log(`📧 Ticket enviado a ${ticketRow.buyer_email || buyer_email}`);
+          console.log(
+            `📧 Ticket enviado a ${ticketRow.buyer_email || buyer_email}`
+          );
 
-          // (Opcional) marca en BD que ya se envió el mail para no duplicar
+          // Marcamos que ya se envió para no duplicar
           await supabaseAdmin
             .from("entradas")
             .update({ ticket_email_sent_at: new Date().toISOString() })
