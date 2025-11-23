@@ -323,3 +323,21 @@ body {
   outline: none !important;
   border: none !important;
 }
+
+/* 🔫 Apagar TODOS los overlays blancos de html5-qrcode dentro de #reader */
+#reader,
+#reader * {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Quitar esquinas / líneas que se dibujen con ::before / ::after */
+#reader *::before,
+#reader *::after {
+  content: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
