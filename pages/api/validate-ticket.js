@@ -1,50 +1,92 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export default async function handler(req, res) {
-  // puede ser GET o POST, pero seguimos con GET para no romper tu front
   const { codigo, sec, qr, validador } = req.query;
 
-  // 1) Normalizar entradas: que al menos venga uno
+  // 1) Al menos un dato
   if (!codigo && !sec && !qr) {
     return res
       .status(400)
       .json({ ok: false, error: "Falta código, código de seguridad o QR" });
   }
 
-  // 2) Construir filtros dinámicos
+  // 👈 AQUÍ SIN TYPESCRIPT
   const orFilters = [];
 
+  // --- A) Código de ticket (manual o por query) ---
   if (codigo) {
-    orFilters.push(`codigo.eq.${codigo}`);
-  }
-
-  if (sec) {
-    orFilters.push(`security_code.eq.${sec}`);
-  }
-
-  if (qr) {
-    const qrString = String(qr);
-    const parts = qrString.split("|");
-
-    // Asumimos que tu QR trae algo como "algo|CODIGO" (como en tu front)
-    const qrCodigo = parts[1] || parts[0];
-
-    // Lo intentamos como código de ticket…
-    if (qrCodigo) {
-      orFilters.push(`codigo.eq.${qrCodigo}`);
-      // …y opcionalmente como ID (si algún día decides poner el uuid en el QR)
-      orFilters.push(`id.eq.${qrCodigo}`);
+    const cod = String(codigo).trim();
+    if (cod) {
+      orFilters.push(`codigo.eq.${cod}`);
     }
   }
 
-  // Si por alguna razón no se armó ningún filtro:
+  // --- B) Código de seguridad (manual) ---
+  if (sec) {
+    const s = String(sec).trim();
+    if (s) {
+      orFilters.push(`security_code.eq.${s}`);
+    }
+  }
+
+  // --- C) QR escaneado ---
+  if (qr) {
+    const qrString = String(qr).trim();
+
+    // 1) Intentar como URL (por si alguna vez pones link en el QR)
+    try {
+      const url = new URL(qrString);
+
+      const qpCodigo =
+        url.searchParams.get("codigo") ||
+        url.searchParams.get("ticket") ||
+        url.searchParams.get("code");
+
+      const qpId =
+        url.searchParams.get("id") ||
+        url.searchParams.get("entradaId") ||
+        url.searchParams.get("ticketId");
+
+      if (qpCodigo) {
+        orFilters.push(`codigo.eq.${qpCodigo.trim()}`);
+      }
+      if (qpId) {
+        orFilters.push(`id.eq.${qpId.trim()}`);
+      }
+    } catch {
+      // no era URL, seguimos con los otros formatos
+    }
+
+    // 2) Formato con pipes: ej. "CS-123456|ABCDEF|uuid"
+    const parts = qrString
+      .split("|")
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    for (const p of parts) {
+      if (p.startsWith("CS-")) {
+        orFilters.push(`codigo.eq.${p}`);
+      }
+      // si alguna parte parece un uuid largo, lo probamos como id
+      if (p.length > 20) {
+        orFilters.push(`id.eq.${p}`);
+      }
+    }
+
+    // 3) Fallback: buscar un patrón tipo CS-###### dentro del string
+    const match = qrString.match(/CS-\d{4,12}/i);
+    if (match) {
+      orFilters.push(`codigo.eq.${match[0]}`);
+    }
+  }
+
   if (!orFilters.length) {
     return res
       .status(400)
       .json({ ok: false, error: "No se pudo interpretar el dato enviado" });
   }
 
-  // 3) Buscar en Supabase usando OR
+  // 2) Buscar en tu tabla entradas (con tus columnas reales)
   const { data, error } = await supabaseAdmin
     .from("entradas")
     .select(
@@ -53,15 +95,21 @@ export default async function handler(req, res) {
     .or(orFilters.join(","))
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    console.error("Error Supabase validate-ticket:", error);
+    return res
+      .status(500)
+      .json({ ok: false, error: "Error consultando el ticket" });
+  }
+
+  if (!data) {
     return res
       .status(404)
       .json({ ok: false, error: "Ticket no encontrado" });
   }
 
-  // 4) Validaciones de negocio
-
-  if (data.status_pago !== "aprobado") {
+  // 3) Reglas de negocio usando status_pago (tu columna real)
+  if (String(data.status_pago).toLowerCase() !== "aprobado") {
     return res
       .status(400)
       .json({ ok: false, error: "Ticket no pagado" });
@@ -74,7 +122,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // 5) Marcar como usado
+  // 4) Marcar ticket como usado
   const { error: updError } = await supabaseAdmin
     .from("entradas")
     .update({
@@ -84,11 +132,13 @@ export default async function handler(req, res) {
     .eq("id", data.id);
 
   if (updError) {
+    console.error("Error actualizando uso de ticket:", updError);
     return res
       .status(500)
       .json({ ok: false, error: "Error registrando uso" });
   }
 
+  // 5) Respuesta OK
   return res.status(200).json({
     ok: true,
     codigo: data.codigo,
