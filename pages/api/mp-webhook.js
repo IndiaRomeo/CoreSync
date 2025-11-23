@@ -303,7 +303,7 @@ export default async function handler(req, res) {
             attachments: [
               {
                 filename: `ticket-${ticketRow.codigo}.pdf`,
-                content: pdfBuffer, // 👈 Buffer directo, no base64
+                content: pdfBuffer.toString("base64"),
                 type: "application/pdf",
                 disposition: "attachment",
               },
