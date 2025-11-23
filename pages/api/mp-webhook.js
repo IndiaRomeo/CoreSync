@@ -86,67 +86,74 @@ export default async function handler(req, res) {
 
     // 5) Solo si quedó aprobada intentamos enviar ticket
     if (status_pago === "aprobado") {
-      try {
-        // 5.1 Leer la entrada
-        const { data: ticketRow, error: ticketError } = await supabaseAdmin
-          .from("entradas")
-          .select(
-            "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code, ticket_email_sent_at"
-          )
-          .eq("id", externalRef)
-          .single();
+    try {
+      // 5.1 Intentar marcar ticket_email_sent_at SOLO si estaba en null
+      const nowIso = new Date().toISOString();
 
-        if (ticketError || !ticketRow) {
-          console.error("⚠️ No se pudo leer la entrada:", ticketError);
-          return res.status(200).send("No ticket row");
-        }
+      const { data: rows, error: ticketError } = await supabaseAdmin
+        .from("entradas")
+        .update({ ticket_email_sent_at: nowIso })
+        .eq("id", externalRef)
+        .is("ticket_email_sent_at", null)
+        .select(
+          "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code, ticket_email_sent_at"
+        );
 
-        // 5.2 Si ya tiene fecha de envío, no mandamos otro
-        if (ticketRow.ticket_email_sent_at) {
-          console.log(
-            `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at=${ticketRow.ticket_email_sent_at}, no reenviamos.`
-          );
-          return res.status(200).send("Email already sent");
-        }
+      // Si hay error, salimos
+      if (ticketError) {
+        console.error("⚠️ Error leyendo/actualizando entrada:", ticketError);
+        return res.status(200).send("No ticket row");
+      }
 
-        // 5.3 Correo destino (BD primero, luego MP payer.email)
-        const payer = paymentInfo.payer || {};
-        const payerEmail = payer.email || null;
-        const toEmail = ticketRow.buyer_email || payerEmail;
+      // Si no se actualizó ninguna fila, ya se había enviado antes
+      if (!rows || rows.length === 0) {
+        console.log(
+          `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at, no reenviamos.`
+        );
+        return res.status(200).send("Email already sent");
+      }
 
-        if (!toEmail) {
-          console.log("⚠️ No hay buyer_email para enviar el ticket.");
-          return res.status(200).send("No buyer email");
-        }
+      // Aquí SÍ es la primera vez → usamos esa fila
+      const ticketRow = rows[0];
 
-        // 5.4 Fecha formateada
-        const eventDate = new Date(ticketRow.event_date);
-        const eventDateLabel = eventDate.toLocaleString("es-CO", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+      // 5.3 Correo destino (BD primero, luego MP payer.email)
+      const payer = paymentInfo.payer || {};
+      const payerEmail = payer.email || null;
+      const toEmail = ticketRow.buyer_email || payerEmail;
 
-        const priceLabel = `${ticketRow.divisa} $${ticketRow.importe.toLocaleString(
-          "es-CO"
-        )}`;
+      if (!toEmail) {
+        console.log("⚠️ No hay buyer_email para enviar el ticket.");
+        return res.status(200).send("No buyer email");
+      }
 
-        // 5.5 Código de seguridad derivado si hace falta (solo para mostrarlo en el correo)
-        const codigoString = String(ticketRow.codigo ?? "");
-        const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
-        const derivedSecurity =
-          securityBase.length >= 6
-            ? securityBase.slice(-6)
-            : securityBase.padStart(6, "0");
-        const securityCode = ticketRow.security_code || derivedSecurity;
+      // 5.4 Fecha formateada
+      const eventDate = new Date(ticketRow.event_date);
+      const eventDateLabel = eventDate.toLocaleString("es-CO", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
-        // 5.6 URL del PDF (ya generado por tu propia API)
-        const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
+      const priceLabel = `${ticketRow.divisa} $${ticketRow.importe.toLocaleString(
+        "es-CO"
+      )}`;
 
-        // 5.7 HTML del correo (el mismo que ya tenías)
-        const htmlBody = `
+      // 5.5 Código de seguridad derivado
+      const codigoString = String(ticketRow.codigo ?? "");
+      const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
+      const derivedSecurity =
+        securityBase.length >= 6
+          ? securityBase.slice(-6)
+          : securityBase.padStart(6, "0");
+      const securityCode = ticketRow.security_code || derivedSecurity;
+
+      // 5.6 URL del PDF
+      const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
+
+      // 5.7 HTML del correo (igual que ya tienes)
+      const htmlBody = `
         <!doctype html>
         <html lang="es">
           <head>
@@ -272,37 +279,31 @@ export default async function handler(req, res) {
         </html>
         `;
 
-        // 5.8 Enviar correo usando la URL del PDF como attachment
-        const { data, error: resendError } = await resend.emails.send({
-          from:
-            process.env.TICKETS_FROM_EMAIL ||
-            "Core Sync Collective - Tickets <tickets@collectivecoresync.com>",
-          to: toEmail,
-          subject: `Tu ticket para ${ticketRow.event_name}`,
-          html: htmlBody,
-          attachments: [
-            {
-              filename: `ticket-${ticketRow.codigo}.pdf`,
-              path: ticketPdfUrl, // 👈 Resend descarga este PDF y lo adjunta
-            },
-          ],
-        });
+      // 5.8 Enviar correo
+      const { data, error: resendError } = await resend.emails.send({
+        from:
+          process.env.TICKETS_FROM_EMAIL ||
+          "Core Sync Collective - Tickets <tickets@collectivecoresync.com>",
+        to: toEmail,
+        subject: `Tu ticket para ${ticketRow.event_name}`,
+        html: htmlBody,
+        attachments: [
+          {
+            filename: `ticket-${ticketRow.codigo}.pdf`,
+            path: ticketPdfUrl,
+          },
+        ],
+      });
 
-        if (resendError) {
-          console.error("❌ Error enviando ticket por email (Resend):", resendError);
-        } else {
-          console.log(`📧 Ticket enviado a ${toEmail}`, data);
-        }
-
-        // 5.9 Marcar que ya se envió (aunque Resend devuelva error, puedes decidir no marcar)
-        await supabaseAdmin
-          .from("entradas")
-          .update({ ticket_email_sent_at: new Date().toISOString() })
-          .eq("id", externalRef);
-      } catch (mailErr) {
-        console.error("❌ Error enviando ticket por email (try/catch):", mailErr);
+      if (resendError) {
+        console.error("❌ Error enviando ticket por email (Resend):", resendError);
+      } else {
+        console.log(`📧 Ticket enviado a ${toEmail}`, data);
       }
+    } catch (mailErr) {
+      console.error("❌ Error enviando ticket por email (try/catch):", mailErr);
     }
+  }
 
     return res.status(200).send("OK");
   } catch (error) {
