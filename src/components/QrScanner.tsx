@@ -24,7 +24,7 @@ export default function QrScanner({ onResult, style }: QrScannerProps) {
           fps: 10,
           qrbox: { width: 220, height: 220 },
           disableFlip: true,
-          aspectRatio: 1.0, // ✅ esto sí está tipado
+          aspectRatio: 1.0, //esto sí está tipado
         },
         (decodedText) => {
           setHitAnim(true);
