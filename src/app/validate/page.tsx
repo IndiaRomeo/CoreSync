@@ -182,225 +182,197 @@ export default function Validador() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
-      {/* Top bar / header */}
-      <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-emerald-400">
-              Core Sync Collective
-            </p>
-            <h1 className="text-lg font-semibold">
-              Validador de tickets
-            </h1>
-          </div>
+    <div className="relative flex flex-col items-center p-6">
+      <h1 className="text-2xl font-bold mb-2">Validador de tickets</h1>
 
-          {validador && (
-            <div className="text-right text-xs">
-              <div className="inline-flex items-center gap-1 rounded-full bg-slate-800/80 px-3 py-1 border border-slate-700">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-medium">{validador}</span>
-              </div>
-              <p className="mt-1 text-[11px] text-slate-400">
-                Tickets validados:{" "}
-                <span className="font-semibold text-emerald-400">
-                  {contador}
+      {/* 🔔 Banner flotante de resultado (arriba, muy visible) */}
+      {(data || msg) && (
+        <div className="fixed inset-x-0 top-3 z-50 flex justify-center">
+          <div
+            className={
+              "w-[92%] max-w-md rounded-2xl px-4 py-3 shadow-xl border backdrop-blur " +
+              (data
+                ? "bg-emerald-900/95 border-emerald-400 text-emerald-50"
+                : "bg-rose-900/95 border-rose-400 text-rose-50")
+            }
+          >
+            <div className="flex items-center gap-3">
+              {data ? (
+                <AiOutlineCheckCircle
+                  className="text-emerald-300 flex-shrink-0"
+                  size={32}
+                />
+              ) : (
+                <AiOutlineCloseCircle
+                  className="text-rose-300 flex-shrink-0"
+                  size={32}
+                />
+              )}
+
+              <div className="flex flex-col text-sm">
+                <span className="font-semibold text-base">
+                  {data ? "¡TICKET VÁLIDO!" : "Ticket no válido"}
                 </span>
-              </p>
+
+                {data ? (
+                  <>
+                    <span>Código: {data.codigo}</span>
+                    <span>Nombre: {data.nombre}</span>
+                    <span>Tel: {data.telefono}</span>
+                    <span className="text-xs opacity-80">
+                      Email: {data.email}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs opacity-90">{msg}</span>
+                )}
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {validador && (
+        <div className="flex items-center justify-between w-full max-w-xs mb-4 mt-10">
+          <div className="flex flex-col text-sm text-gray-300">
+            <p>
+              Validador activo: <strong>{validador}</strong>
+            </p>
+            <p className="text-gray-400">
+              Tickets validados: {contador}
+            </p>
+          </div>
+          <button
+            className="text-red-400 text-sm underline ml-4"
+            onClick={() => {
+              const currentValidador = validador;
+              setValidador("");
+              setUsername("");
+              setPin("");
+              setData(null);
+              setContador(0);
+              scannedCodesRef.current.clear();
+              localStorage.removeItem("validador");
+              if (currentValidador) {
+                localStorage.removeItem(
+                  `contador_${currentValidador}`
+                );
+              }
+              setMsg("Sesión cerrada");
+              resetAfter(2000);
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      )}
+
+      {/* Sección de escaneo QR */}
+      {validador && (
+        <div className="my-4">
+          {!scanned && <QrScanner onResult={handleResult} />}
+          {!scanned && (
+            <p className="text-gray-400 text-sm mt-2 text-center">
+              Apunta al código QR del ticket
+            </p>
           )}
         </div>
-      </header>
+      )}
 
-      <main className="flex-1 flex justify-center">
-        <div className="w-full max-w-xl px-4 py-6 space-y-6">
-          {/* Login de validador */}
-          {!validador && (
-            <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
-              <h2 className="text-base font-semibold mb-2">
-                Inicia sesión como validador
-              </h2>
-              <p className="text-xs text-slate-400 mb-4">
-                Usa tu nombre y PIN asignado para empezar a escanear
-                entradas en el evento.
-              </p>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Nombre"
-                  className="w-full mb-1 border border-slate-700 bg-slate-900 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-                <input
-                  type="password"
-                  placeholder="PIN"
-                  className="w-full mb-1 border border-slate-700 bg-slate-900 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                />
-                <button
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg py-2 text-sm font-semibold transition-colors"
-                  onClick={() => {
-                    const claveCorrecta = VALIDADORES[username];
-                    if (claveCorrecta && claveCorrecta === pin) {
-                      setValidador(username);
-                      localStorage.setItem("validador", username);
-                    } else {
-                      setMsg("Nombre o PIN incorrecto");
-                      resetAfter(3000);
-                    }
-                  }}
-                >
-                  Entrar al validador
-                </button>
-              </div>
-            </section>
-          )}
+      {/* Formularios manuales (código y código de seguridad) */}
+      {validador && (
+        <div className="w-full max-w-sm mt-4 space-y-4">
+          {/* Código de ticket */}
+          <form
+            onSubmit={handleValidateByCodigo}
+            className="flex flex-col gap-2 border border-white/10 rounded-xl p-3 bg-slate-900/60"
+          >
+            <h2 className="font-semibold text-sm text-white">
+              Validar por código de ticket
+            </h2>
+            <p className="text-[11px] text-gray-400">
+              Escribe el código impreso en la boleta (ej. CS-390388).
+            </p>
+            <input
+              type="text"
+              value={codigoManual}
+              onChange={(e) => setCodigoManual(e.target.value)}
+              placeholder="Ej: CS-390388"
+              className="border border-white/10 bg-slate-900/80 rounded px-2 py-1 text-sm text-white placeholder:text-gray-500"
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-500 transition text-white text-sm rounded py-1 font-semibold"
+            >
+              Validar código
+            </button>
+          </form>
 
-          {/* Zona de escaneo + formularios */}
-          {validador && (
-            <>
-              {/* Scanner card */}
-              <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">
-                    Escaneo rápido por QR
-                  </h2>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Cámara activa
-                  </span>
-                </div>
-
-                <div className="mt-3">
-                  <div className="relative w-full max-w-sm mx-auto aspect-[4/3] overflow-hidden rounded-2xl border border-slate-700 bg-black">
-                    {/* Cámara */}
-                    {!scanned && (
-                      <div className="absolute inset-0">
-                        <QrScanner onResult={handleResult} />
-                      </div>
-                    )}
-
-                    {/* Overlay del marco */}
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <div className="w-52 h-52 rounded-3xl border-2 border-emerald-400/80 shadow-[0_0_0_9999px_rgba(15,23,42,0.65)]" />
-                    </div>
-
-                    {/* Texto inferior */}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-[11px] text-slate-200/90">
-                      Apunta al código QR del ticket
-                    </div>
-                  </div>
-
-                  <p className="mt-2 text-[11px] text-center text-slate-400">
-                    Al escanear, el sistema marcará automáticamente el
-                    ticket como usado y mostrará los datos del asistente.
-                  </p>
-                </div>
-              </section>
-
-              {/* Formularios manuales */}
-              <section className="grid gap-4 md:grid-cols-2">
-                <form
-                  onSubmit={handleValidateByCodigo}
-                  className="flex flex-col gap-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-4"
-                >
-                  <h3 className="font-semibold text-sm">
-                    Validar por código de ticket
-                  </h3>
-                  <p className="text-[11px] text-slate-400 -mt-1">
-                    Escribe el código impreso en la boleta (ej. CS-390388).
-                  </p>
-                  <input
-                    type="text"
-                    value={codigoManual}
-                    onChange={(e) => setCodigoManual(e.target.value)}
-                    placeholder="Ej: CS-390388"
-                    className="border border-slate-700 bg-slate-950 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <button
-                    type="submit"
-                    className="mt-1 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg py-2 font-semibold transition-colors"
-                  >
-                    Validar código
-                  </button>
-                </form>
-
-                <form
-                  onSubmit={handleValidateBySecurity}
-                  className="flex flex-col gap-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-4"
-                >
-                  <h3 className="font-semibold text-sm">
-                    Validar por código de seguridad
-                  </h3>
-                  <p className="text-[11px] text-slate-400 -mt-1">
-                    Úsalo como respaldo si el QR no se puede leer.
-                  </p>
-                  <input
-                    type="text"
-                    value={securityManual}
-                    onChange={(e) => setSecurityManual(e.target.value)}
-                    placeholder="Ej: 9F3A2C"
-                    className="border border-slate-700 bg-slate-950 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                  />
-                  <button
-                    type="submit"
-                    className="mt-1 bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-sm rounded-lg py-2 font-semibold transition-colors"
-                  >
-                    Validar código de seguridad
-                  </button>
-                </form>
-              </section>
-            </>
-          )}
-
-          {/* Mensaje de éxito */}
-          {data && (
-            <section className="bg-emerald-100 rounded-2xl p-4 text-center mt-2 flex flex-col items-center shadow-lg">
-              <AiOutlineCheckCircle
-                className="text-emerald-700 animate-pulse mb-1"
-                size={40}
-              />
-              <div className="text-base font-bold text-emerald-800">
-                ¡TICKET VÁLIDO!
-              </div>
-              <p className="text-sm text-emerald-900 mt-2">
-                Nombre: {data.nombre}
-              </p>
-              <p className="text-sm text-emerald-900">
-                Teléfono: {data.telefono}
-              </p>
-              <p className="text-sm text-emerald-900">
-                Email: {data.email}
-              </p>
-              <p className="text-sm text-emerald-900">
-                Estado: {data.estado}
-              </p>
-            </section>
-          )}
-
-          {/* Mensaje de error */}
-          {msg && (
-            <section className="bg-rose-100 rounded-2xl p-4 text-center mt-2 flex flex-col items-center shadow-lg">
-              <AiOutlineCloseCircle
-                className="text-rose-700 mb-1"
-                size={40}
-              />
-              <div className="text-base font-bold text-rose-700">
-                {msg}
-              </div>
-            </section>
-          )}
-
-          {/* Botón cerrar sesión (ya está arriba, pero aquí queda la separación visual) */}
-          {validador && (
-            <div className="text-center text-[11px] text-slate-500 mt-4">
-              Core Sync · Módulo de validación interno
-            </div>
-          )}
+          {/* Código de seguridad */}
+          <form
+            onSubmit={handleValidateBySecurity}
+            className="flex flex-col gap-2 border border-white/10 rounded-xl p-3 bg-slate-900/60"
+          >
+            <h2 className="font-semibold text-sm text-white">
+              Validar por código de seguridad
+            </h2>
+            <p className="text-[11px] text-gray-400">
+              Úsalo como respaldo si el QR no se puede leer.
+            </p>
+            <input
+              type="text"
+              value={securityManual}
+              onChange={(e) => setSecurityManual(e.target.value)}
+              placeholder="Ej: 9F3A2C"
+              className="border border-white/10 bg-slate-900/80 rounded px-2 py-1 text-sm text-white placeholder:text-gray-500"
+            />
+            <button
+              type="submit"
+              className="bg-fuchsia-600 hover:bg-fuchsia-500 transition text-white text-sm rounded py-1 font-semibold"
+            >
+              Validar código de seguridad
+            </button>
+          </form>
         </div>
-      </main>
+      )}
+
+      {/* Login de validador */}
+      {!validador && (
+        <div className="w-full max-w-xs mb-6 mt-6">
+          <h2 className="text-lg font-semibold mb-2">
+            Inicia sesión como validador
+          </h2>
+          <input
+            type="text"
+            placeholder="Nombre"
+            className="w-full mb-2 border border-white/10 bg-slate-900/80 p-2 rounded text-white"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="PIN"
+            className="w-full mb-2 border border-white/10 bg-slate-900/80 p-2 rounded text-white"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+          />
+          <button
+            className="w-full bg-blue-600 hover:bg-blue-500 transition text-white rounded py-2 font-semibold"
+            onClick={() => {
+              const claveCorrecta = VALIDADORES[username];
+              if (claveCorrecta && claveCorrecta === pin) {
+                setValidador(username);
+                localStorage.setItem("validador", username);
+              } else {
+                setMsg("Nombre o PIN incorrecto");
+                resetAfter(3000);
+              }
+            }}
+          >
+            Iniciar sesión
+          </button>
+        </div>
+      )}
     </div>
   );
 }
