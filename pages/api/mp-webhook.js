@@ -98,228 +98,235 @@ export default async function handler(req, res) {
     console.log(`🎟️ Entrada ${externalRef} marcada como ${status_pago}`);
 
     // 4) Si el pago quedó APROBADO ⇒ generar PDF y enviarlo por correo
-    if (status_pago === "aprobado" && buyer_email) {
+    if (status_pago === "aprobado") {
       try {
-        // Leer la fila + ticket_email_sent_at
-        const { data: ticketRow, error: ticketError } = await supabaseAdmin
+        // 4.1 Intentar "reservar" el envío:
+        // solo el PRIMER webhook que llegue con ticket_email_sent_at NULL lo consigue.
+        const nowIso = new Date().toISOString();
+
+        const { data: updatedRows, error: lockError } = await supabaseAdmin
           .from("entradas")
+          .update({ ticket_email_sent_at: nowIso })
+          .eq("id", externalRef)
+          .is("ticket_email_sent_at", null) // solo si aún NO se ha enviado
           .select(
             "buyer_name, buyer_email, event_name, event_date, event_location, codigo, importe, divisa, qr_base64, security_code, ticket_email_sent_at"
-          )
-          .eq("id", externalRef)
-          .single();
-
-        if (ticketError || !ticketRow) {
-          console.error(
-            "⚠️ No se pudo leer la entrada para generar el PDF:",
-            ticketError
-          );
-        } else {
-          // ⛔ Candado anti-duplicados: si ya se envió antes, no mandamos otro correo
-          if (ticketRow.ticket_email_sent_at) {
-            console.log(
-              `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at=${ticketRow.ticket_email_sent_at}, no reenviamos correo.`
-            );
-            return res.status(200).send("Email already sent");
-          }
-
-          // Formatear fecha
-          const eventDate = new Date(ticketRow.event_date);
-          const eventDateLabel = eventDate.toLocaleString("es-CO", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-
-          const priceLabel = `${ticketRow.divisa} $${ticketRow.importe.toLocaleString(
-            "es-CO"
-          )}`;
-
-          // Código de seguridad (si no está guardado, lo derivamos del código)
-          const codigoString = String(ticketRow.codigo ?? "");
-          const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
-          const derivedSecurity =
-            securityBase.length >= 6
-              ? securityBase.slice(-6)
-              : securityBase.padStart(6, "0");
-
-          const securityCode = ticketRow.security_code || derivedSecurity;
-
-          // Construir el PDF con el mismo diseño premium
-          const doc = (
-            <TicketPDF
-              buyerName={ticketRow.buyer_name}
-              eventName={ticketRow.event_name}
-              eventDateLabel={eventDateLabel}
-              eventLocation={ticketRow.event_location}
-              codigo={ticketRow.codigo}
-              priceLabel={priceLabel}
-              qrBase64={ticketRow.qr_base64}
-              logoUrl="/core-sync-logo.png"
-              securityCode={securityCode}
-            />
           );
 
-          const pdfBuffer = await pdf(doc).toBuffer();
-
-          // Enviar email con Resend
-          const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
-
-          const htmlBody = `
-          <!doctype html>
-          <html lang="es">
-            <head>
-              <meta charset="utf-8" />
-              <title>Tu ticket para ${ticketRow.event_name}</title>
-            </head>
-            <body style="margin:0;padding:0;background:#050509;color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#050509;padding:24px 0;">
-                <tr>
-                  <td align="center">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#0b0b10;border-radius:18px;overflow:hidden;border:1px solid #1f2937;">
-                      
-                      <!-- Header -->
-                      <tr>
-                        <td style="padding:24px 24px 16px 24px;background:radial-gradient(circle at top,#22c55e33,#020617);border-bottom:1px solid #111827;">
-                          <table width="100%">
-                            <tr>
-                              <td align="left">
-                                <img
-                                  src="https://collectivecoresync.com/core-sync-logo.png"
-                                  alt="Core Sync Collective"
-                                  width="48"
-                                  height="48"
-                                  style="display:block;border-radius:999px;border:1px solid #22c55e33;"
-                                />
-                              </td>
-                              <td align="right">
-                                <div style="font-size:11px;color:#9ca3af;letter-spacing:0.08em;text-transform:uppercase;">
-                                  Core Sync Collective
-                                </div>
-                                <div style="margin-top:4px;font-size:13px;color:#e5e7eb;">
-                                  Tu ticket está listo ⚡
-                                </div>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-
-                      <!-- Mensaje principal -->
-                      <tr>
-                        <td style="padding:24px;">
-                          <h1 style="margin:0;font-size:22px;font-weight:700;color:#f9fafb;">
-                            Hola ${ticketRow.buyer_name || "raver"},
-                          </h1>
-                          <p style="margin:12px 0;font-size:14px;color:#e5e7eb;">
-                            Gracias por apoyar <strong>Core Sync Collective</strong>.
-                          </p>
-                          <p style="margin:0;font-size:13px;color:#9ca3af;">
-                            Adjuntamos tu ticket digital. Preséntalo en tu celular o impreso.
-                          </p>
-                        </td>
-                      </tr>
-
-                      <!-- Tarjeta de ticket -->
-                      <tr>
-                        <td style="padding:0 24px 24px 24px;">
-                          <table width="100%" style="border-radius:14px;background:linear-gradient(135deg,#020617,#111827);border:1px solid #1f2937;">
-                            <tr>
-                              <td style="padding:18px;">
-                                <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:0.16em;">Entrada digital</div>
-                                <div style="margin-top:4px;font-size:16px;font-weight:700;color:#f9fafb;">${ticketRow.event_name}</div>
-                                <div style="margin-top:4px;font-size:13px;color:#e5e7eb;">${eventDateLabel}</div>
-                                <div style="font-size:12px;color:#9ca3af;">${ticketRow.event_location}</div>
-                              </td>
-                              <td style="padding:18px;" align="right">
-                                <div style="font-size:11px;color:#9ca3af;">Importe</div>
-                                <div style="font-size:15px;font-weight:700;color:#a855f7;">
-                                  ${priceLabel}
-                                </div>
-                              </td>
-                            </tr>
-
-                            <tr>
-                              <td colspan="2" style="padding:14px 18px;">
-                                <table width="100%">
-                                  <tr>
-                                    <td>
-                                      <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Código de ticket</div>
-                                      <div style="font-family:monospace;font-size:15px;font-weight:700;color:#f97316;">${ticketRow.codigo}</div>
-                                    </td>
-                                    <td align="right">
-                                      <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Seguridad</div>
-                                      <div style="font-family:monospace;font-size:15px;font-weight:700;color:#22c55e;">${securityCode}</div>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-
-                          </table>
-                        </td>
-                      </tr>
-
-                      <!-- Botón -->
-                      <tr>
-                        <td align="center" style="padding:0 24px 24px 24px;">
-                          <a href="${ticketPdfUrl}"
-                            style="display:inline-block;padding:10px 22px;border-radius:999px;background:#f97316;color:#050509;font-size:13px;font-weight:700;text-decoration:none;letter-spacing:0.12em;">
-                            Descargar Ticket (PDF)
-                          </a>
-                          <div style="margin-top:10px;font-size:11px;color:#6b7280;">
-                            Si el botón no funciona, abre el archivo adjunto.
-                          </div>
-                        </td>
-                      </tr>
-
-                      <!-- Footer -->
-                      <tr>
-                        <td style="padding:24px;border-top:1px solid #111827;">
-                          <div style="font-size:11px;color:#4b5563;">
-                            Core Sync Collective · Producción Techno<br />
-                            Soporte: <a href="mailto:collectivecoresync@gmail.com" style="color:#9ca3af;">collectivecoresync@gmail.com</a>
-                          </div>
-                        </td>
-                      </tr>
-
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </body>
-          </html>
-          `;
-
-          await resend.emails.send({
-            from:
-              process.env.TICKETS_FROM_EMAIL ||
-              "Core Sync <onboarding@resend.dev>",
-            to: ticketRow.buyer_email || buyer_email,
-            subject: `Tu ticket para ${ticketRow.event_name}`,
-            html: htmlBody,
-            attachments: [
-              {
-                filename: `ticket-${ticketRow.codigo}.pdf`,
-                content: pdfBuffer.toString("base64"),
-                type: "application/pdf",
-                disposition: "attachment",
-              },
-            ],
-          });
-
-          console.log(
-            `📧 Ticket enviado a ${ticketRow.buyer_email || buyer_email}`
-          );
-
-          // Marcamos que ya se envió para no duplicar
-          await supabaseAdmin
-            .from("entradas")
-            .update({ ticket_email_sent_at: new Date().toISOString() })
-            .eq("id", externalRef);
+        if (lockError) {
+          console.error("❌ Error marcando ticket_email_sent_at:", lockError);
+          return res.status(200).send("Error locking email");
         }
+
+        // Si no volvió ninguna fila, alguien más ya lo envió antes
+        if (!updatedRows || updatedRows.length === 0) {
+          console.log(
+            `📨 Ticket ${externalRef} ya tenía ticket_email_sent_at, no reenviamos correo.`
+          );
+          return res.status(200).send("Email already sent");
+        }
+
+        const ticketRow = updatedRows[0];
+
+        // Aseguramos correo destino (prioridad BD, fallback payer.email)
+        const toEmail = ticketRow.buyer_email || buyer_email;
+        if (!toEmail) {
+          console.log("⚠️ No hay buyer_email para enviar el ticket.");
+          return res.status(200).send("No buyer email");
+        }
+
+        // 4.2 Formatear fecha
+        const eventDate = new Date(ticketRow.event_date);
+        const eventDateLabel = eventDate.toLocaleString("es-CO", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        const priceLabel = `${ticketRow.divisa} $${ticketRow.importe.toLocaleString(
+          "es-CO"
+        )}`;
+
+        // 4.3 Limpiar el base64 del QR (por si viene con "data:image/png;base64,")
+        let qrBase64 = ticketRow.qr_base64 || "";
+        qrBase64 = qrBase64.replace(/^data:image\/\w+;base64,/, "");
+
+        // 4.4 Código de seguridad (si no está guardado, lo derivamos del código)
+        const codigoString = String(ticketRow.codigo ?? "");
+        const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
+        const derivedSecurity =
+          securityBase.length >= 6
+            ? securityBase.slice(-6)
+            : securityBase.padStart(6, "0");
+
+        const securityCode = ticketRow.security_code || derivedSecurity;
+
+        // 4.5 Construir el PDF con el mismo diseño premium
+        const doc = (
+          <TicketPDF
+            buyerName={ticketRow.buyer_name}
+            eventName={ticketRow.event_name}
+            eventDateLabel={eventDateLabel}
+            eventLocation={ticketRow.event_location}
+            codigo={ticketRow.codigo}
+            priceLabel={priceLabel}
+            qrBase64={qrBase64}
+            logoUrl="/core-sync-logo.png"
+            securityCode={securityCode}
+          />
+        );
+
+        const pdfBuffer = await pdf(doc).toBuffer();
+
+        // 4.6 HTML del correo (tema dark completo)
+        const ticketPdfUrl = `https://collectivecoresync.com/api/boleta-pdf-from-db?id=${externalRef}`;
+
+        const htmlBody = `
+        <!doctype html>
+        <html lang="es">
+          <head>
+            <meta charset="utf-8" />
+            <title>Tu ticket para ${ticketRow.event_name}</title>
+          </head>
+          <body style="margin:0;padding:0;background:#050509;color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#050509;padding:24px 0;">
+              <tr>
+                <td align="center" style="background:#050509;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#050509;border-radius:18px;overflow:hidden;border:1px solid #111827;">
+                    
+                    <!-- Header -->
+                    <tr>
+                      <td style="padding:24px 24px 16px 24px;background:radial-gradient(circle at top,#22c55e33,#020617);border-bottom:1px solid #111827;">
+                        <table width="100%">
+                          <tr>
+                            <td align="left">
+                              <img
+                                src="https://collectivecoresync.com/core-sync-logo.png"
+                                alt="Core Sync Collective"
+                                width="48"
+                                height="48"
+                                style="display:block;border-radius:999px;border:1px solid #22c55e33;"
+                              />
+                            </td>
+                            <td align="right">
+                              <div style="font-size:11px;color:#9ca3af;letter-spacing:0.08em;text-transform:uppercase;">
+                                Core Sync Collective
+                              </div>
+                              <div style="margin-top:4px;font-size:13px;color:#e5e7eb;">
+                                Tu ticket está listo ⚡
+                              </div>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                    <!-- Mensaje principal -->
+                    <tr>
+                      <td style="padding:24px;background:#050509;">
+                        <h1 style="margin:0;font-size:22px;font-weight:700;color:#f9fafb;">
+                          Hola ${ticketRow.buyer_name || "raver"},
+                        </h1>
+                        <p style="margin:12px 0;font-size:14px;color:#e5e7eb;">
+                          Gracias por apoyar <strong>Core Sync Collective</strong>.
+                        </p>
+                        <p style="margin:0;font-size:13px;color:#9ca3af;">
+                          Adjuntamos tu ticket digital. Preséntalo en tu celular o impreso.
+                        </p>
+                      </td>
+                    </tr>
+
+                    <!-- Tarjeta de ticket -->
+                    <tr>
+                      <td style="padding:0 24px 24px 24px;background:#050509;">
+                        <table width="100%" style="border-radius:14px;background:linear-gradient(135deg,#020617,#111827);border:1px solid #1f2937;">
+                          <tr>
+                            <td style="padding:18px;">
+                              <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:0.16em;">Entrada digital</div>
+                              <div style="margin-top:4px;font-size:16px;font-weight:700;color:#f9fafb;">${ticketRow.event_name}</div>
+                              <div style="margin-top:4px;font-size:13px;color:#e5e7eb;">${eventDateLabel}</div>
+                              <div style="font-size:12px;color:#9ca3af;">${ticketRow.event_location}</div>
+                            </td>
+                            <td style="padding:18px;" align="right">
+                              <div style="font-size:11px;color:#9ca3af;">Importe</div>
+                              <div style="font-size:15px;font-weight:700;color:#a855f7;">
+                                ${priceLabel}
+                              </div>
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td colspan="2" style="padding:14px 18px;">
+                              <table width="100%">
+                                <tr>
+                                  <td>
+                                    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Código de ticket</div>
+                                    <div style="font-family:monospace;font-size:15px;font-weight:700;color:#f97316;">${ticketRow.codigo}</div>
+                                  </td>
+                                  <td align="right">
+                                    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Seguridad</div>
+                                    <div style="font-family:monospace;font-size:15px;font-weight:700;color:#22c55e;">${securityCode}</div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                        </table>
+                      </td>
+                    </tr>
+
+                    <!-- Botón -->
+                    <tr>
+                      <td align="center" style="padding:0 24px 24px 24px;background:#050509;">
+                        <a href="${ticketPdfUrl}"
+                          style="display:inline-block;padding:10px 22px;border-radius:999px;background:#f97316;color:#050509;font-size:13px;font-weight:700;text-decoration:none;letter-spacing:0.12em;">
+                          Descargar Ticket (PDF)
+                        </a>
+                        <div style="margin-top:10px;font-size:11px;color:#6b7280;">
+                          Si el botón no funciona, abre el archivo adjunto.
+                        </div>
+                      </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                      <td style="padding:24px;border-top:1px solid #111827;background:#050509;">
+                        <div style="font-size:11px;color:#4b5563;">
+                          Core Sync Collective · Producción Techno<br />
+                          Soporte: <a href="mailto:collectivecoresync@gmail.com" style="color:#9ca3af;">collectivecoresync@gmail.com</a>
+                        </div>
+                      </td>
+                    </tr>
+
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+        `;
+
+        await resend.emails.send({
+          from:
+            process.env.TICKETS_FROM_EMAIL ||
+            "Core Sync <tickets@collectivecoresync.com>",
+          to: toEmail,
+          subject: `Tu ticket para ${ticketRow.event_name}`,
+          html: htmlBody,
+          attachments: [
+            {
+              filename: `ticket-${ticketRow.codigo}.pdf`,
+              content: pdfBuffer,          // Buffer directo, no base64
+              type: "application/pdf",
+              disposition: "attachment",
+            },
+          ],
+        });
+
+        console.log(`📧 Ticket enviado a ${toEmail}`);
       } catch (mailErr) {
         console.error("❌ Error enviando ticket por email:", mailErr);
         // IMPORTANTE: aun si falla el correo, respondemos 200 para que MP no reintente
