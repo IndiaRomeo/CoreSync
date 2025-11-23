@@ -159,16 +159,44 @@ export default async function handler(req, res) {
           <head>
             <meta charset="utf-8" />
             <title>Tu ticket para ${ticketRow.event_name}</title>
+
+            <!-- Ayuda en modo oscuro en iOS / Apple Mail -->
+            <meta name="color-scheme" content="dark">
+            <meta name="supported-color-schemes" content="dark">
           </head>
-          <body style="margin:0;padding:0;background:#050509;color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#050509;padding:24px 0;">
+          <!-- 👇 Forzar fondo oscuro con bgcolor + style -->
+          <body bgcolor="#050509" style="margin:0;padding:0;background-color:#050509;">
+            <table
+              width="100%"
+              cellpadding="0"
+              cellspacing="0"
+              bgcolor="#050509"
+              style="background-color:#050509;padding:24px 0;"
+            >
               <tr>
-                <td align="center" style="background:#050509;">
-                  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#050509;border-radius:18px;overflow:hidden;border:1px solid #111827;">
-                    
+                <!-- 👇 También reforzamos en el TD -->
+                <td align="center" bgcolor="#050509" style="background-color:#050509;">
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    style="
+                      max-width:560px;
+                      background:#050509;
+                      border-radius:18px;
+                      overflow:hidden;
+                      border:1px solid #111827;
+                    "
+                  >
                     <!-- Header -->
                     <tr>
-                      <td style="padding:24px 24px 16px 24px;background:radial-gradient(circle at top,#22c55e33,#020617);border-bottom:1px solid #111827;">
+                      <td
+                        style="
+                          padding:24px 24px 16px 24px;
+                          background:radial-gradient(circle at top,#22c55e33,#020617);
+                          border-bottom:1px solid #111827;
+                        "
+                      >
                         <table width="100%">
                           <tr>
                             <td align="left">
@@ -211,7 +239,14 @@ export default async function handler(req, res) {
                     <!-- Tarjeta de ticket -->
                     <tr>
                       <td style="padding:0 24px 24px 24px;background:#050509;">
-                        <table width="100%" style="border-radius:14px;background:linear-gradient(135deg,#020617,#111827);border:1px solid #1f2937;">
+                        <table
+                          width="100%"
+                          style="
+                            border-radius:14px;
+                            background:linear-gradient(135deg,#020617,#111827);
+                            border:1px solid #1f2937;
+                          "
+                        >
                           <tr>
                             <td style="padding:18px;">
                               <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:0.16em;">Entrada digital</div>
@@ -243,7 +278,6 @@ export default async function handler(req, res) {
                               </table>
                             </td>
                           </tr>
-
                         </table>
                       </td>
                     </tr>
@@ -251,8 +285,20 @@ export default async function handler(req, res) {
                     <!-- Botón -->
                     <tr>
                       <td align="center" style="padding:0 24px 24px 24px;background:#050509;">
-                        <a href="${ticketPdfUrl}"
-                          style="display:inline-block;padding:10px 22px;border-radius:999px;background:#f97316;color:#050509;font-size:13px;font-weight:700;text-decoration:none;letter-spacing:0.12em;">
+                        <a
+                          href="${ticketPdfUrl}"
+                          style="
+                            display:inline-block;
+                            padding:10px 22px;
+                            border-radius:999px;
+                            background:#f97316;
+                            color:#050509;
+                            font-size:13px;
+                            font-weight:700;
+                            text-decoration:none;
+                            letter-spacing:0.12em;
+                          "
+                        >
                           Descargar Ticket (PDF)
                         </a>
                         <div style="margin-top:10px;font-size:11px;color:#6b7280;">
@@ -266,7 +312,10 @@ export default async function handler(req, res) {
                       <td style="padding:24px;border-top:1px solid #111827;background:#050509;">
                         <div style="font-size:11px;color:#4b5563;">
                           Core Sync Collective · Producción Techno<br />
-                          Soporte: <a href="mailto:collectivecoresync@gmail.com" style="color:#9ca3af;">collectivecoresync@gmail.com</a>
+                          Soporte:
+                          <a href="mailto:collectivecoresync@gmail.com" style="color:#9ca3af;">
+                            collectivecoresync@gmail.com
+                          </a>
                         </div>
                       </td>
                     </tr>
