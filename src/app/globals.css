@@ -294,3 +294,25 @@ body {
   animation: qr-success-flash 0.5s ease-out;
 }
 
+/* Elimina las esquinas blancas internas del UI de html5-qrcode */
+#reader__scan_region,
+#reader__camera_permission_button,
+#reader__dashboard_section_csr,
+#reader__dashboard {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Elimina los corner guides que html5-qrcode dibuja */
+#reader__scan_region > div {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* En algunos dispositivos html5-qrcode mete un overlay adicional */
+#reader video {
+  outline: none !important;
+  border: none !important;
+}

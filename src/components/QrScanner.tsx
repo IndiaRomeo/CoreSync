@@ -24,12 +24,11 @@ export default function QrScanner({ onResult, style }: QrScannerProps) {
           fps: 10,
           qrbox: { width: 220, height: 220 },
           disableFlip: true,
+          aspectRatio: 1.0, // ✅ esto sí está tipado
         },
         (decodedText) => {
-          // disparar animación de éxito
           setHitAnim(true);
           setTimeout(() => setHitAnim(false), 600);
-
           onResult(decodedText);
         },
         () => {}
@@ -54,7 +53,7 @@ export default function QrScanner({ onResult, style }: QrScannerProps) {
       {/* Overlay pro */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="relative w-[230px] h-[230px]">
-          {/* Borde verde con glow + flash de éxito */}
+          {/* Borde verde */}
           <div
             className={
               "absolute inset-0 rounded-[30px] border-[3px] border-emerald-400/90 shadow-[0_0_20px_rgba(16,185,129,0.65)] " +
@@ -62,7 +61,7 @@ export default function QrScanner({ onResult, style }: QrScannerProps) {
             }
           />
 
-          {/* Línea láser animada */}
+          {/* Línea láser */}
           <div
             className="
               absolute 
@@ -75,7 +74,7 @@ export default function QrScanner({ onResult, style }: QrScannerProps) {
             "
           />
 
-          {/* Sutil borde extra para look “glass” */}
+          {/* Borde glass */}
           <div className="absolute inset-1 rounded-[28px] ring-1 ring-emerald-400/35" />
         </div>
       </div>
