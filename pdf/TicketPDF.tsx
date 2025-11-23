@@ -37,8 +37,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#262737",
     position: "relative",
-    width: "100%",
-    minHeight: 0,
+    height: "100%",      // en vez de minHeight
+    width: "100%",       // ocupar toda la hoja
   },
 
   // ---------- WATERMARK ----------
@@ -253,9 +253,9 @@ const styles = StyleSheet.create({
 
   // ---------- FOOTER ----------
   footer: {
-    marginTop: 6,                // ↓ antes 10
+    marginTop: 6,
     paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     borderTopWidth: 1,
     borderColor: "#2A2B3A",
     backgroundColor: "#111119",
