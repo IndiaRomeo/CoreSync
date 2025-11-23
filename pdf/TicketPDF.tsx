@@ -28,9 +28,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     backgroundColor: "#050509",
     fontFamily: "Helvetica",
+  },
+
+  // NUEVO: wrapper que centra el ticket
+  pageInner: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+
   container: {
     flexDirection: "row",
     borderRadius: 14,
@@ -39,6 +45,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#262737",
     position: "relative",
+    width: 520,       // ancho fijo del ticket
+    minHeight: 0,     // quitamos el minHeight grande
   },
 
   // ---------- WATERMARK ----------

@@ -164,8 +164,8 @@ export default async function handler(req, res) {
             <meta name="color-scheme" content="dark">
             <meta name="supported-color-schemes" content="dark">
           </head>
-          <!-- 👇 Forzar fondo oscuro con bgcolor + style -->
-          <body bgcolor="#050509" style="margin:0;padding:0;background-color:#050509;">
+          <!-- Forzar fondo oscuro con bgcolor + style -->
+          <body bgcolor="#050509" style="margin:0;padding:0;background-color:#050509;-webkit-text-size-adjust:100%;">
             <table
               width="100%"
               cellpadding="0"
@@ -174,7 +174,7 @@ export default async function handler(req, res) {
               style="background-color:#050509;padding:24px 0;"
             >
               <tr>
-                <!-- 👇 También reforzamos en el TD -->
+                <!-- También reforzamos en el TD -->
                 <td align="center" bgcolor="#050509" style="background-color:#050509;">
                   <table
                     width="100%"
