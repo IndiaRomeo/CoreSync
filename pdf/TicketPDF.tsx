@@ -23,20 +23,21 @@ type TicketPDFProps = {
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 32,
-    paddingBottom: 32,
-    paddingHorizontal: 32,
-    backgroundColor: "#111217", // fondo algo más dark
+    paddingTop: 24,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    backgroundColor: "#050509",
     fontFamily: "Helvetica",
   },
   container: {
-    flexDirection: "row", // ticket + talonario
+    flexDirection: "row",
     borderRadius: 14,
     backgroundColor: "#181920",
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#262737",
-    position: "relative", // para watermark
+    position: "relative",
+    minHeight: 500,
   },
 
   // ---------- WATERMARK ----------

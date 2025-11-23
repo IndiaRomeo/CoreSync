@@ -304,9 +304,11 @@ export default async function handler(req, res) {
           attachments: [
             {
               filename: `ticket-${ticketRow.codigo}.pdf`,
-              content: pdfBuffer, // Buffer directo
-              type: "application/pdf",
-              disposition: "attachment",
+              content: pdfBuffer.toString("base64"), // 👈 ahora sí, base64
+              contentType: "application/pdf",
+              // si quieres, puedes dejar la línea de abajo o quitarla,
+              // pero no es necesaria para que funcione:
+              // disposition: "attachment",
             },
           ],
         });
