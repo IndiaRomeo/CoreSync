@@ -2,43 +2,28 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const url = req.nextUrl.clone();
+  const { pathname } = req.nextUrl;
 
-  // Rutas protegidas del panel admin
-  const protectedPaths = [
-    "/admin",
-    "/admin/",
-    "/admin/tickets",
-    "/admin/register-buyer",
-    "/admin/marcar-qr-manual",
-    "/admin/backup",
-  ];
+  // Solo interceptar rutas del panel admin (páginas, no APIs)
+  const isProtected = pathname.startsWith("/admin");
 
-  const isProtected = protectedPaths.some((p) =>
-    req.nextUrl.pathname.startsWith(p)
-  );
-
-  // Permitir el login y logout sin restricciones
-  if (req.nextUrl.pathname.startsWith("/admin-login")) return NextResponse.next();
-  if (req.nextUrl.pathname.startsWith("/admin-logout")) return NextResponse.next();
-
-  if (isProtected) {
-    const cookie = req.cookies.get("admin_auth");
-    if (!cookie || cookie.value !== "1") {
-      url.pathname = "/admin-login"; // redirigir al login
-      return NextResponse.redirect(url);
-    }
+  if (!isProtected) {
+    return NextResponse.next();
   }
 
+  const cookie = req.cookies.get("admin_auth");
+
+  // Si NO hay cookie válida -> manda siempre a /admin (que ya muestra el login)
+  if (!cookie || cookie.value !== "1") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/admin";
+    return NextResponse.redirect(url);
+  }
+
+  // Hay cookie válida -> dejar pasar
   return NextResponse.next();
 }
 
-// Definir qué rutas mira el middleware
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/admin",
-    "/admin-login",
-    "/admin-logout",
-  ],
+  matcher: ["/admin", "/admin/:path*"],
 };
