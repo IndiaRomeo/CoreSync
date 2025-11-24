@@ -781,11 +781,31 @@ export default function AdminPanel() {
                           onClick={(e) => {
                             const rect = e.currentTarget.getBoundingClientRect();
 
+                            const menuWidth = 192;   // w-48 = 12rem = 192px
+                            const menuHeight = 120;  // altura aproximada del menú
+                            const padding = 12;      // margen con los bordes
+
+                            let x = rect.right;      // por defecto, pegado al botón
+                            let y = rect.bottom + 6; // un poquito abajo del botón
+
+                            const viewportWidth = window.innerWidth;
+                            const viewportHeight = window.innerHeight;
+
+                            // Si se sale por la derecha, lo movemos hacia la izquierda
+                            if (x + menuWidth + padding > viewportWidth) {
+                              x = viewportWidth - menuWidth - padding;
+                            }
+
+                            // Si se sale por abajo, lo abrimos hacia arriba
+                            if (y + menuHeight + padding > viewportHeight) {
+                              y = rect.top - menuHeight - 6;
+                            }
+
                             // 1) Creamos el menú con visible: false
                             setActionsMenu({
                               ticket: t,
-                              x: rect.right,
-                              y: rect.bottom + 6,
+                              x,
+                              y,
                               visible: false,
                             });
 
@@ -832,7 +852,7 @@ export default function AdminPanel() {
               `}
               style={{
                 top: actionsMenu.y,
-                left: actionsMenu.x - 190,
+                left: actionsMenu.x,
               }}
               onClick={(e) => e.stopPropagation()}
             >
