@@ -93,7 +93,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo: "NOCHE DE VELITAS — Core Sync Collective",
-          precio: 22000,
+          precio: 21999,
           entradaId,
         }),
       });
@@ -442,7 +442,7 @@ export default function Home() {
 
                   <div>
                     <p className="text-base">
-                      <span className="font-semibold">Precio:</span> $22,000 COP{" "}
+                      <span className="font-semibold">Precio:</span> $21,999 COP{" "}
                       <span className="text-xs text-gray-500">
                         (entrada general digital)
                       </span>

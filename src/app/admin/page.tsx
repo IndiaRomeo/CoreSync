@@ -681,31 +681,45 @@ export default function AdminPanel() {
                       .filter(([k]) => !HIDDEN_KEYS.has(k))
                       .map(([k, v], j) =>
                         k.toLowerCase() === "estado" ? (
-                          <td
-                            key={j}
-                            className="border-b border-zinc-900 px-3 py-2 align-middle"
-                          >
+                        <td
+                          key={j}
+                          className="border-b border-zinc-900 px-3 py-2 align-middle"
+                        >
+                          <div className="flex items-center gap-2">
+                            {/* Píldora de estado */}
                             <span
                               className={
                                 String(v).toLowerCase() === "pagado"
-                                  ? "inline-flex px-3 py-1 rounded-full bg-emerald-600 text-[11px] font-semibold text-white"
+                                  ? "inline-flex px-3 py-1 rounded-full bg-emerald-600/90 text-[11px] font-semibold text-white shadow-sm shadow-emerald-500/40"
                                   : String(v).toLowerCase() === "reservado"
-                                  ? "inline-flex px-3 py-1 rounded-full bg-amber-500 text-[11px] font-semibold text-zinc-900"
-                                  : "inline-flex px-3 py-1 rounded-full bg-zinc-600 text-[11px] font-semibold text-white"
+                                  ? "inline-flex px-3 py-1 rounded-full bg-amber-400/90 text-[11px] font-semibold text-zinc-900 shadow-sm shadow-amber-400/40"
+                                  : "inline-flex px-3 py-1 rounded-full bg-zinc-600/90 text-[11px] font-semibold text-white"
                               }
                             >
                               {v}
                             </span>
+
+                            {/* Acción solo cuando está reservado */}
                             {String(v).toLowerCase() === "reservado" && (
                               <button
-                                className="ml-2 px-2 py-1 rounded-full bg-emerald-700 text-[10px] font-semibold text-white hover:bg-emerald-800 cursor-pointer"
+                                className="
+                                  inline-flex items-center gap-1
+                                  px-2.5 py-1 rounded-full
+                                  text-[10px] font-semibold
+                                  border border-emerald-500/60
+                                  bg-zinc-950/80
+                                  text-emerald-300
+                                  hover:bg-emerald-500/10 hover:border-emerald-400
+                                  shadow-sm shadow-emerald-500/30
+                                  cursor-pointer
+                                "
                                 onClick={async () => {
                                   if (
-                                    !window.confirm(
-                                      "¿Marcar este ticket como PAGADO?"
-                                    )
-                                  )
+                                    !window.confirm("¿Marcar este ticket como PAGADO?")
+                                  ) {
                                     return;
+                                  }
+
                                   const resp = await fetch("/api/marcar-pago", {
                                     method: "POST",
                                     headers: {
@@ -715,6 +729,7 @@ export default function AdminPanel() {
                                       codigo: t.Código,
                                     }),
                                   });
+
                                   if (resp.ok) {
                                     setAlert({
                                       msg: "¡Boleta marcada como pagada!",
@@ -735,11 +750,13 @@ export default function AdminPanel() {
                                   }
                                 }}
                               >
-                                Marcar pagado
+                                <span className="text-[12px]">✅</span>
+                                <span>Confirmar pago</span>
                               </button>
                             )}
-                          </td>
-                        ) : k.toLowerCase() === "qr" ? (
+                          </div>
+                        </td>
+                      ) : k.toLowerCase() === "qr" ? (
                           <td
                             key={j}
                             className="border-b border-zinc-900 px-3 py-2"
