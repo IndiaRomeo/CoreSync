@@ -68,31 +68,33 @@ export async function GET() {
 
         return {
           Código: row.codigo || row.id || "",
+          Estado: estado,
+
+          // ----- Datos comprador -----
           Nombre: row.buyer_name || "",
           Teléfono: row.buyer_phone || "",
           Email: row.buyer_email || "",
-          Estado: estado,
 
-          // columnas nuevas:
+          // ----- Info compra -----
           Importe:
             row.importe != null
-              ? `${row.divisa || "COP"} $${Number(row.importe).toLocaleString(
-                  "es-CO"
-                )}`
+              ? `${row.divisa || "COP"} $${Number(row.importe).toLocaleString("es-CO")}`
               : "",
+          "Fecha compra": fmtDate(row.created_at),
+          "Fecha pago": fmtDate(row.paid_at),
+          "Email ticket": row.ticket_email_sent_at ? fmtDate(row.ticket_email_sent_at) : "",
+
+          // ----- Info evento -----
           Evento: row.event_name || "",
           "Fecha evento": fmtDate(row.event_date),
           Lugar: row.event_location || "",
-          "Fecha compra": fmtDate(row.created_at),
-          "Fecha pago": fmtDate(row.paid_at),
 
-          "Qr usado": qrUsado,
+          // ----- Validación puerta -----
+          "Qr usado": row.qr_used_at ? "SI" : "NO",
           "Fecha uso QR": fmtDate(row.qr_used_at),
           "Validador QR": row.qr_used_by || "",
 
-          "Email ticket":
-            row.ticket_email_sent_at ? fmtDate(row.ticket_email_sent_at) : "",
-
+          // ----- QR -----
           Qr: row.qr_base64 || "",
         };
       }) || [];
