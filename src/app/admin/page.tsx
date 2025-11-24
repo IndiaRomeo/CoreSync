@@ -133,7 +133,12 @@ export default function AdminPanel() {
   "todos" | "pagado" | "reservado" | "rechazado"
   >("todos");
 
-  const [openActionsId, setOpenActionsId] = useState<string | null>(null);
+  const [actionsMenu, setActionsMenu] = useState<{
+    ticket: Ticket;
+    x: number;
+    y: number;
+    visible: boolean;
+  } | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
@@ -770,57 +775,31 @@ export default function AdminPanel() {
                           </td>
                         )
                       )}
-                      <td className="border-b border-zinc-900 px-3 py-2 align-middle relative">
-                        {/* Botón de menú (tres puntos) */}
+                      <td className="border-b border-zinc-900 px-3 py-2 align-middle text-right">
                         <button
-                          className="px-2 py-1 rounded-full bg-zinc-900 border border-zinc-700 text-[14px] leading-none text-zinc-200 hover:bg-zinc-800 cursor-pointer"
-                          onClick={() => {
-                            const id = t.Código || String(i);
-                            setOpenActionsId((prev) => (prev === id ? null : id));
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-zinc-900 border border-zinc-700 text-[14px] leading-none text-zinc-200 hover:bg-zinc-800 cursor-pointer"
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+
+                            // 1) Creamos el menú con visible: false
+                            setActionsMenu({
+                              ticket: t,
+                              x: rect.right,
+                              y: rect.bottom + 6,
+                              visible: false,
+                            });
+
+                            // 2) En el siguiente frame, lo marcamos visible para que se anime
+                            requestAnimationFrame(() => {
+                              setActionsMenu((prev) =>
+                                prev ? { ...prev, visible: true } : prev
+                              );
+                            });
                           }}
                           aria-label="Acciones"
                         >
                           ⋮
                         </button>
-
-                        {/* Menú desplegable */}
-                        {openActionsId === (t.Código || String(i)) && (
-                          <div className="absolute right-2 top-9 z-20 w-44 rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl text-[11px] py-1">
-                            <button
-                              className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-zinc-100"
-                              onClick={() => {
-                                handleResend(t);
-                                setOpenActionsId(null);
-                              }}
-                            >
-                              📩 Reenviar ticket por email
-                            </button>
-
-                            {(t["Qr usado"] || "").toLowerCase() !== "si" && (
-                              <button
-                                className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-emerald-300"
-                                onClick={() => {
-                                  handleMarkQrUsed(t);
-                                  setOpenActionsId(null);
-                                }}
-                              >
-                                ✅ Marcar QR usado
-                              </button>
-                            )}
-
-                            {t.Qr && (
-                              <button
-                                className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-sky-300"
-                                onClick={() => {
-                                  setShowQr(t.Qr as string);
-                                  setOpenActionsId(null);
-                                }}
-                              >
-                                🔍 Ver QR
-                              </button>
-                            )}
-                          </div>
-                        )}
                       </td>
                     </tr>
                   ))}
@@ -834,6 +813,60 @@ export default function AdminPanel() {
               </div>
             )}
           </section>
+        )}
+
+        {/* MENÚ FLOTANTE DE ACCIONES */}
+        {actionsMenu && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setActionsMenu(null)}
+        >
+          <div
+            className="absolute w-48 rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl text-[11px] py-1 pointer-events-auto"
+            style={{
+              top: actionsMenu.y,
+              left: actionsMenu.x - 190,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+              <button
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-zinc-100 flex items-center gap-2"
+                onClick={() => {
+                  handleResend(actionsMenu.ticket);
+                  setActionsMenu(null);
+                }}
+              >
+                <span>📩</span>
+                <span>Reenviar ticket por email</span>
+              </button>
+
+              {(actionsMenu.ticket["Qr usado"] || "").toLowerCase() !== "si" && (
+                <button
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-emerald-300 flex items-center gap-2"
+                  onClick={() => {
+                    handleMarkQrUsed(actionsMenu.ticket);
+                    setActionsMenu(null);
+                  }}
+                >
+                  <span>✅</span>
+                  <span>Marcar QR usado</span>
+                </button>
+              )}
+
+              {actionsMenu.ticket.Qr && (
+                <button
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-sky-300 flex items-center gap-2"
+                  onClick={() => {
+                    setShowQr(actionsMenu.ticket.Qr as string);
+                    setActionsMenu(null);
+                  }}
+                >
+                  <span>🔍</span>
+                  <span>Ver QR</span>
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* MODAL QR */}
