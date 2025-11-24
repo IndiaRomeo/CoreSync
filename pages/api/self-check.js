@@ -1,64 +1,68 @@
 // pages/api/self-check.js
-import { google } from "googleapis";
-import fs from "fs";
-
-const CRED_FILE = process.cwd() + "/credenciales.json";
-let credentials;
-if (process.env.GOOGLE_CREDENTIALS_JSON) {
-  credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-} else {
-  credentials = JSON.parse(fs.readFileSync(CRED_FILE, "utf8"));
-}
-
-// Ajusta esto:
-const SHEET_ID = "1zpO7v5Pu1TbWqbRmPxpOYb_E5w01irr0ZKe9_MFsxXo";
-const SHEET_NAME = "Entradas"; // <== Cambia por el nombre de tu hoja EXACTO
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export default async function handler(req, res) {
-  const query = (req.query.query || "").trim().toLowerCase();
-  if (!query) return res.status(400).json({ ok: false, error: "Falta búsqueda" });
-
-  try {
-    const auth = new google.auth.GoogleAuth({
-      credentials,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
-    const sheets = google.sheets({ version: "v4", auth });
-
-    const { data } = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: `${SHEET_NAME}!A:I`, // Usa el nombre real de la hoja
-    });
-
-    const rows = data.values || [];
-    if (rows.length < 2) {
-      return res.status(404).json({ ok: false, error: "No hay datos." });
-    }
-    // Asume la primera fila es encabezado
-    const results = rows
-      .slice(1)
-      .filter(r => {
-        const email = (r[3] || "").toLowerCase();
-        const telefono = (r[2] || "").replace(/[\s\-]/g, "");
-        return email === query || telefono === query.replace(/[\s\-]/g, "");
-      })
-      .map(r => ({
-        codigo: r[0],
-        nombre: r[1],
-        telefono: r[2],
-        email: r[3],
-        estado: r[4],
-        usado: (r[7] || "").toLowerCase() === "si",
-        qr: r[6] || "",
-      }));
-
-    if (!results.length) {
-      return res.status(404).json({ ok: false, error: "No se encontró ninguna boleta para ese dato." });
-    }
-
-    res.json({ ok: true, tickets: results });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ ok: false, error: "Error de servidor: " + e.message });
+  if (req.method !== "GET") {
+    return res.status(405).send("Method not allowed");
   }
+
+  const { query } = req.query;
+  if (!query) {
+    return res
+      .status(400)
+      .json({ error: "Falta parámetro de búsqueda", tickets: [] });
+  }
+
+  const raw = String(query).trim();
+  if (!raw) {
+    return res
+      .status(400)
+      .json({ error: "Falta parámetro de búsqueda", tickets: [] });
+  }
+
+  const orFilters = [];
+
+  // Si parece correo → buscar por buyer_email
+  if (raw.includes("@")) {
+    orFilters.push(`buyer_email.ilike.%${raw.toLowerCase()}%`);
+  } else {
+    // Si no es correo, probamos teléfono (solo dígitos) y código
+    const digits = raw.replace(/\D/g, "");
+    if (digits) {
+      orFilters.push(`buyer_phone.ilike.%${digits}%`);
+    }
+
+    // También permitir poner el código directamente
+    orFilters.push(`codigo.ilike.%${raw}%`);
+  }
+
+  if (!orFilters.length) {
+    return res.status(200).json({ tickets: [] });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("entradas")
+    .select(
+      "codigo, buyer_name, buyer_phone, buyer_email, status_pago, qr_used_at, created_at"
+    )
+    .or(orFilters.join(","))
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    console.error("Error en self-check:", error);
+    return res.status(500).json({ error: "Error consultando tickets", tickets: [] });
+  }
+
+  const tickets = (data || []).map((t) => ({
+    codigo: t.codigo || "",
+    nombre: t.buyer_name || "",
+    telefono: t.buyer_phone || "",
+    email: t.buyer_email || "",
+    estado: t.status_pago || "",
+    usado: !!t.qr_used_at,
+    usadoEn: t.qr_used_at,
+  }));
+
+  return res.status(200).json({ tickets });
 }
