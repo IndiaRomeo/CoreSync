@@ -701,50 +701,42 @@ export default function AdminPanel() {
 
                             {/* Acción solo cuando está reservado */}
                             {String(v).toLowerCase() === "reservado" && (
-                              <button
-                                className="
-                                  inline-flex items-center
-                                  px-3 py-1 rounded-full
-                                  text-[10px] font-semibold tracking-wide
-                                  border border-emerald-500/70
-                                  text-emerald-200
-                                  bg-zinc-950/80
-                                  hover:bg-emerald-500/10 hover:text-emerald-100
-                                  transition-colors
-                                  cursor-pointer
-                                "
-                                onClick={async () => {
-                                  if (!window.confirm("¿Marcar este ticket como PAGADO?")) return;
+                            <button
+                              className="
+                                inline-flex items-center
+                                px-3 py-1 rounded-full
+                                text-[10px] font-semibold
+                                border border-emerald-500/70
+                                bg-zinc-950/90
+                                text-emerald-300
+                                hover:bg-emerald-500/10 hover:border-emerald-400
+                                shadow-sm shadow-emerald-500/30
+                                cursor-pointer
+                              "
+                              onClick={async () => {
+                                if (!window.confirm("¿Marcar este ticket como PAGADO?")) return;
 
-                                  const resp = await fetch("/api/marcar-pago", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ codigo: t.Código }),
-                                  });
+                                const resp = await fetch("/api/marcar-pago", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ codigo: t.Código }),
+                                });
 
-                                  if (resp.ok) {
-                                    setAlert({
-                                      msg: "¡Boleta marcada como pagada!",
-                                      type: "success",
-                                    });
-                                    setTickets((tickets) =>
-                                      tickets.map((ticket) =>
-                                        ticket.Código === t.Código
-                                          ? { ...ticket, Estado: "Pagado" }
-                                          : ticket
-                                      )
-                                    );
-                                  } else {
-                                    setAlert({
-                                      msg: "Error al marcar como pagada",
-                                      type: "error",
-                                    });
-                                  }
-                                }}
-                              >
-                                Confirmar pago
-                              </button>
-                            )}
+                                if (resp.ok) {
+                                  setAlert({ msg: "¡Boleta marcada como pagada!", type: "success" });
+                                  setTickets((tickets) =>
+                                    tickets.map((ticket) =>
+                                      ticket.Código === t.Código ? { ...ticket, Estado: "Pagado" } : ticket
+                                    )
+                                  );
+                                } else {
+                                  setAlert({ msg: "Error al marcar como pagada", type: "error" });
+                                }
+                              }}
+                            >
+                              Confirmar pago
+                            </button>
+                          )}
                           </div>
                         </td>
                       ) : k.toLowerCase() === "qr" ? (
