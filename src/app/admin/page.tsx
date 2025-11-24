@@ -87,30 +87,6 @@ function StatCard({
   );
 }
 
-function exportToCsv(tickets: Ticket[]) {
-  if (!tickets.length) return;
-  const headers = Object.keys(tickets[0]);
-  const rows = tickets.map((t) =>
-    headers
-      .map((h) => {
-        let cell = t[h] ?? "";
-        cell = String(cell).replace(/"/g, '""').replace(/\n/g, " ");
-        return `"${cell}"`;
-      })
-      .join(",")
-  );
-  const csvContent = [headers.join(","), ...rows].join("\r\n");
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "boletas.csv";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.URL.revokeObjectURL(url);
-}
-
 export default function AdminPanel() {
   // 1. Login
   const [isAuth, setIsAuth] = useState(false);
@@ -445,10 +421,21 @@ export default function AdminPanel() {
               />
 
               <button
-                className="bg-emerald-600/90 hover:bg-emerald-500 text-[11px] px-3 py-1.5 rounded-xl font-semibold shadow-sm shadow-emerald-500/40 cursor-pointer whitespace-nowrap"
-                onClick={() => exportToCsv(filteredTickets)}
+                className="bg-zinc-800/90 hover:bg-zinc-700 text-[11px] px-3 py-1.5 rounded-xl font-semibold border border-zinc-600/70 cursor-pointer whitespace-nowrap"
+                onClick={() => {
+                  window.open("/api/backup", "_blank"); // entradas completas
+                }}
               >
-                Descargar CSV
+                Backup entradas
+              </button>
+
+              <button
+                className="bg-zinc-800/90 hover:bg-zinc-700 text-[11px] px-3 py-1.5 rounded-xl font-semibold border border-zinc-600/70 cursor-pointer whitespace-nowrap"
+                onClick={() => {
+                  window.open("/api/backup?tabla=logs", "_blank"); // logs completos
+                }}
+              >
+                Backup logs
               </button>
               <button
                 className="bg-sky-600/90 hover:bg-sky-500 text-[11px] px-3 py-1.5 rounded-xl font-semibold shadow-sm shadow-sky-500/40 cursor-pointer disabled:opacity-60 whitespace-nowrap"
