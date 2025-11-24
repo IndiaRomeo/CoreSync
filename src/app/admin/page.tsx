@@ -23,6 +23,7 @@ type Ticket = {
   Estado: string;
   "Qr usado": string;
   Qr?: string;
+
   [key: string]: string | undefined;
 };
 
@@ -437,7 +438,7 @@ export default function AdminPanel() {
               <li>Las boletas pagadas y usadas tienen color; las reservadas aparecen en amarillo.</li>
               <li>Puedes descargar todas las boletas en CSV para verlas en Excel.</li>
               <li>El panel se actualiza automáticamente al recargar la página.</li>
-              <li>Si hay un error o inconsistencia, revisa la hoja de Google Sheets directamente.</li>
+              <li>Si ves algo raro, revisa la tabla <b>entradas</b> directamente en Supabase.</li>
             </ul>
             <div className="mt-2 text-xs text-gray-600">Recuerda: solo compartir este link a staff autorizado.<br />Actualiza la página si notas cambios externos en la base.</div>
           </div>
