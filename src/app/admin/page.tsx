@@ -129,11 +129,9 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => {
-    if (checkingAuth) return;   // todavía verificando cookie
-    if (!isAuth) return;        // no autenticado → no cargar nada
-
+    if (!isAuth) return;      // solo cuando ya esté logueado
     actualizarTickets();
-  }, [checkingAuth, isAuth]);
+  }, [isAuth]);
 
   useEffect(() => {
     if (alert) {

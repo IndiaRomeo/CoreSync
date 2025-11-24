@@ -3,8 +3,8 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET() {
-  const cookieStore = cookies();
-  const auth = (await cookieStore).get("admin_auth");
+  const cookieStore = await cookies();
+  const auth = cookieStore.get("admin_auth");
   if (!auth || auth.value !== "1") {
     return NextResponse.json(
       { ok: false, error: "No autorizado" },
@@ -56,48 +56,41 @@ export async function GET() {
         : "";
 
     const tickets =
-    (data || []).map((row) => {
-      // Normalizar Estado
-      let estado = "Reservado";
-      const sp = (row.status_pago || "").toLowerCase();
-      if (sp === "aprobado") estado = "Pagado";
-      else if (sp === "rechazado") estado = "Rechazado";
+      (data || []).map((row) => {
+        let estado = "Reservado";
+        const sp = (row.status_pago || "").toLowerCase();
+        if (sp === "aprobado") estado = "Pagado";
+        else if (sp === "rechazado") estado = "Rechazado";
 
-      // Qr usado: SI/NO en base a qr_used_at
-      const qrUsado = row.qr_used_at ? "SI" : "NO";
+        const qrUsado = row.qr_used_at ? "SI" : "NO";
 
-      return {
-        Código: row.codigo || row.id || "",
-        Nombre: row.buyer_name || "",
-        Teléfono: row.buyer_phone || "",
-        Email: row.buyer_email || "",
-        Estado: estado,
-
-        Importe:
-          row.importe != null
-            ? `${row.divisa || "COP"} $${Number(row.importe).toLocaleString(
-                "es-CO"
-              )}`
+        return {
+          Código: row.codigo || row.id || "",
+          Nombre: row.buyer_name || "",
+          Teléfono: row.buyer_phone || "",
+          Email: row.buyer_email || "",
+          Estado: estado,
+          Importe:
+            row.importe != null
+              ? `${row.divisa || "COP"} $${Number(row.importe).toLocaleString(
+                  "es-CO"
+                )}`
+              : "",
+          Evento: row.event_name || "",
+          "Fecha evento": fmtDate(row.event_date),
+          Lugar: row.event_location || "",
+          "Fecha compra": fmtDate(row.created_at),
+          "Fecha pago": fmtDate(row.paid_at),
+          "Qr usado": qrUsado,
+          "Fecha uso QR": fmtDate(row.qr_used_at),
+          "Validador QR": row.qr_used_by || "",
+          "Email ticket": row.ticket_email_sent_at
+            ? fmtDate(row.ticket_email_sent_at)
             : "",
-        Evento: row.event_name || "",
-        "Fecha evento": fmtDate(row.event_date),
-        Lugar: row.event_location || "",
-        "Fecha compra": fmtDate(row.created_at),
-        "Fecha pago": fmtDate(row.paid_at),
-
-        "Qr usado": qrUsado,
-        "Fecha uso QR": fmtDate(row.qr_used_at),
-        "Validador QR": row.qr_used_by || "",
-
-        "Email ticket":
-          row.ticket_email_sent_at ? fmtDate(row.ticket_email_sent_at) : "",
-
-        //Campo oculto para filtro de fecha (raw ISO)
-        "Fecha compra ISO": row.created_at || "",
-
-        Qr: row.qr_base64 || "",
-      };
-    }) || [];
+          "Fecha compra ISO": row.created_at || "",
+          Qr: row.qr_base64 || "",
+        };
+      }) || [];
 
     return NextResponse.json({ ok: true, tickets });
   } catch (e) {
