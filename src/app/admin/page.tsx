@@ -129,8 +129,10 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => {
-    actualizarTickets();
-  }, []);
+    if (isAuth) {
+      actualizarTickets();
+    }
+  }, [isAuth]);
 
   useEffect(() => {
     if (alert) {
