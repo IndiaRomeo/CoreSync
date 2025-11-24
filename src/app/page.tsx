@@ -3,6 +3,7 @@
 import { useState, useEffect, type CSSProperties } from "react";
 import Loader from "../components/Loader";
 import React from "react";
+import Image from "next/image";
 
 const videoSrc = "/video.mp4"; // Usa el nombre real de tu video
 
@@ -405,7 +406,7 @@ export default function Home() {
             <div className="px-0 pt-0 pb-0 flex-1 overflow-hidden rounded-b-2xl">
               <div className="px-8 pt-2 pb-10 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 <div className="w-full flex justify-center mb-4">
-                  <img
+                  <Image
                     src="/evento-foto-velitas.png"
                     alt="Flyer Core Sync Collective"
                     className="rounded-xl max-h-80 md:max-h-96 w-auto object-contain shadow-lg"

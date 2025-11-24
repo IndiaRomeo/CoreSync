@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image";
+
 import {
   PieChart,
   Pie,
@@ -632,9 +634,11 @@ export default function AdminPanel() {
               <h3 className="text-sm font-semibold mb-3">
                 QR de la boleta
               </h3>
-              <img
+              <Image
                 src={showQr}
-                alt="QR"
+                alt="QR de la boleta"
+                width={208}
+                height={208}
                 className="w-52 h-52 object-contain rounded-lg border border-zinc-800 bg-zinc-900"
               />
               <button
