@@ -1,16 +1,44 @@
 "use client";
 import { useEffect, useState } from "react";
-import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-// Componente simple de alerta
-function AlertBar({ msg, type = "info", onClose }: { msg: string; type: string; onClose: () => void }) {
-  const bg = type === "success" ? "bg-green-600"
-           : type === "error" ? "bg-red-600"
-           : "bg-blue-600";
+// Componente simple de alerta (toast)
+function AlertBar({
+  msg,
+  type = "info",
+  onClose,
+}: {
+  msg: string;
+  type: "success" | "error" | "info";
+  onClose: () => void;
+}) {
+  const bg =
+    type === "success"
+      ? "from-emerald-500 to-emerald-600"
+      : type === "error"
+      ? "from-rose-500 to-rose-600"
+      : "from-sky-500 to-sky-600";
+
   return (
-    <div className={`fixed top-5 left-1/2 z-[200] -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg text-white font-bold ${bg} animate-fade-in-up`}>
-      {msg}
-      <button className="ml-4 text-white/80 hover:text-white" onClick={onClose}>×</button>
+    <div className="fixed inset-0 pointer-events-none z-[200] flex items-start justify-center mt-6">
+      <div
+        className={`pointer-events-auto px-6 py-3 rounded-2xl shadow-2xl text-white font-semibold bg-gradient-to-r ${bg} flex items-center gap-4 border border-white/20 backdrop-blur`}
+      >
+        <span>{msg}</span>
+        <button
+          className="text-white/70 hover:text-white text-lg leading-none"
+          onClick={onClose}
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }
@@ -27,11 +55,32 @@ type Ticket = {
   [key: string]: string | undefined;
 };
 
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+function StatCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
   return (
-    <div className={`flex flex-col items-center p-3 rounded-xl min-w-[90px] shadow-md ${color}`}>
-      <span className="text-2xl font-bold text-white">{value}</span>
-      <span className="text-xs font-semibold text-white/80">{label}</span>
+    <div className="flex-1 min-w-[130px]">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/80 to-zinc-950/90 shadow-lg px-4 py-3">
+        <div
+          className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${color}`}
+        />
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col">
+            <span className="text-2xl font-extrabold tracking-tight">
+              {value}
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+              {label}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -39,13 +88,14 @@ function StatCard({ label, value, color }: { label: string; value: number; color
 function exportToCsv(tickets: Ticket[]) {
   if (!tickets.length) return;
   const headers = Object.keys(tickets[0]);
-  const rows = tickets.map(t =>
-    headers.map(h => {
-      let cell = t[h] ?? "";
-      // Escapar comillas y saltos de línea
-      cell = String(cell).replace(/"/g, '""').replace(/\n/g, " ");
-      return `"${cell}"`;
-    }).join(",")
+  const rows = tickets.map((t) =>
+    headers
+      .map((h) => {
+        let cell = t[h] ?? "";
+        cell = String(cell).replace(/"/g, '""').replace(/\n/g, " ");
+        return `"${cell}"`;
+      })
+      .join(",")
   );
   const csvContent = [headers.join(","), ...rows].join("\r\n");
   const blob = new Blob([csvContent], { type: "text/csv" });
@@ -60,30 +110,32 @@ function exportToCsv(tickets: Ticket[]) {
 }
 
 export default function AdminPanel() {
-  // TODOS LOS HOOKS PRIMERO
   // 1. Login
   const [isAuth, setIsAuth] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+
   // 2. Panel admin
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [showQr, setShowQr] = useState<string | null>(null);
-  const [filter, setFilter] = useState(""); // para búsqueda rápida
+  const [filter, setFilter] = useState("");
   const [showHelp, setShowHelp] = useState(false);
-  const [alert, setAlert] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
+  const [alert, setAlert] = useState<{
+    msg: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
 
-  // 2. Al cargar, revisa si la cookie de login está presente
+  // Revisa cookie admin
   useEffect(() => {
     fetch("/api/admin-login")
-      .then(res => setIsAuth(res.ok))
+      .then((res) => setIsAuth(res.ok))
       .finally(() => setCheckingAuth(false));
   }, []);
 
   useEffect(() => {
     actualizarTickets();
-    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -93,7 +145,6 @@ export default function AdminPanel() {
     }
   }, [alert]);
 
-  // 3. Formulario login (solo visible si !isAuth)
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoginError("");
@@ -111,31 +162,61 @@ export default function AdminPanel() {
   }
 
   if (checkingAuth) return null;
+
+  // ====== LOGIN VIEW ======
   if (!isAuth) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <form onSubmit={handleLogin} className="bg-gray-900 rounded-xl p-8 shadow-xl flex flex-col gap-4 w-full max-w-xs">
-          <h2 className="text-lg font-bold text-white">Acceso restringido</h2>
+      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-slate-950 flex items-center justify-center relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_top,_#22d3ee_0,_transparent_45%),radial-gradient(circle_at_bottom,_#8b5cf6_0,_transparent_45%)]" />
+        <form
+          onSubmit={handleLogin}
+          className="relative bg-zinc-950/90 border border-white/10 rounded-3xl px-8 py-7 shadow-2xl flex flex-col gap-4 w-full max-w-sm backdrop-blur-xl"
+        >
+          <div className="flex flex-col gap-1 mb-1">
+            <span className="text-[11px] uppercase tracking-[0.25em] text-zinc-500">
+              Core Sync • Admin
+            </span>
+            <h2 className="text-xl font-bold text-white">
+              Acceso al panel de boletas
+            </h2>
+            <p className="text-xs text-zinc-400">
+              Ingresa la clave interna para ver ventas, asistentes y validaciones.
+            </p>
+          </div>
           <input
             type="password"
             placeholder="Contraseña admin"
-            className="p-2 rounded bg-gray-800 text-white border border-gray-700"
+            className="p-2.5 rounded-xl bg-zinc-900 text-white border border-zinc-700/80 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             autoFocus
           />
-          <button className="bg-blue-700 rounded py-2 font-bold text-white cursor-pointer">Ingresar</button>
-          {loginError && <div className="text-red-400 text-xs">{loginError}</div>}
+          <button className="mt-1 bg-gradient-to-r from-sky-500 to-indigo-500 rounded-xl py-2.5 font-semibold text-sm text-white shadow-lg shadow-sky-500/30 hover:shadow-indigo-500/40 hover:translate-y-[1px] transition">
+            Ingresar
+          </button>
+          {loginError && (
+            <div className="text-rose-400 text-xs mt-1">{loginError}</div>
+          )}
+          <div className="mt-2 text-[10px] text-zinc-500 flex items-center gap-2">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            Solo para uso interno de staff autorizado.
+          </div>
         </form>
       </div>
     );
   }
 
-  // Stats
+  // ====== STATS ======
   const total = tickets.length;
-  const pagadas = tickets.filter(t => (t.Estado || "").toLowerCase() === "pagado").length;
-  const reservadas = tickets.filter(t => (t.Estado || "").toLowerCase() === "reservado").length;
-  const usados = tickets.filter(t => ((t["Qr usado"] || t.Usado || "").toLowerCase() === "si")).length;
+  const pagadas = tickets.filter(
+    (t) => (t.Estado || "").toLowerCase() === "pagado"
+  ).length;
+  const reservadas = tickets.filter(
+    (t) => (t.Estado || "").toLowerCase() === "reservado"
+  ).length;
+  const usados = tickets.filter(
+    (t) => (t["Qr usado"] || "").toLowerCase() === "si"
+  ).length;
   const sinUsar = total - usados;
   const ultimo = tickets.length ? tickets[tickets.length - 1] : null;
   const pagadasNoUsadas = pagadas - usados;
@@ -146,304 +227,485 @@ export default function AdminPanel() {
     { name: "Reservadas (no pagado)", value: reservadas },
   ];
 
-  // Colores personalizados
-  const COLORS = ["#10b981", "#3b82f6", "#eab308"]; // verde, azul, amarillo
+  const COLORS = ["#10b981", "#3b82f6", "#eab308"];
 
   function actualizarTickets() {
     setLoading(true);
     fetch("/api/tickets")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setTickets(data.tickets || []);
         setLoading(false);
       });
   }
 
-  // Filtro/búsqueda simple (por nombre, email o código)
-  const filteredTickets = tickets.filter(t =>
-    !filter ||
-    (t.Nombre && t.Nombre.toLowerCase().includes(filter.toLowerCase())) ||
-    (t.Email && t.Email.toLowerCase().includes(filter.toLowerCase())) ||
-    (t.Código && t.Código.toLowerCase().includes(filter.toLowerCase()))
+  const filteredTickets = tickets.filter(
+    (t) =>
+      !filter ||
+      (t.Nombre &&
+        t.Nombre.toLowerCase().includes(filter.toLowerCase())) ||
+      (t.Email && t.Email.toLowerCase().includes(filter.toLowerCase())) ||
+      (t.Código && t.Código.toLowerCase().includes(filter.toLowerCase()))
   );
 
-  // Mobile tabla scroll-x, cabeceras sticky
+  // ====== MAIN ADMIN VIEW ======
   return (
-    <div className="p-6 min-h-screen bg-black text-white">
-      {alert && (
-        <AlertBar
-          msg={alert.msg}
-          type={alert.type}
-          onClose={() => setAlert(null)}
-        />
-      )}
-      {/* Header + Menú de ayuda */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap mb-3 gap-2">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">Panel Admin - Boletas</h1>
-          <button
-            className="bg-gray-800 text-xs rounded px-3 py-1 border border-gray-600 hover:bg-red-800 transition cursor-pointer"
-            onClick={async () => {
-              await fetch("/api/admin-logout", { method: "POST" });
-              window.location.reload(); // O resetea estado isAuth y muestra login otra vez
-            }}
-            title="Cerrar sesión"
-          >Cerrar sesión</button>
-          <button
-            className="bg-gray-800 text-xs rounded px-3 py-1 border border-gray-600 hover:bg-blue-800 transition cursor-pointer"
-            onClick={() => setShowHelp(true)}
-          >¿Cómo usar?</button>
-          <button
-            className="bg-gray-800 text-xs rounded px-3 py-1 border border-gray-600 hover:bg-teal-700 transition cursor-pointer"
-            onClick={() => window.location.href = "/admin/dashboard"}
-          >
-            Logs
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          <input
-            placeholder="Buscar por nombre, email o código..."
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
-            className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-xs focus:border-blue-400 outline-none"
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-slate-950 text-slate-50 relative overflow-hidden">
+      {/* background glow */}
+      <div className="pointer-events-none absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.25)_0,_transparent_45%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.25)_0,_transparent_45%)]" />
+
+      <div className="relative z-10 px-4 md:px-6 lg:px-10 py-6 space-y-6">
+        {alert && (
+          <AlertBar
+            msg={alert.msg}
+            type={alert.type}
+            onClose={() => setAlert(null)}
           />
-          <button
-            className="bg-green-700 px-3 py-1 rounded font-bold text-xs hover:bg-green-800 transition cursor-pointer"
-            onClick={() => exportToCsv(filteredTickets)}
-          >
-            Descargar CSV
-          </button>
-          <button
-            className="bg-blue-700 px-3 py-1 rounded font-bold text-xs hover:bg-blue-900 transition cursor-pointer"
-            onClick={actualizarTickets}
-            disabled={loading}
-            title="Actualizar lista de boletas"
-          >
-            {loading ? "Actualizando..." : "Actualizar lista"}
-          </button>
-          {/* === Botón de backup === 
-          <button
-            className="bg-blue-700 px-3 py-1 rounded font-bold text-xs hover:bg-blue-800 transition cursor-pointer"
-            onClick={() => {
-              window.open('/api/backup', '_blank');
-            }}
-          >
-            Descargar backup completo
-          </button>*/}
-        </div>
-      </div>
-
-      {/* Stats cards */}
-      {!loading && (
-        <div className="flex flex-wrap md:flex-nowrap gap-3 mb-4 w-full justify-center">
-          <StatCard label="Total boletas" value={total} color="bg-blue-800" />
-          <StatCard label="Pagadas" value={pagadas} color="bg-green-700" />
-          <StatCard label="Reservadas" value={reservadas} color="bg-yellow-700" />
-          <StatCard label="QR usados" value={usados} color="bg-purple-700" />
-          <StatCard label="Sin usar" value={sinUsar} color="bg-gray-700" />
-        </div>
-      )}
-
-      {/* Pie Chart de análisis */}
-      {!loading && (
-        <div className="w-full flex flex-col items-center my-8">
-          <div className="text-center text-2xl font-bold mb-4 tracking-wide hidden md:block">
-            Análisis general de asistencia
-          </div>
-          <div className="text-center text-base font-bold mb-4 tracking-wide md:hidden">
-            Estadísticas de asistencia
-          </div>
-          <div className="flex justify-center w-full">
-            <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl">
-              <ResponsiveContainer width="100%" height={window.innerWidth < 640 ? 250 : 430}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                    outerRadius={window.innerWidth < 640 ? 75 : 110}
-                    dataKey="value"
-                    paddingAngle={2}
-                  >
-                    {pieData.map((entry, idx) => (
-                      <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend verticalAlign="bottom" iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Último ticket creado */}
-      {!loading && ultimo && (
-        <div className="text-xs mb-4 bg-gray-900/80 px-3 py-2 rounded-xl border border-gray-700">
-          <b>Última boleta:</b> #{ultimo.Código} · {ultimo.Nombre} · {ultimo.Email}
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex flex-col items-center py-10">
-            <svg className="animate-spin h-8 w-8 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-            </svg>
-        </div>
         )}
-      {!loading && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-700 text-xs md:text-sm bg-gray-900/90 shadow-lg rounded-xl">
-            <thead className="sticky top-0 z-10">
-              <tr>
-                {tickets[0] &&
-                  Object.keys(tickets[0]).map(key => (
-                    <th key={key} className="border-b border-gray-700 px-2 py-2 text-left font-bold bg-gray-800">
-                      {key}
-                    </th>
-                  ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTickets.map((t, i) => (
-                <tr
-                  key={i}
-                  className={
-                    ((t["Qr usado"] || t.Usado || "").toLowerCase() === "si")
-                      ? "bg-green-900/60 hover:bg-green-800/70"
-                      : "hover:bg-gray-700/40"
-                  }
-                >
-                  {Object.entries(t).map(([k, v], j) =>
-                    k.toLowerCase() === "estado" ? (
-                    <td key={j} className="border-b border-gray-800 px-2 py-2">
-                      <span className={
-                        String(v).toLowerCase() === "pagado"
-                          ? "inline-block px-3 py-1 rounded-full bg-green-600 text-white font-bold"
-                          : String(v).toLowerCase() === "reservado"
-                          ? "inline-block px-3 py-1 rounded-full bg-yellow-600 text-white font-bold"
-                          : "inline-block px-3 py-1 rounded-full bg-gray-500 text-white"
-                      }>
-                        {v}
-                      </span>
-                      {String(v).toLowerCase() === "reservado" && (
-                        <button
-                          className="ml-2 px-2 py-1 bg-green-700 rounded text-xs font-bold text-white hover:bg-green-900 cursor-pointer"
-                          onClick={async () => {
-                            if (!window.confirm("¿Marcar este ticket como PAGADO?")) return;
-                            const resp = await fetch("/api/marcar-pago", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ codigo: t.Código || t.codigo }),
-                            });
-                            if (resp.ok) {
-                              setAlert({ msg: "¡Boleta marcada como pagada!", type: "success" });
-                              setTickets(tickets => tickets.map(ticket =>
-                                ticket.Código === t.Código ? { ...ticket, Estado: "Pagado" } : ticket
-                              ));
-                            } else {
-                              setAlert({ msg: "Error al marcar como pagada", type: "error" });
-                            }
-                          }}
-                        >
-                          Marcar pagado
-                        </button>
-                      )}
-                    </td>
-                  ) : k.toLowerCase() === "qr" ? (
-                      <td key={j} className="border-b border-gray-800 px-2 py-2">
-                        <button
-                          onClick={() => setShowQr(v as string)}
-                          className="text-blue-300 underline hover:text-blue-500 transition cursor-pointer"
-                        >
-                          Ver QR
-                        </button>
-                        {/*<a
-                          href={`/api/boleta-pdf?codigo=${encodeURIComponent(t.Código || t.codigo || "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-purple-300 underline hover:text-purple-500 transition cursor-pointer ml-3"
-                          download={`ticket_${t.Código || t.codigo}.pdf`}
-                        >
-                          Descargar Ticket
-                        </a>*/}
-                      </td>
-                    ) : k.toLowerCase() === "qr usado" ? (
-                      <td key={j} className="border-b border-gray-800 px-2 py-2 text-center">
-                        <span className={
-                          (v === "SI" || v === "si")
-                            ? "inline-block px-3 py-1 rounded-full bg-green-600 text-white font-bold"
-                            : "inline-block px-3 py-1 rounded-full bg-gray-500 text-white font-bold"
-                        }>
-                          {v === "SI" || v === "si" ? "Sí" : "No"}
-                        </span>
-                      </td>
-                    ) : (
-                      <td key={j} className="border-b border-gray-800 px-2 py-2 max-w-xs truncate">{v}</td>
-                    )
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filteredTickets.length === 0 && (
-            <div className="mt-6 text-center text-gray-400">
-              No hay resultados para tu búsqueda.
+
+        {/* HEADER */}
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/70 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-zinc-400">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Core Sync • Ticketing
             </div>
-          )}
-        </div>
-      )}
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                Panel Admin – Boletas
+              </h1>
+              <p className="text-xs md:text-sm text-zinc-400 mt-1">
+                Control de ventas, asistentes, validaciones y generación de
+                reportes.
+              </p>
+            </div>
+          </div>
 
-      {/* MODAL QR */}
-      {showQr && (
-        <div
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
-          onClick={() => setShowQr(null)}
-        >
-          <div
-            className="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center"
-            onClick={e => e.stopPropagation()}
-          >
-            <img src={showQr} alt="QR" className="w-52 h-52 object-contain" />
+          <div className="flex flex-wrap gap-2 items-center">
             <button
-              className="mt-4 px-4 py-2 rounded bg-black text-white font-bold cursor-pointer"
-              onClick={() => setShowQr(null)}
+              className="px-3 py-1.5 rounded-xl text-[11px] font-semibold border border-zinc-700/80 bg-zinc-900/70 hover:bg-zinc-800/80 transition cursor-pointer"
+              onClick={() => setShowHelp(true)}
             >
-              Cerrar
+              ¿Cómo usar?
             </button>
-            <a
-              href={showQr}
-              download="qr-ticket.png"
-              className="mt-2 text-blue-600 underline cursor-pointer"
+            <button
+              className="px-3 py-1.5 rounded-xl text-[11px] font-semibold border border-sky-500/40 bg-sky-600/80 hover:bg-sky-500/90 shadow-sm shadow-sky-500/40 transition cursor-pointer"
+              onClick={() => (window.location.href = "/admin/dashboard")}
             >
-              Descargar QR
-            </a>
+              Ver logs de validación
+            </button>
+            <button
+              className="px-3 py-1.5 rounded-xl text-[11px] font-semibold border border-rose-500/40 bg-gradient-to-r from-rose-500 to-orange-500 hover:brightness-110 shadow-sm shadow-rose-500/40 transition cursor-pointer"
+              onClick={async () => {
+                await fetch("/api/admin-logout", { method: "POST" });
+                window.location.reload();
+              }}
+              title="Cerrar sesión"
+            >
+              Cerrar sesión
+            </button>
           </div>
-        </div>
-      )}
+        </header>
 
-      {/* AYUDA / Manual rápido */}
-      {showHelp && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" onClick={() => setShowHelp(false)}>
-          <div className="bg-white rounded-xl p-8 max-w-lg w-full shadow-2xl text-black relative" onClick={e => e.stopPropagation()}>
-            <button className="absolute top-3 right-3 text-lg px-2 py-1 rounded bg-black/10 hover:bg-black/20" onClick={() => setShowHelp(false)}>×</button>
-            <h2 className="text-2xl font-bold mb-2 text-blue-900">¿Cómo usar el panel?</h2>
-            <ul className="mb-3 list-disc pl-6 text-sm">
-              <li>Filtra por nombre, email o código para ubicar rápido cualquier persona.</li>
-              <li>Pulsa <b>“Ver QR”</b> para ver el QR del ticket y descargarlo.</li>
-              <li>Las boletas pagadas y usadas tienen color; las reservadas aparecen en amarillo.</li>
-              <li>Puedes descargar todas las boletas en CSV para verlas en Excel.</li>
-              <li>El panel se actualiza automáticamente al recargar la página.</li>
-              <li>Si ves algo raro, revisa la tabla <b>entradas</b> directamente en Supabase.</li>
-            </ul>
-            <div className="mt-2 text-xs text-gray-600">Recuerda: solo compartir este link a staff autorizado.<br />Actualiza la página si notas cambios externos en la base.</div>
+        {/* SEARCH + ACTIONS */}
+        <section className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div className="rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-xl px-4 py-3 flex flex-wrap gap-3 items-center shadow-lg">
+            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+              <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide">
+                Buscar boletas
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+              <input
+                placeholder="Nombre, email o código..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="flex-1 bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-1.5 text-xs focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                className="bg-emerald-600/90 hover:bg-emerald-500 text-[11px] px-3 py-1.5 rounded-xl font-semibold shadow-sm shadow-emerald-500/40 cursor-pointer"
+                onClick={() => exportToCsv(filteredTickets)}
+              >
+                Descargar CSV
+              </button>
+              <button
+                className="bg-sky-600/90 hover:bg-sky-500 text-[11px] px-3 py-1.5 rounded-xl font-semibold shadow-sm shadow-sky-500/40 cursor-pointer disabled:opacity-60"
+                onClick={actualizarTickets}
+                disabled={loading}
+                title="Actualizar lista de boletas"
+              >
+                {loading ? "Actualizando..." : "Actualizar lista"}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+
+          {/* RESUMEN RÁPIDO */}
+          <div className="rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-xl px-4 py-3 shadow-lg flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+              Resumen rápido
+            </span>
+            <p className="text-xs text-zinc-400 leading-snug">
+              {total === 0 ? (
+                <>Aún no hay boletas registradas para este evento.</>
+              ) : (
+                <>
+                  Tienes <b>{total}</b> boleta(s) en total, de las cuales{" "}
+                  <b>{pagadas}</b> están <span className="text-emerald-400">pagadas</span> y{" "}
+                  <b>{reservadas}</b> siguen{" "}
+                  <span className="text-amber-300">reservadas</span>. Se han
+                  usado <b>{usados}</b> QR en puerta.
+                </>
+              )}
+            </p>
+          </div>
+        </section>
+
+        {/* STATS CARDS */}
+        {!loading && (
+          <section className="flex flex-wrap gap-3">
+            <StatCard label="Total boletas" value={total} color="from-sky-500 to-indigo-500" />
+            <StatCard label="Pagadas" value={pagadas} color="from-emerald-500 to-green-600" />
+            <StatCard label="Reservadas" value={reservadas} color="from-amber-400 to-orange-500" />
+            <StatCard label="QR usados" value={usados} color="from-fuchsia-500 to-purple-600" />
+            <StatCard label="Sin usar" value={sinUsar} color="from-zinc-500 to-slate-500" />
+          </section>
+        )}
+
+        {/* CHART + LAST TICKET */}
+        {!loading && (
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start">
+            <div className="rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-xl px-4 md:px-6 py-5 shadow-xl">
+              <h2 className="text-sm md:text-base font-semibold mb-2 tracking-wide flex items-center gap-2">
+                <span className="inline-block w-1.5 h-6 rounded-full bg-gradient-to-b from-sky-400 to-indigo-500" />
+                Análisis general de asistencia
+              </h2>
+              <div className="w-full">
+                <ResponsiveContainer
+                  width="100%"
+                  height={typeof window !== "undefined" && window.innerWidth < 640 ? 250 : 320}
+                >
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) =>
+                        `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                      }
+                      outerRadius={
+                        typeof window !== "undefined" && window.innerWidth < 640 ? 80 : 110
+                      }
+                      dataKey="value"
+                      paddingAngle={2}
+                    >
+                      {pieData.map((entry, idx) => (
+                        <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend verticalAlign="bottom" iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap gap-3 text-[11px] mt-2 justify-center text-zinc-400">
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Asistieron (pagado y usado)
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-sky-500" />
+                  Pagó pero no asistió
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  Reservadas (no pagado)
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {ultimo && (
+                <div className="rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-600/20 via-emerald-500/10 to-emerald-400/10 px-4 py-3 shadow-lg">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-300 mb-1">
+                    Última boleta registrada
+                  </div>
+                  <div className="text-xs text-zinc-200">
+                    <b>#{ultimo.Código}</b> · {ultimo.Nombre} · {ultimo.Email}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-white/10 bg-zinc-950/80 px-4 py-3 text-[11px] text-zinc-400 backdrop-blur-xl shadow-lg">
+                <p>
+                  Tip: puedes abrir este panel desde el celular el día del evento
+                  para buscar por nombre o correo y verificar pagos al vuelo.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* TABLA */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <svg
+              className="animate-spin h-9 w-9 text-sky-400 mb-3"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              />
+            </svg>
+            <p className="text-xs text-zinc-400">Cargando boletas…</p>
+          </div>
+        ) : (
+          <section className="rounded-2xl border border-white/10 bg-zinc-950/90 backdrop-blur-xl shadow-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-zinc-800/80 flex items-center justify-between">
+              <h2 className="text-sm font-semibold tracking-wide">
+                Listado de boletas
+              </h2>
+              <span className="text-[11px] text-zinc-500">
+                {filteredTickets.length} resultado(s)
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs md:text-sm">
+                <thead>
+                  <tr className="bg-zinc-900/90">
+                    {tickets[0] &&
+                      Object.keys(tickets[0]).map((key) => (
+                        <th
+                          key={key}
+                          className="px-3 py-2 border-b border-zinc-800 text-left font-semibold text-[11px] uppercase tracking-wide text-zinc-400"
+                        >
+                          {key}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTickets.map((t, i) => (
+                    <tr
+                      key={i}
+                      className={
+                        (t["Qr usado"] || "").toLowerCase() === "si"
+                          ? "bg-emerald-900/30 hover:bg-emerald-800/40"
+                          : "hover:bg-zinc-800/40"
+                      }
+                    >
+                      {Object.entries(t).map(([k, v], j) =>
+                        k.toLowerCase() === "estado" ? (
+                          <td
+                            key={j}
+                            className="border-b border-zinc-900 px-3 py-2 align-middle"
+                          >
+                            <span
+                              className={
+                                String(v).toLowerCase() === "pagado"
+                                  ? "inline-flex px-3 py-1 rounded-full bg-emerald-600 text-[11px] font-semibold text-white"
+                                  : String(v).toLowerCase() === "reservado"
+                                  ? "inline-flex px-3 py-1 rounded-full bg-amber-500 text-[11px] font-semibold text-zinc-900"
+                                  : "inline-flex px-3 py-1 rounded-full bg-zinc-600 text-[11px] font-semibold text-white"
+                              }
+                            >
+                              {v}
+                            </span>
+                            {String(v).toLowerCase() === "reservado" && (
+                              <button
+                                className="ml-2 px-2 py-1 rounded-full bg-emerald-700 text-[10px] font-semibold text-white hover:bg-emerald-800 cursor-pointer"
+                                onClick={async () => {
+                                  if (
+                                    !window.confirm(
+                                      "¿Marcar este ticket como PAGADO?"
+                                    )
+                                  )
+                                    return;
+                                  const resp = await fetch("/api/marcar-pago", {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      codigo: t.Código,
+                                    }),
+                                  });
+                                  if (resp.ok) {
+                                    setAlert({
+                                      msg: "¡Boleta marcada como pagada!",
+                                      type: "success",
+                                    });
+                                    setTickets((tickets) =>
+                                      tickets.map((ticket) =>
+                                        ticket.Código === t.Código
+                                          ? { ...ticket, Estado: "Pagado" }
+                                          : ticket
+                                      )
+                                    );
+                                  } else {
+                                    setAlert({
+                                      msg: "Error al marcar como pagada",
+                                      type: "error",
+                                    });
+                                  }
+                                }}
+                              >
+                                Marcar pagado
+                              </button>
+                            )}
+                          </td>
+                        ) : k.toLowerCase() === "qr" ? (
+                          <td
+                            key={j}
+                            className="border-b border-zinc-900 px-3 py-2"
+                          >
+                            <button
+                              onClick={() => setShowQr(v as string)}
+                              className="text-sky-300 text-[11px] underline hover:text-sky-400 transition cursor-pointer"
+                            >
+                              Ver QR
+                            </button>
+                          </td>
+                        ) : k.toLowerCase() === "qr usado" ? (
+                          <td
+                            key={j}
+                            className="border-b border-zinc-900 px-3 py-2 text-center"
+                          >
+                            <span
+                              className={
+                                v === "SI" || v === "si"
+                                  ? "inline-flex px-3 py-1 rounded-full bg-emerald-600 text-[11px] font-semibold text-white"
+                                  : "inline-flex px-3 py-1 rounded-full bg-zinc-600 text-[11px] font-semibold text-white"
+                              }
+                            >
+                              {v === "SI" || v === "si" ? "Sí" : "No"}
+                            </span>
+                          </td>
+                        ) : (
+                          <td
+                            key={j}
+                            className="border-b border-zinc-900 px-3 py-2 max-w-xs truncate text-xs text-zinc-200"
+                          >
+                            {v}
+                          </td>
+                        )
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredTickets.length === 0 && (
+              <div className="py-8 text-center text-sm text-zinc-500">
+                No hay resultados para tu búsqueda.
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* MODAL QR */}
+        {showQr && (
+          <div
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4"
+            onClick={() => setShowQr(null)}
+          >
+            <div
+              className="bg-zinc-950 rounded-2xl shadow-2xl border border-white/10 px-6 py-6 flex flex-col items-center max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-sm font-semibold mb-3">
+                QR de la boleta
+              </h3>
+              <img
+                src={showQr}
+                alt="QR"
+                className="w-52 h-52 object-contain rounded-lg border border-zinc-800 bg-zinc-900"
+              />
+              <button
+                className="mt-4 px-4 py-2 rounded-xl bg-zinc-900 text-sm text-white font-semibold border border-zinc-700 hover:bg-zinc-800 cursor-pointer"
+                onClick={() => setShowQr(null)}
+              >
+                Cerrar
+              </button>
+              <a
+                href={showQr}
+                download="qr-ticket.png"
+                className="mt-2 text-xs text-sky-400 underline cursor-pointer"
+              >
+                Descargar QR
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* AYUDA / Manual rápido */}
+        {showHelp && (
+          <div
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4"
+            onClick={() => setShowHelp(false)}
+          >
+            <div
+              className="bg-zinc-50 rounded-2xl p-7 max-w-lg w-full shadow-2xl text-zinc-900 relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-3 right-3 text-lg px-2 py-1 rounded-full bg-black/5 hover:bg-black/10"
+                onClick={() => setShowHelp(false)}
+              >
+                ×
+              </button>
+              <h2 className="text-xl font-bold mb-2 text-sky-900">
+                ¿Cómo usar el panel?
+              </h2>
+              <ul className="mb-3 list-disc pl-5 text-sm space-y-1.5">
+                <li>
+                  Usa el buscador para encontrar rápido por{" "}
+                  <b>nombre, email o código</b>.
+                </li>
+                <li>
+                  Pulsa <b>“Ver QR”</b> para mostrar el código en puerta o
+                  descargarlo.
+                </li>
+                <li>
+                  El color de cada fila indica si el <b>QR ya fue usado</b>.
+                </li>
+                <li>
+                  Desde la columna <b>Estado</b> puedes marcar una reserva como
+                  pagada.
+                </li>
+                <li>
+                  Descarga el <b>CSV</b> para revisar datos en Excel o hacer
+                  informes.
+                </li>
+                <li>
+                  Si ves algo raro, revisa la tabla <b>entradas</b> directamente
+                  en Supabase.
+                </li>
+              </ul>
+              <div className="mt-2 text-xs text-zinc-500">
+                Recuerda: este panel es solo para staff autorizado de Core Sync.
+                No compartas la clave de acceso con asistentes.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

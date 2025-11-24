@@ -1,5 +1,5 @@
 // pages/api/boleta-pdf.js
-import { pdf, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { pdf, Document, Page, Text, View, StyleSheet, Image as PdfImage } from '@react-pdf/renderer';
 
 // ==== AGREGADO: GOOGLE SHEETS ====
 import { google } from "googleapis";
@@ -124,7 +124,7 @@ function TicketPDF({ nombre, codigo, qrBase64 }) {
             hasta 17 de agosto, 5:00 AM
           </Text>
           <View style={{ height: 40 }} />
-          <Image src={qrBase64} style={styles.qr} />
+          <PdfImage src={qrBase64} style={styles.qr} />
         </View>
         <View style={styles.footer}>
           <Text style={styles.footerText}>#CoreSync | Presenta tu ticket en la entrada</Text>

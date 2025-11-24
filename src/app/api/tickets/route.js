@@ -56,48 +56,45 @@ export async function GET() {
         : "";
 
     const tickets =
-      (data || []).map((row) => {
-        // Normalizar Estado
-        let estado = "Reservado";
-        const sp = (row.status_pago || "").toLowerCase();
-        if (sp === "aprobado") estado = "Pagado";
-        else if (sp === "rechazado") estado = "Rechazado";
+    (data || []).map((row) => {
+      // Normalizar Estado
+      let estado = "Reservado";
+      const sp = (row.status_pago || "").toLowerCase();
+      if (sp === "aprobado") estado = "Pagado";
+      else if (sp === "rechazado") estado = "Rechazado";
 
-        // Qr usado: SI/NO en base a qr_used_at
-        const qrUsado = row.qr_used_at ? "SI" : "NO";
+      // Qr usado: SI/NO en base a qr_used_at
+      const qrUsado = row.qr_used_at ? "SI" : "NO";
 
-        return {
-          Código: row.codigo || row.id || "",
-          Estado: estado,
+      return {
+        Código: row.codigo || row.id || "",
+        Nombre: row.buyer_name || "",
+        Teléfono: row.buyer_phone || "",
+        Email: row.buyer_email || "",
+        Estado: estado,
 
-          // ----- Datos comprador -----
-          Nombre: row.buyer_name || "",
-          Teléfono: row.buyer_phone || "",
-          Email: row.buyer_email || "",
+        Importe:
+          row.importe != null
+            ? `${row.divisa || "COP"} $${Number(row.importe).toLocaleString(
+                "es-CO"
+              )}`
+            : "",
+        Evento: row.event_name || "",
+        "Fecha evento": fmtDate(row.event_date),
+        Lugar: row.event_location || "",
+        "Fecha compra": fmtDate(row.created_at),
+        "Fecha pago": fmtDate(row.paid_at),
 
-          // ----- Info compra -----
-          Importe:
-            row.importe != null
-              ? `${row.divisa || "COP"} $${Number(row.importe).toLocaleString("es-CO")}`
-              : "",
-          "Fecha compra": fmtDate(row.created_at),
-          "Fecha pago": fmtDate(row.paid_at),
-          "Email ticket": row.ticket_email_sent_at ? fmtDate(row.ticket_email_sent_at) : "",
+        "Qr usado": qrUsado,
+        "Fecha uso QR": fmtDate(row.qr_used_at),
+        "Validador QR": row.qr_used_by || "",
 
-          // ----- Info evento -----
-          Evento: row.event_name || "",
-          "Fecha evento": fmtDate(row.event_date),
-          Lugar: row.event_location || "",
+        "Email ticket":
+          row.ticket_email_sent_at ? fmtDate(row.ticket_email_sent_at) : "",
 
-          // ----- Validación puerta -----
-          "Qr usado": row.qr_used_at ? "SI" : "NO",
-          "Fecha uso QR": fmtDate(row.qr_used_at),
-          "Validador QR": row.qr_used_by || "",
-
-          // ----- QR -----
-          Qr: row.qr_base64 || "",
-        };
-      }) || [];
+        Qr: row.qr_base64 || "",
+      };
+    }) || [];
 
     return NextResponse.json({ ok: true, tickets });
   } catch (e) {
