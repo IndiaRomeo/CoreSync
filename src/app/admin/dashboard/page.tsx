@@ -81,7 +81,7 @@ export default function Dashboard() {
         <button
           className="bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700 cursor-pointer"
           onClick={async () => {
-            await fetch("/api/logout", { method: "POST" });
+            await fetch("/api/admin-logout", { method: "POST" }); // ✅ mismo endpoint que usas en /admin
             setIsAuth(false);
           }}
         >
