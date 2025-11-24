@@ -15,7 +15,7 @@ const EVENT_DATE =
   process.env.EVENT_DATE || "2024-12-06T21:00:00-05:00"; // ISO
 const EVENT_LOCATION =
   process.env.EVENT_LOCATION || "Quinta (Core Sync · Mariquita, Tolima)";
-const TICKET_PRICE = Number(process.env.TICKET_PRICE || 27499);
+const TICKET_PRICE = Number(process.env.TICKET_PRICE || 22000);
 const TICKET_CURRENCY = process.env.TICKET_CURRENCY || "COP";
 
 const BASE_URL =
