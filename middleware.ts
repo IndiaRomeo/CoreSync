@@ -1,11 +1,13 @@
+// middleware.ts (en la raíz del proyecto)
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Solo interceptar rutas del panel admin (páginas, no APIs)
-  const isProtected = pathname.startsWith("/admin");
+  // Solo nos interesa todo lo que esté DENTRO de /admin, no la raíz /admin
+  // Ej: /admin/tickets, /admin/dashboard, /admin/lo-que-sea
+  const isProtected = pathname.startsWith("/admin/"); // 👈 ojo la barra al final
 
   if (!isProtected) {
     return NextResponse.next();
@@ -13,10 +15,11 @@ export function middleware(req: NextRequest) {
 
   const cookie = req.cookies.get("admin_auth");
 
-  // Si NO hay cookie válida -> manda siempre a /admin (que ya muestra el login)
+  // Si NO hay cookie válida -> manda siempre a /admin (donde está el login)
   if (!cookie || cookie.value !== "1") {
     const url = req.nextUrl.clone();
     url.pathname = "/admin";
+    url.search = ""; // por si acaso, sin query params
     return NextResponse.redirect(url);
   }
 
@@ -24,6 +27,7 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
+// Solo vigila rutas /admin/... (no /admin solo)
 export const config = {
-  matcher: ["/admin", "/admin/:path*"],
+  matcher: ["/admin/:path*"],
 };
