@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import SnowParticles from "../components/SnowParticles";
 import confetti from "canvas-confetti";
@@ -18,7 +19,7 @@ function lanzarConfetti() {
     particleCount: 110,
     spread: 70,
     origin: { y: 0.6 },
-    colors: ["#27c721ff", "#1d0e6bff", "#fff"],
+    colors: ["#22c55e", "#0ea5e9", "#ffffff"],
   });
 }
 
@@ -33,44 +34,35 @@ function ModalMsg({
   onClose: () => void;
   onDownloadPdf?: () => void;
 }) {
+  const base =
+    "fixed inset-0 flex items-center justify-center z-[150] bg-black/60";
   const color =
     type === "success"
-      ? "bg-green-700 border-green-400 text-white"
+      ? "bg-emerald-600/95 border-emerald-300"
       : type === "error"
-      ? "bg-red-700 border-red-400 text-white"
-      : "bg-yellow-700 border-yellow-400 text-white";
+      ? "bg-rose-700/95 border-rose-300"
+      : "bg-amber-600/95 border-amber-300";
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center z-[150]"
-      style={{ background: "rgba(0,0,0,0.12)" }}
-      onClick={onClose}
-    >
+    <div className={base} onClick={onClose}>
       <div
-        className={`relative rounded-xl px-7 pt-10 py-5 border-2 shadow-2xl text-lg max-w-sm text-center ${color} animate-fade-in-up max-h-[90vh] overflow-y-auto`}
+        className={`relative rounded-2xl px-7 pt-9 pb-6 border shadow-2xl text-sm max-w-sm w-full text-center text-white ${color}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Botón X */}
         <button
-          className="absolute top-2 right-2 px-2 py-1 rounded bg-black/40 text-white text-lg font-bold hover:bg-black/70 transition cursor-pointer"
-          style={{
-            lineHeight: "1",
-            minWidth: "30px",
-            minHeight: "30px",
-          }}
+          className="absolute top-2 right-2 px-2 py-1 rounded-full bg-black/30 hover:bg-black/60 transition cursor-pointer text-lg leading-none"
           onClick={onClose}
         >
           ×
         </button>
-
-        {msg}
+        <p className="whitespace-pre-line">{msg}</p>
 
         {type === "success" && onDownloadPdf && (
           <button
-            className="mt-6 px-4 py-2 rounded bg-black text-white font-bold hover:bg-blue-700 transition block w-full cursor-pointer"
+            className="mt-5 w-full px-4 py-2 rounded-xl bg-black/70 hover:bg-black text-sm font-semibold tracking-wide cursor-pointer"
             onClick={onDownloadPdf}
           >
-            Descargar Ticket
+            Descargar ticket
           </button>
         )}
       </div>
@@ -82,9 +74,9 @@ export default function RegistrarForm() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [modalMsg, setModalMsg] = useState("");
-  const [modalType, setModalType] = useState<"success" | "error" | "warning">(
-    "success"
-  );
+  const [modalType, setModalType] = useState<
+    "success" | "error" | "warning"
+  >("success");
   const [buyerData, setBuyerData] = useState<BuyerData | null>(null);
 
   useEffect(() => {
@@ -93,7 +85,7 @@ export default function RegistrarForm() {
       .catch(() => setIsAuth(false));
   }, []);
 
-  // Cerrar modal automático si es error/warning
+  // Cierre automático para error/warning
   useEffect(() => {
     if (modalMsg && modalType !== "success") {
       const t = setTimeout(() => setModalMsg(""), 3000);
@@ -114,7 +106,6 @@ export default function RegistrarForm() {
     return null;
   }
 
-  // Descargar PDF desde la BD usando boleta-pdf-from-db
   async function handleDownloadPdf() {
     if (!buyerData?.entradaId) return;
 
@@ -206,7 +197,7 @@ export default function RegistrarForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black px-4 py-8 relative">
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-slate-950 text-slate-50 relative overflow-hidden px-4 py-8">
       <SnowParticles />
 
       {modalMsg && (
@@ -224,49 +215,79 @@ export default function RegistrarForm() {
         />
       )}
 
-      <div className="relative z-10 w-full max-w-md flex flex-col items-center">
-        <h2 className="text-3xl font-bold text-white mb-2 tracking-wider">
-          Registro manual de boletas
-        </h2>
-        <p className="text-gray-300 text-sm mb-7 text-center max-w-md">
-          Usa este formulario cuando un cliente paga por WhatsApp o en efectivo.
-          Se generará un ticket con QR, se enviará automáticamente al correo y
-          también podrás descargarlo para enviarlo por WhatsApp.
-        </p>
+      <div className="relative z-10 max-w-lg mx-auto">
+        {/* Encabezado tipo admin */}
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/70 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-zinc-400 mb-2">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Core Sync • Ticketing
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Registro manual de boletas
+          </h2>
+          <p className="text-xs md:text-sm text-zinc-400 mt-2 max-w-md">
+            Usa este formulario cuando un cliente paga por WhatsApp o en
+            efectivo. Se generará un ticket con QR, se enviará automáticamente
+            al correo y también podrás descargarlo para enviarlo por WhatsApp.
+          </p>
+        </div>
 
+        {/* Card del formulario */}
         <form
           onSubmit={handleSubmit}
-          className="bg-gray-900/70 p-6 rounded-2xl shadow-2xl flex flex-col gap-4 w-full max-w-md border border-blue-500/80"
+          className="rounded-2xl border border-white/10 bg-zinc-950/85 backdrop-blur-xl px-5 py-6 shadow-2xl flex flex-col gap-4"
         >
-          <input
-            name="nombre"
-            required
-            placeholder="Nombre completo"
-            className="border border-gray-600 bg-black text-white p-2 rounded focus:outline-none focus:border-white transition"
-          />
-          <input
-            name="telefono"
-            required
-            placeholder="Teléfono"
-            className="border border-gray-600 bg-black text-white p-2 rounded focus:outline-none focus:border-white transition"
-          />
-          <input
-            name="email"
-            type="email"
-            required
-            placeholder="Correo electrónico"
-            className="border border-gray-600 bg-black text-white p-2 rounded focus:outline-none focus:border-white transition"
-          />
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+              Nombre completo
+            </label>
+            <input
+              name="nombre"
+              required
+              placeholder="Ej: Ana Gómez"
+              className="border border-zinc-700/80 bg-black/60 text-white px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+              Teléfono
+            </label>
+            <input
+              name="telefono"
+              required
+              placeholder="Solo números"
+              className="border border-zinc-700/80 bg-black/60 text-white px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+              Correo electrónico
+            </label>
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="cliente@correo.com"
+              className="border border-zinc-700/80 bg-black/60 text-white px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+            />
+          </div>
 
           <button
             type="submit"
-            className={`bg-black text-white font-bold rounded py-2 px-4 transition hover:bg-blue-800 hover:text-white cursor-pointer shadow ${
+            className={`mt-2 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 text-sm font-semibold text-white py-2.5 px-4 shadow-lg shadow-emerald-500/30 hover:brightness-110 transition cursor-pointer ${
               loading ? "opacity-70 cursor-wait" : ""
             }`}
             disabled={loading}
           >
             {loading ? "Registrando..." : "Registrar y enviar ticket"}
           </button>
+
+          <p className="text-[10px] text-zinc-500 mt-1 text-center">
+            Solo para uso interno del staff. No compartas este enlace con los
+            asistentes.
+          </p>
         </form>
       </div>
     </div>
