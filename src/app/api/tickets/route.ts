@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/requireAdmin";
 
 export const dynamic = "force-dynamic"; // que no lo cachee
 
@@ -36,19 +37,10 @@ function fmtDate(iso: string | null): string {
 }
 
 export async function GET() {
+  const authError = await requireAdmin();   // 👈
+  if (authError) return authError;
+
   try {
-    // 1) Comprobar cookie admin_auth
-    const cookieStore = await cookies();
-    const auth = cookieStore.get("admin_auth");
-
-    if (!auth || auth.value !== "1") {
-      console.warn("❌ /api/tickets sin cookie admin_auth válida");
-      return NextResponse.json(
-        { ok: false, error: "No autorizado" },
-        { status: 401 }
-      );
-    }
-
     // 2) Leer entradas
     const { data, error } = await supabaseAdmin
       .from("entradas")

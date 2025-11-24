@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/requireAdmin";
 
 export async function POST(req) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { codigo, validador } = body;

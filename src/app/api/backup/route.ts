@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/requireAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -72,10 +73,8 @@ function rowsToCsv(rows: Row[], columns: readonly string[]): string {
 
 export async function GET(req: NextRequest) {
   try {
-    const adminCookie = req.cookies.get("admin_auth");
-    if (!adminCookie || adminCookie.value !== "1") {
-      return new NextResponse("No autorizado", { status: 401 });
-    }
+    const authError = await requireAdmin();
+    if (authError) return authError;
 
     const url = new URL(req.url);
     const tablaParam =

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import QRCode from "qrcode";
 import sharp from "sharp";
 import fs from "fs";
@@ -7,6 +6,7 @@ import path from "path";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildTicketEmailHtml } from "@/lib/buildTicketEmailHtml";
+import { requireAdmin } from "@/lib/requireAdmin";
 
 // ---------- CONFIG DEL EVENTO ----------
 const EVENT_NAME =
@@ -65,14 +65,8 @@ async function generarQrConLogo({ codigo, nombre, telefono, email }) {
 
 // ---------- HANDLER PRINCIPAL ----------
 export async function POST(req) {
-  const cookieStore = cookies();
-  const auth = cookieStore.get("admin_auth");
-  if (!auth || auth.value !== "1") {
-    return NextResponse.json(
-      { ok: false, error: "No autorizado" },
-      { status: 401 }
-    );
-  }
+  const authError = await requireAdmin();
+  if (authError) return authError;
 
   try {
     const body = await req.json();
