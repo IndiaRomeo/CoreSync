@@ -92,6 +92,9 @@ export async function GET() {
         "Email ticket":
           row.ticket_email_sent_at ? fmtDate(row.ticket_email_sent_at) : "",
 
+        //Campo oculto para filtro de fecha (raw ISO)
+        "Fecha compra ISO": row.created_at || "",
+
         Qr: row.qr_base64 || "",
       };
     }) || [];

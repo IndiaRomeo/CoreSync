@@ -129,6 +129,16 @@ export default function AdminPanel() {
     type: "success" | "error" | "info";
   } | null>(null);
 
+  const [statusFilter, setStatusFilter] = useState<
+  "todos" | "pagado" | "reservado" | "rechazado"
+  >("todos");
+
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  // claves que no queremos mostrar como columnas
+  const HIDDEN_KEYS = new Set(["Fecha compra ISO"]);
+
   // Revisa cookie admin
   useEffect(() => {
     fetch("/api/admin-login")
@@ -160,6 +170,76 @@ export default function AdminPanel() {
       setPassword("");
     } else {
       setLoginError("Clave incorrecta");
+    }
+  }
+
+  async function handleResend(ticket: Ticket) {
+    try {
+      if (!ticket.Código) {
+        setAlert({ msg: "Ticket sin código", type: "error" });
+        return;
+      }
+
+      const resp = await fetch("/api/resend-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigo: ticket.Código }),
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        console.error("❌ Error reenviando ticket:", data);
+        setAlert({
+          msg: data.error || "No se pudo reenviar el ticket",
+          type: "error",
+        });
+        return;
+      }
+
+      setAlert({ msg: "Ticket reenviado por email ✅", type: "success" });
+    } catch (e) {
+      console.error("❌ Error en handleResend:", e);
+      setAlert({ msg: "Error interno reenviando ticket", type: "error" });
+    }
+  }
+
+  async function handleMarkQrUsed(ticket: Ticket) {
+    try {
+      if (!ticket.Código) {
+        setAlert({ msg: "Ticket sin código", type: "error" });
+        return;
+      }
+
+      if (!window.confirm("¿Marcar este QR como usado manualmente?")) return;
+
+      const resp = await fetch("/api/marcar-qr-manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigo: ticket.Código, validador: "ADMIN_PANEL" }),
+      });
+
+      const data = await resp.json().catch(() => ({}));
+
+      if (!resp.ok || !data.ok) {
+        console.error("❌ Error marcando QR manual:", data);
+        setAlert({
+          msg: data.error || "No se pudo marcar el QR como usado",
+          type: "error",
+        });
+        return;
+      }
+
+      // Actualizar estado local
+      setTickets((tickets) =>
+        tickets.map((t) =>
+          t.Código === ticket.Código ? { ...t, "Qr usado": "SI" } : t
+        )
+      );
+
+      setAlert({ msg: "QR marcado como usado ✅", type: "success" });
+    } catch (e) {
+      console.error("❌ Error en handleMarkQrUsed:", e);
+      setAlert({ msg: "Error interno marcando QR", type: "error" });
     }
   }
 
@@ -241,14 +321,41 @@ export default function AdminPanel() {
       });
   }
 
-  const filteredTickets = tickets.filter(
-    (t) =>
+  const filteredTickets = tickets.filter((t) => {
+    // 1) Filtro de texto
+    const textOk =
       !filter ||
       (t.Nombre &&
         t.Nombre.toLowerCase().includes(filter.toLowerCase())) ||
       (t.Email && t.Email.toLowerCase().includes(filter.toLowerCase())) ||
-      (t.Código && t.Código.toLowerCase().includes(filter.toLowerCase()))
-  );
+      (t.Código && t.Código.toLowerCase().includes(filter.toLowerCase()));
+
+    if (!textOk) return false;
+
+    // 2) Filtro de estado
+    if (statusFilter !== "todos") {
+      const estado = (t.Estado || "").toLowerCase();
+      if (estado !== statusFilter) return false;
+    }
+
+    // 3) Filtro por fecha (usamos "Fecha compra ISO" del backend)
+    const iso = t["Fecha compra ISO"];
+    if (iso) {
+      const compraDate = new Date(iso);
+
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom + "T00:00:00");
+        if (compraDate < fromDate) return false;
+      }
+
+      if (dateTo) {
+        const toDate = new Date(dateTo + "T23:59:59");
+        if (compraDate > toDate) return false;
+      }
+    }
+
+    return true;
+  });
 
   // ====== MAIN ADMIN VIEW ======
   return (
@@ -324,6 +431,34 @@ export default function AdminPanel() {
                 onChange={(e) => setFilter(e.target.value)}
                 className="flex-1 bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-1.5 text-xs focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
               />
+              <div className="flex flex-wrap gap-2 items-center flex-1 min-w-[220px]">
+                <select
+                  value={statusFilter}
+                  onChange={(e) =>
+                    setStatusFilter(e.target.value as "todos" | "pagado" | "reservado" | "rechazado")
+                  }
+                  className="bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-1.5 text-[11px] text-zinc-200"
+                >
+                  <option value="todos">Todos los estados</option>
+                  <option value="pagado">Solo pagadas</option>
+                  <option value="reservado">Solo reservadas</option>
+                  <option value="rechazado">Solo rechazadas</option>
+                </select>
+
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="bg-zinc-900 border border-zinc-700/80 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200"
+                />
+
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="bg-zinc-900 border border-zinc-700/80 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -491,7 +626,9 @@ export default function AdminPanel() {
                 <thead>
                   <tr className="bg-zinc-900/90">
                     {tickets[0] &&
-                      Object.keys(tickets[0]).map((key) => (
+                    Object.keys(tickets[0])
+                      .filter((key) => !HIDDEN_KEYS.has(key))
+                      .map((key) => (
                         <th
                           key={key}
                           className="px-3 py-2 border-b border-zinc-800 text-left font-semibold text-[11px] uppercase tracking-wide text-zinc-400"
@@ -499,6 +636,10 @@ export default function AdminPanel() {
                           {key}
                         </th>
                       ))}
+                    {/* Columna fija de acciones */}
+                    <th className="px-3 py-2 border-b border-zinc-800 text-left font-semibold text-[11px] uppercase tracking-wide text-zinc-400">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -511,7 +652,9 @@ export default function AdminPanel() {
                           : "hover:bg-zinc-800/40"
                       }
                     >
-                      {Object.entries(t).map(([k, v], j) =>
+                      {Object.entries(t)
+                      .filter(([k]) => !HIDDEN_KEYS.has(k))
+                      .map(([k, v], j) =>
                         k.toLowerCase() === "estado" ? (
                           <td
                             key={j}
@@ -607,6 +750,25 @@ export default function AdminPanel() {
                           </td>
                         )
                       )}
+                      <td className="border-b border-zinc-900 px-3 py-2">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            className="px-2.5 py-1 rounded-full bg-sky-600 text-[10px] font-semibold text-white hover:bg-sky-500 cursor-pointer"
+                            onClick={() => handleResend(t)}
+                          >
+                            Reenviar ticket
+                          </button>
+
+                          {(t["Qr usado"] || "").toLowerCase() !== "si" && (
+                            <button
+                              className="px-2.5 py-1 rounded-full bg-emerald-700 text-[10px] font-semibold text-white hover:bg-emerald-600 cursor-pointer"
+                              onClick={() => handleMarkQrUsed(t)}
+                            >
+                              Marcar QR usado
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
