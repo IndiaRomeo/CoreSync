@@ -524,7 +524,7 @@ export default function Home() {
                 </form>
 
                 <a
-                  href="wa.me/573502768095"
+                  href="https://wa.me/573502768095"
                   className="block w-full mt-3 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg text-center font-bold border-2 border-green-600 transition-all duration-200"
                   target="_blank"
                   rel="noopener"
