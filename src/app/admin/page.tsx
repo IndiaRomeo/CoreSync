@@ -294,14 +294,32 @@ export default function AdminPanel() {
 
   const COLORS = ["#10b981", "#3b82f6", "#eab308"];
 
-  function actualizarTickets() {
+  async function actualizarTickets() {
     setLoading(true);
-    fetch("/api/tickets")
-      .then((res) => res.json())
-      .then((data) => {
+    try {
+      const res = await fetch("/api/tickets");
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        console.error("❌ /api/tickets error:", data);
+        setAlert({
+          msg: data.error || "Error obteniendo boletas",
+          type: "error",
+        });
+        setTickets([]);
+      } else {
         setTickets(data.tickets || []);
-        setLoading(false);
+      }
+    } catch (e) {
+      console.error("❌ Error fetch /api/tickets:", e);
+      setAlert({
+        msg: "Error de red consultando boletas",
+        type: "error",
       });
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const filteredTickets = tickets.filter((t) => {
