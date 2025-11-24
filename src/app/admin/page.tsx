@@ -817,18 +817,25 @@ export default function AdminPanel() {
 
         {/* MENÚ FLOTANTE DE ACCIONES */}
         {actionsMenu && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setActionsMenu(null)}
-        >
           <div
-            className="absolute w-48 rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl text-[11px] py-1 pointer-events-auto"
-            style={{
-              top: actionsMenu.y,
-              left: actionsMenu.x - 190,
-            }}
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-40"
+            onClick={() => setActionsMenu(null)}
           >
+            <div
+              className={`
+                absolute w-48 rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl
+                text-[11px] py-1 pointer-events-auto
+                origin-top-right transform transition-all duration-150 ease-out
+                ${actionsMenu.visible
+                  ? "opacity-100 scale-100 translate-y-0"
+                  : "opacity-0 scale-95 -translate-y-1"}
+              `}
+              style={{
+                top: actionsMenu.y,
+                left: actionsMenu.x - 190,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-zinc-100 flex items-center gap-2"
                 onClick={() => {
