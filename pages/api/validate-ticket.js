@@ -9,7 +9,7 @@ async function registrarLog({
   validador,
 }) {
   try {
-    await supabaseAdmin.from("logs_validaciones").insert({
+    await supabaseAdmin.from("logs_validacion").insert({
       fecha: new Date().toISOString(),
       codigo,
       nombre,
@@ -132,7 +132,7 @@ export default async function handler(req, res) {
   }
 
   // 3) Reglas de negocio usando status_pago (tu columna real)
-  
+
   // 1) Ticket no pagado
   if (String(data.status_pago).toLowerCase() !== "aprobado") {
     await registrarLog({
