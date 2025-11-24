@@ -70,7 +70,7 @@ export default function Home() {
           buyer_email: buyerEmail,
           buyer_name: buyerName,
           buyer_phone: buyerPhone,
-          importe: 1000,
+          importe: 21900,
           event_name: "Core Sync Collective - Noche de Velitas",
           event_date: "2025-12-06T21:00:00.000-05:00",
           event_location: "San Sebastián de Mariquita",
@@ -92,7 +92,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo: "NOCHE DE VELITAS — Core Sync Collective",
-          precio: 1000,
+          precio: 21900,
           entradaId,
         }),
       });

@@ -65,7 +65,7 @@ export default function SelfCheck() {
               Core Sync Collective
             </p>
             <h1 className="text-lg font-semibold">
-              Consulta de boletas (self-check)
+              Consulta de Tickets
             </h1>
           </div>
 
