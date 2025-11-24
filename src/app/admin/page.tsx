@@ -703,31 +703,23 @@ export default function AdminPanel() {
                             {String(v).toLowerCase() === "reservado" && (
                               <button
                                 className="
-                                  inline-flex items-center gap-1
-                                  px-2.5 py-1 rounded-full
-                                  text-[10px] font-semibold
-                                  border border-emerald-500/60
+                                  inline-flex items-center
+                                  px-3 py-1 rounded-full
+                                  text-[10px] font-semibold tracking-wide
+                                  border border-emerald-500/70
+                                  text-emerald-200
                                   bg-zinc-950/80
-                                  text-emerald-300
-                                  hover:bg-emerald-500/10 hover:border-emerald-400
-                                  shadow-sm shadow-emerald-500/30
+                                  hover:bg-emerald-500/10 hover:text-emerald-100
+                                  transition-colors
                                   cursor-pointer
                                 "
                                 onClick={async () => {
-                                  if (
-                                    !window.confirm("¿Marcar este ticket como PAGADO?")
-                                  ) {
-                                    return;
-                                  }
+                                  if (!window.confirm("¿Marcar este ticket como PAGADO?")) return;
 
                                   const resp = await fetch("/api/marcar-pago", {
                                     method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      codigo: t.Código,
-                                    }),
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ codigo: t.Código }),
                                   });
 
                                   if (resp.ok) {
@@ -750,8 +742,7 @@ export default function AdminPanel() {
                                   }
                                 }}
                               >
-                                <span className="text-[12px]">✅</span>
-                                <span>Confirmar pago</span>
+                                Confirmar pago
                               </button>
                             )}
                           </div>

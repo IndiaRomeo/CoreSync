@@ -1,5 +1,28 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+async function registrarLog({
+  codigo,
+  nombre,
+  email,
+  estado,
+  resultado,
+  validador,
+}) {
+  try {
+    await supabaseAdmin.from("logs_validaciones").insert({
+      fecha: new Date().toISOString(),
+      codigo,
+      nombre,
+      email,
+      estado,
+      resultado,
+      validador: validador || "DESCONOCIDO",
+    });
+  } catch (e) {
+    console.error("Error registrando log de validación:", e);
+  }
+}
+
 export default async function handler(req, res) {
   const { codigo, sec, qr, validador } = req.query;
 
@@ -109,20 +132,41 @@ export default async function handler(req, res) {
   }
 
   // 3) Reglas de negocio usando status_pago (tu columna real)
+  
+  // 1) Ticket no pagado
   if (String(data.status_pago).toLowerCase() !== "aprobado") {
+    await registrarLog({
+      codigo: data.codigo,
+      nombre: data.buyer_name,
+      email: data.buyer_email,
+      estado: data.status_pago,
+      resultado: "NO_PAGADO",
+      validador,
+    });
+
     return res
       .status(400)
       .json({ ok: false, error: "Ticket no pagado" });
   }
 
+  // 2) Ticket ya usado
   if (data.qr_used_at) {
+    await registrarLog({
+      codigo: data.codigo,
+      nombre: data.buyer_name,
+      email: data.buyer_email,
+      estado: data.status_pago,
+      resultado: "YA_USADO",
+      validador,
+    });
+
     return res.status(400).json({
       ok: false,
       error: "Este ticket ya fue usado.",
     });
   }
 
-  // 4) Marcar ticket como usado
+  // 3) Validación OK
   const { error: updError } = await supabaseAdmin
     .from("entradas")
     .update({
@@ -138,7 +182,16 @@ export default async function handler(req, res) {
       .json({ ok: false, error: "Error registrando uso" });
   }
 
-  // 5) Respuesta OK
+  // 👇 aquí logeas como VALIDADO
+  await registrarLog({
+    codigo: data.codigo,
+    nombre: data.buyer_name,
+    email: data.buyer_email,
+    estado: data.status_pago,
+    resultado: "VALIDADO",
+    validador,
+  });
+
   return res.status(200).json({
     ok: true,
     codigo: data.codigo,
