@@ -133,11 +133,12 @@ export default function AdminPanel() {
   "todos" | "pagado" | "reservado" | "rechazado"
   >("todos");
 
+  const [openActionsId, setOpenActionsId] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
   // claves que no queremos mostrar como columnas
-  const HIDDEN_KEYS = new Set(["Fecha compra ISO"]);
+  const HIDDEN_KEYS = new Set(["Fecha compra ISO", "Qr"]);
 
   // Revisa cookie admin
   useEffect(() => {
@@ -418,57 +419,34 @@ export default function AdminPanel() {
 
         {/* SEARCH + ACTIONS */}
         <section className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <div className="rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-xl px-4 py-3 flex flex-wrap gap-3 items-center shadow-lg">
-            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+        <div className="rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-xl px-4 py-3 shadow-lg space-y-3">
+          {/* Fila 1: título + búsqueda + botones */}
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex flex-col gap-1 min-w-[180px]">
               <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide">
                 Buscar boletas
               </span>
+              <span className="text-[10px] text-zinc-500">
+                Usa el buscador y filtra por estado o rango de fechas.
+              </span>
             </div>
-            <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+
+            <div className="flex-1 min-w-[230px] max-w-xl flex items-center gap-2">
               <input
                 placeholder="Nombre, email o código..."
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="flex-1 bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-1.5 text-xs focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
               />
-              <div className="flex flex-wrap gap-2 items-center flex-1 min-w-[220px]">
-                <select
-                  value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(e.target.value as "todos" | "pagado" | "reservado" | "rechazado")
-                  }
-                  className="bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-1.5 text-[11px] text-zinc-200"
-                >
-                  <option value="todos">Todos los estados</option>
-                  <option value="pagado">Solo pagadas</option>
-                  <option value="reservado">Solo reservadas</option>
-                  <option value="rechazado">Solo rechazadas</option>
-                </select>
 
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="bg-zinc-900 border border-zinc-700/80 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200"
-                />
-
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="bg-zinc-900 border border-zinc-700/80 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
               <button
-                className="bg-emerald-600/90 hover:bg-emerald-500 text-[11px] px-3 py-1.5 rounded-xl font-semibold shadow-sm shadow-emerald-500/40 cursor-pointer"
+                className="bg-emerald-600/90 hover:bg-emerald-500 text-[11px] px-3 py-1.5 rounded-xl font-semibold shadow-sm shadow-emerald-500/40 cursor-pointer whitespace-nowrap"
                 onClick={() => exportToCsv(filteredTickets)}
               >
                 Descargar CSV
               </button>
               <button
-                className="bg-sky-600/90 hover:bg-sky-500 text-[11px] px-3 py-1.5 rounded-xl font-semibold shadow-sm shadow-sky-500/40 cursor-pointer disabled:opacity-60"
+                className="bg-sky-600/90 hover:bg-sky-500 text-[11px] px-3 py-1.5 rounded-xl font-semibold shadow-sm shadow-sky-500/40 cursor-pointer disabled:opacity-60 whitespace-nowrap"
                 onClick={actualizarTickets}
                 disabled={loading}
                 title="Actualizar lista de boletas"
@@ -478,9 +456,51 @@ export default function AdminPanel() {
             </div>
           </div>
 
-          {/* RESUMEN RÁPIDO */}
-          <div className="rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-xl px-4 py-3 shadow-lg flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+          {/* Fila 2: filtros compactos */}
+          <div className="flex flex-wrap items-center gap-3 text-[11px]">
+            <span className="text-zinc-500 uppercase tracking-wide">
+              Filtros rápidos
+            </span>
+
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(
+                  e.target.value as "todos" | "pagado" | "reservado" | "rechazado"
+                )
+              }
+              className="bg-zinc-900 border border-zinc-700/80 rounded-full px-3 py-1.5 text-[11px] text-zinc-200"
+            >
+              <option value="todos">Todos los estados</option>
+              <option value="pagado">Solo pagadas</option>
+              <option value="reservado">Solo reservadas</option>
+              <option value="rechazado">Solo rechazadas</option>
+            </select>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-zinc-500 text-[10px] uppercase tracking-wide">
+                Rango de fechas
+              </span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="bg-zinc-900 border border-zinc-700/80 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200"
+              />
+              <span className="text-zinc-500 text-[10px]">a</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="bg-zinc-900 border border-zinc-700/80 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* RESUMEN RÁPIDO (lo de la derecha lo dejas igual) */}
+        <div className="rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-xl px-4 py-3 shadow-lg flex flex-col gap-1">
+         <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
               Resumen rápido
             </span>
             <p className="text-xs text-zinc-400 leading-snug">
@@ -496,8 +516,8 @@ export default function AdminPanel() {
                 </>
               )}
             </p>
-          </div>
-        </section>
+        </div>
+      </section>
 
         {/* STATS CARDS */}
         {!loading && (
@@ -750,24 +770,57 @@ export default function AdminPanel() {
                           </td>
                         )
                       )}
-                      <td className="border-b border-zinc-900 px-3 py-2">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            className="px-2.5 py-1 rounded-full bg-sky-600 text-[10px] font-semibold text-white hover:bg-sky-500 cursor-pointer"
-                            onClick={() => handleResend(t)}
-                          >
-                            Reenviar ticket
-                          </button>
+                      <td className="border-b border-zinc-900 px-3 py-2 align-middle relative">
+                        {/* Botón de menú (tres puntos) */}
+                        <button
+                          className="px-2 py-1 rounded-full bg-zinc-900 border border-zinc-700 text-[14px] leading-none text-zinc-200 hover:bg-zinc-800 cursor-pointer"
+                          onClick={() => {
+                            const id = t.Código || String(i);
+                            setOpenActionsId((prev) => (prev === id ? null : id));
+                          }}
+                          aria-label="Acciones"
+                        >
+                          ⋮
+                        </button>
 
-                          {(t["Qr usado"] || "").toLowerCase() !== "si" && (
+                        {/* Menú desplegable */}
+                        {openActionsId === (t.Código || String(i)) && (
+                          <div className="absolute right-2 top-9 z-20 w-44 rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl text-[11px] py-1">
                             <button
-                              className="px-2.5 py-1 rounded-full bg-emerald-700 text-[10px] font-semibold text-white hover:bg-emerald-600 cursor-pointer"
-                              onClick={() => handleMarkQrUsed(t)}
+                              className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-zinc-100"
+                              onClick={() => {
+                                handleResend(t);
+                                setOpenActionsId(null);
+                              }}
                             >
-                              Marcar QR usado
+                              📩 Reenviar ticket por email
                             </button>
-                          )}
-                        </div>
+
+                            {(t["Qr usado"] || "").toLowerCase() !== "si" && (
+                              <button
+                                className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-emerald-300"
+                                onClick={() => {
+                                  handleMarkQrUsed(t);
+                                  setOpenActionsId(null);
+                                }}
+                              >
+                                ✅ Marcar QR usado
+                              </button>
+                            )}
+
+                            {t.Qr && (
+                              <button
+                                className="w-full text-left px-3 py-1.5 hover:bg-zinc-800 cursor-pointer text-sky-300"
+                                onClick={() => {
+                                  setShowQr(t.Qr as string);
+                                  setOpenActionsId(null);
+                                }}
+                              >
+                                🔍 Ver QR
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
