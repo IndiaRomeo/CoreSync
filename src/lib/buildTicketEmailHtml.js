@@ -10,7 +10,15 @@ export function buildTicketEmailHtml(entry, ticketPdfUrl, BASE_URL) {
 
   const priceLabel = `${entry.divisa} $${entry.importe.toLocaleString("es-CO")}`;
 
-  const securityCode = entry.security_code;
+  // 🔐 Derivar código de seguridad si viene null en la BD
+  const codigoString = String(entry.codigo ?? "");
+  const securityBase = codigoString.replace(/[^0-9A-Za-z]/g, "");
+  const derivedSecurity =
+    securityBase.length >= 6
+      ? securityBase.slice(-6)
+      : securityBase.padStart(6, "0");
+
+  const securityCode = entry.security_code || derivedSecurity;
 
   return `
   <!doctype html>
