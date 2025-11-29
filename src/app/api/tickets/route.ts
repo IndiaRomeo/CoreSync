@@ -32,6 +32,8 @@ function fmtDate(iso: string | null): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
+    timeZone: "America/Bogota",   // clave
   });
 }
 
