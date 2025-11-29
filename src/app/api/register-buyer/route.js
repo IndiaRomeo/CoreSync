@@ -12,7 +12,7 @@ import { requireAdmin } from "@/lib/requireAdmin";
 const EVENT_NAME =
   process.env.EVENT_NAME || "Noche de Velitas – Techno Edition";
 const EVENT_DATE =
-  process.env.EVENT_DATE || "2024-12-06T21:00:00-05:00"; // ISO
+  process.env.EVENT_DATE || "2025-12-06T21:00:00-05:00"; // ISO
 const EVENT_LOCATION =
   process.env.EVENT_LOCATION || "Quinta (Core Sync · Mariquita, Tolima)";
 const TICKET_PRICE = Number(process.env.TICKET_PRICE || 21999);
