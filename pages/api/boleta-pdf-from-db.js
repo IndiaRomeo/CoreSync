@@ -26,6 +26,8 @@ export default async function handler(req, res) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
+    timeZone: "America/Bogota",
   });
 
   // 2) Precio formateado

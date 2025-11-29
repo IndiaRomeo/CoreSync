@@ -6,6 +6,8 @@ export function buildTicketEmailHtml(entry, ticketPdfUrl, BASE_URL) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
+    timeZone: "America/Bogota",
   });
 
   const priceLabel = `${entry.divisa} $${entry.importe.toLocaleString("es-CO")}`;
