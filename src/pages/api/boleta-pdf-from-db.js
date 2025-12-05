@@ -1,5 +1,5 @@
 import { pdf } from "@react-pdf/renderer";
-import TicketPDF from "../../pdf/TicketPDF";
+import TicketPDF from "../../../pdf/TicketPDF";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export default async function handler(req, res) {
