@@ -473,7 +473,7 @@ export default function Home() {
                 </div>
 
                 {/* 🧾 Mini formulario de datos antes de pagar */}
-                {/*<form
+                *<form
                   onSubmit={handlePay}
                   className="mt-6 flex flex-col gap-3 border-t border-gray-200 pt-4"
                 >
@@ -522,7 +522,7 @@ export default function Home() {
                       ? "Redirigiendo a Mercado Pago..."
                       : "Pagar con Mercado Pago"}
                   </button>
-                </form>*/}
+                </form>*/
 
                 <a
                   href="https://wa.me/573502768095"
