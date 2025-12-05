@@ -71,7 +71,7 @@ export default function Home() {
           buyer_email: buyerEmail,
           buyer_name: buyerName,
           buyer_phone: buyerPhone,
-          importe: 21999,
+          importe: 1000,
           event_name: "Core Sync Collective - Noche de Velitas",
           event_date: "2025-12-06T21:00:00.000-05:00",
           event_location: "San Sebastián de Mariquita",
@@ -93,7 +93,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo: "NOCHE DE VELITAS — Core Sync Collective",
-          precio: 21999,
+          precio: 1000,
           entradaId,
         }),
       });
@@ -442,7 +442,7 @@ export default function Home() {
 
                   <div>
                     <p className="text-base">
-                      <span className="font-semibold">Precio:</span> $21,999 COP{" "}
+                      <span className="font-semibold">Precio:</span> $1000 COP{" "}
                       <span className="text-xs text-gray-500">
                         (entrada general digital)
                       </span>
@@ -473,7 +473,7 @@ export default function Home() {
                 </div>
 
                 {/* 🧾 Mini formulario de datos antes de pagar */}
-                <form
+                {/*<form
                   onSubmit={handlePay}
                   className="mt-6 flex flex-col gap-3 border-t border-gray-200 pt-4"
                 >
@@ -522,7 +522,7 @@ export default function Home() {
                       ? "Redirigiendo a Mercado Pago..."
                       : "Pagar con Mercado Pago"}
                   </button>
-                </form>
+                </form>*/}
 
                 <a
                   href="https://wa.me/573502768095"
