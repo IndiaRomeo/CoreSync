@@ -10,11 +10,11 @@ import { requireAdmin } from "@/lib/requireAdmin";
 
 // ---------- CONFIG DEL EVENTO ----------
 const EVENT_NAME =
-  process.env.EVENT_NAME || "Noche de Velitas – Techno Edition";
+  process.env.EVENT_NAME || "Semana Santa Underground – Techno Santo";
 const EVENT_DATE =
-  process.env.EVENT_DATE || "2025-12-06T21:00:00-05:00"; // ISO
+  process.env.EVENT_DATE || "2026-12-06T21:00:00-05:00"; // ISO
 const EVENT_LOCATION =
-  process.env.EVENT_LOCATION || "Quinta (Core Sync · Mariquita, Tolima)";
+  process.env.EVENT_LOCATION || "(Core Sync · Mariquita, Tolima)";
 const TICKET_PRICE = Number(process.env.TICKET_PRICE || 22000);
 const TICKET_CURRENCY = process.env.TICKET_CURRENCY || "COP";
 

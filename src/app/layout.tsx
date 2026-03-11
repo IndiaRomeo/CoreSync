@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     siteName: "Core Sync Collective",
     images: [
       {
-        url: "https://collectivecoresync.com/evento-foto-velitas.png",
+        url: "https://collectivecoresync.com/evento-samana-santa.png",
         width: 1200,
         height: 630,
         alt: "Flyer Core Sync Collective",

@@ -166,7 +166,7 @@ export default function RegistrarForm() {
         ...body,
         codigo: result.codigo,
         qrBase64: result.qrBase64,
-        entradaId: result.entradaId,
+        entradaId: result.id,
         pdfUrl: result.pdfUrl,
       });
 
