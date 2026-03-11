@@ -141,7 +141,6 @@ export async function POST(req) {
       security_code: securityCode,
       created_at: nowIso,
       paid_at: nowIso,
-      ticket_email_sent_at: nowIso,
       mp_preference_id: null,
       mp_payment_id: null,
     };
@@ -152,12 +151,15 @@ export async function POST(req) {
       .select("id")
       .single();
 
-    if (insertError) {
-      console.error("❌ Error insertando entrada manual:", insertError);
-      return NextResponse.json(
-        { ok: false, error: "Error guardando el ticket" },
-        { status: 500 }
-      );
+    if (resendError) {
+      console.error("❌ Error enviando ticket manual por email:", resendError);
+    } else {
+      await supabaseAdmin
+        .from("entradas")
+        .update({ ticket_email_sent_at: new Date().toISOString() })
+        .eq("id", entradaId);
+
+      console.log(`📧 Ticket manual enviado a ${email}`);
     }
 
     const entradaId = insertData.id;
