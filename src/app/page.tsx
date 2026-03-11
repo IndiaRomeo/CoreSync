@@ -433,7 +433,7 @@ export default function Home() {
 
                   <div className="text-sm text-gray-800 space-y-1">
                     <p>
-                      <span className="font-semibold">Fecha:</span> 06 de diciembre, 2025
+                      <span className="font-semibold">Fecha:</span> 04 de Abril, 2026
                     </p>
                     <p>
                       <span className="font-semibold">Hora:</span> 9:00 PM
