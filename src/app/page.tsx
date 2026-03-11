@@ -407,7 +407,7 @@ export default function Home() {
               <div className="px-8 pt-2 pb-10 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 <div className="w-full flex justify-center mb-4">
                   <Image
-                    src="/evento-foto-velitas.png"
+                    src="/evento-samana-santa.png"
                     alt="Flyer Core Sync Collective"
                     className="rounded-xl max-h-80 md:max-h-96 w-auto object-contain shadow-lg"
                   />
