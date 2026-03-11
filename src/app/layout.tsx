@@ -20,10 +20,10 @@ const orbitron = Orbitron({
 });
 
 export const metadata: Metadata = {
-  title: "Core Sync Collective - Noche de Velitas",
+  title: "Core Sync Collective - Techno Santo",
   description: "Fiesta Techno | Core Sync Collective | 6 Diciembre 2025 | San Sebastián de Mariquita | ¡Compra tu entrada ya!",
   openGraph: {
-    title: "Core Sync Collective - Noche de Velitas",
+    title: "Core Sync Collective - Techno Santo",
     description: "No te pierdas el evento del año: Diciembre, Mariquita. Boletas limitadas. ¡Compra ahora!",
     url: "https://collectivecoresync.com/",
     siteName: "Core Sync Collective",
