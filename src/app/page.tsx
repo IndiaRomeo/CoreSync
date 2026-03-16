@@ -71,7 +71,7 @@ export default function Home() {
           buyer_email: buyerEmail,
           buyer_name: buyerName,
           buyer_phone: buyerPhone,
-          importe: 22000,
+          importe: 30000,
           event_name: "Core Sync Collective - Techno Santo",
           event_date: "2025-12-06T21:00:00.000-05:00",
           event_location: "San Sebastián de Mariquita",
@@ -93,7 +93,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo: "TECHNO SANTO — Core Sync Collective",
-          precio: 22000,
+          precio: 30000,
           entradaId,
         }),
       });
@@ -442,7 +442,7 @@ export default function Home() {
 
                   <div>
                     <p className="text-base">
-                      <span className="font-semibold">Precio:</span> $22,000 COP{" "}
+                      <span className="font-semibold">Precio:</span> $30,000 COP{" "}
                       <span className="text-xs text-gray-500">
                         (entrada general digital)
                       </span>
