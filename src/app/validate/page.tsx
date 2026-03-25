@@ -31,6 +31,7 @@ export default function Validador() {
   const [isFetching, setIsFetching] = useState(false);
   const scannedCodesRef = useRef<Set<string>>(new Set());
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scanLockRef = useRef(false);
   const [contador, setContador] = useState(0);
 
   const [username, setUsername] = useState("");
@@ -99,15 +100,15 @@ export default function Validador() {
           scannedCodesRef.current.add(codigoCache);
         }
 
-        resetAfter(1200);
+        resetAfter(1800);
       } else {
         setMsg(r.error || "No válido");
         playBeep("fail");
 
         if (r.error === "Este ticket ya fue usado.") {
-          resetAfter(1200);
+          resetAfter(1800);
         } else {
-          resetAfter(1000);
+          resetAfter(1400);
         }
       }
     } catch {
@@ -118,18 +119,27 @@ export default function Validador() {
 
   const handleResult = async (qrValue: string) => {
     if (!qrValue) return;
-    if (scanned || isFetching) return;
+    if (scanned || isFetching || scanLockRef.current) return;
+
+    scanLockRef.current = true;
 
     const parts = qrValue.split("|");
     const codigo = parts[1] || parts[0];
 
     if (!codigo) {
       setMsg("Código QR inválido");
-      resetAfter(1000);
+      resetAfter(1200);
+
+      setTimeout(() => {
+        scanLockRef.current = false;
+      }, 1200);
       return;
     }
 
     if (scannedCodesRef.current.has(codigo)) {
+      setTimeout(() => {
+        scanLockRef.current = false;
+      }, 1200);
       return;
     }
 
@@ -139,7 +149,8 @@ export default function Validador() {
 
     setTimeout(() => {
       scannedCodesRef.current.delete(codigo);
-    }, 1500);
+      scanLockRef.current = false;
+    }, 1800);
   };
 
   const handleValidateByCodigo = async (
