@@ -75,7 +75,7 @@ export async function POST(req) {
     const { error: resendError } = await resend.emails.send({
       from:
         process.env.TICKETS_FROM_EMAIL ||
-        "Core Sync Collective - Tickets <tickets@collectivecoresync.com>",
+        "Core Sync Collective <tickets@collectivecoresync.com>",
       to: toEmail,
       subject: `Tu ticket para ${entry.event_name}`,
       html: htmlBody,

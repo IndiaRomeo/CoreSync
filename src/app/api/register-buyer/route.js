@@ -12,7 +12,7 @@ import { requireAdmin } from "@/lib/requireAdmin";
 const EVENT_NAME =
   process.env.EVENT_NAME || "Semana Santa Underground – Techno Santo";
 const EVENT_DATE =
-  process.env.EVENT_DATE || "2026-12-06T21:00:00-05:00"; // ISO
+  process.env.EVENT_DATE || "2026-12-06T21:00:00-05:00";
 const EVENT_LOCATION =
   process.env.EVENT_LOCATION || "(Core Sync · Mariquita, Tolima)";
 const TICKET_PRICE = Number(process.env.TICKET_PRICE || 30000);
@@ -25,7 +25,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ---------- UTIL: generar código único ----------
 function generarCodigo() {
-  const random = Math.floor(100000 + Math.random() * 900000); // 6 dígitos
+  const random = Math.floor(100000 + Math.random() * 900000);
   return `CS-${random}`;
 }
 
@@ -74,7 +74,6 @@ export async function POST(req) {
     const email = (body.email || "").trim();
     const telefono = (body.telefono || "").trim();
 
-    // 2) Validaciones básicas
     if (!nombre || !email || !telefono) {
       return NextResponse.json(
         { ok: false, error: "Faltan datos obligatorios" },
@@ -106,7 +105,6 @@ export async function POST(req) {
       );
     }
 
-    // 3) Generar código y QR
     const codigo = generarCodigo();
 
     const codigoString = String(codigo ?? "");
@@ -125,7 +123,6 @@ export async function POST(req) {
 
     const nowIso = new Date().toISOString();
 
-    // 4) Insertar en Supabase
     const rowToInsert = {
       buyer_name: nombre,
       buyer_email: email,
@@ -151,23 +148,18 @@ export async function POST(req) {
       .select("id")
       .single();
 
-    if (resendError) {
-      console.error("❌ Error enviando ticket manual por email:", resendError);
-    } else {
-      await supabaseAdmin
-        .from("entradas")
-        .update({ ticket_email_sent_at: new Date().toISOString() })
-        .eq("id", entradaId);
-
-      console.log(`📧 Ticket manual enviado a ${email}`);
+    if (insertError || !insertData?.id) {
+      console.error("❌ Error insertando entrada:", insertError);
+      return NextResponse.json(
+        { ok: false, error: "No se pudo crear la entrada" },
+        { status: 500 }
+      );
     }
 
     const entradaId = insertData.id;
 
-    // 5) URL del PDF
     const ticketPdfUrl = `${BASE_URL}/api/boleta-pdf-from-db?id=${entradaId}`;
 
-    // 6) Enviar email usando helper compartido
     try {
       const entryForMail = {
         ...rowToInsert,
@@ -183,7 +175,7 @@ export async function POST(req) {
       const { error: resendError } = await resend.emails.send({
         from:
           process.env.TICKETS_FROM_EMAIL ||
-          "Core Sync Collective - Tickets <tickets@collectivecoresync.com>",
+          "Core Sync Collective <tickets@collectivecoresync.com>",
         to: email,
         subject: `Tu ticket para ${entryForMail.event_name}`,
         html: htmlBody,
@@ -198,13 +190,17 @@ export async function POST(req) {
       if (resendError) {
         console.error("❌ Error enviando ticket manual por email:", resendError);
       } else {
+        await supabaseAdmin
+          .from("entradas")
+          .update({ ticket_email_sent_at: new Date().toISOString() })
+          .eq("id", entradaId);
+
         console.log(`📧 Ticket manual enviado a ${email}`);
       }
     } catch (mailErr) {
       console.error("❌ Error en envío de email manual:", mailErr);
     }
 
-    // 7) Respuesta para el front
     return NextResponse.json({
       ok: true,
       id: entradaId,
