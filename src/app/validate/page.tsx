@@ -249,7 +249,7 @@ export default function Validador() {
                 <span className="font-medium">{validador}</span>
               </div>
               <p className="mt-1 text-[11px] text-slate-400">
-                Tickets validados:{" "}
+                Validados en este dispositivo:{" "}
                 <span className="font-semibold text-emerald-400">
                   {contador}
                 </span>
