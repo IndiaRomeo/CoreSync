@@ -2,6 +2,41 @@ import { pdf } from "@react-pdf/renderer";
 import TicketPDF from "../../../pdf/TicketPDF";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+function formatEventDateLabel(rawDate) {
+  if (!rawDate) return "";
+
+  const iso = String(rawDate);
+
+  const match = iso.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/
+  );
+
+  if (!match) return iso;
+
+  const [, year, month, day, hour, minute] = match;
+
+  const meses = {
+    "01": "enero",
+    "02": "febrero",
+    "03": "marzo",
+    "04": "abril",
+    "05": "mayo",
+    "06": "junio",
+    "07": "julio",
+    "08": "agosto",
+    "09": "septiembre",
+    "10": "octubre",
+    "11": "noviembre",
+    "12": "diciembre",
+  };
+
+  let h = parseInt(hour, 10);
+  const ampm = h >= 12 ? "p. m." : "a. m.";
+  h = h % 12 || 12;
+
+  return `${day} de ${meses[month]} de ${year}, ${String(h).padStart(2, "0")}:${minute} ${ampm}`;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
@@ -18,17 +53,8 @@ export default async function handler(req, res) {
 
   if (error || !data) return res.status(404).send("Ticket no encontrado");
 
-  // 1) Fecha formateada
-  const eventDate = new Date(data.event_date);
-  const eventDateLabel = eventDate.toLocaleString("es-CO", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "America/Bogota",
-  });
+  // 1) Fecha formateada SIN reconvertir zona horaria
+  const eventDateLabel = formatEventDateLabel(data.event_date);
 
   // 2) Precio formateado
   const priceLabel = `${data.divisa} $${data.importe.toLocaleString("es-CO")}`;
@@ -37,7 +63,7 @@ export default async function handler(req, res) {
   let qrBase64 = data.qr_base64 || "";
   qrBase64 = qrBase64.replace(/^data:image\/\w+;base64,/, "");
 
-  // 4) Código de seguridad (si no existe aún en la BD)
+  // 4) Código de seguridad
   let securityCode = data.security_code;
   if (!securityCode) {
     const codigoString = String(data.codigo ?? "");
@@ -48,14 +74,13 @@ export default async function handler(req, res) {
         ? securityBase.slice(-6)
         : securityBase.padStart(6, "0");
 
-    // Guardarlo en BD para futuras validaciones / check-in
     await supabaseAdmin
       .from("entradas")
       .update({ security_code: securityCode })
       .eq("id", id);
   }
 
-  // 5) Construir el PDF con el mismo diseño premium
+  // 5) Construir PDF
   const doc = (
     <TicketPDF
       buyerName={data.buyer_name}
@@ -72,7 +97,7 @@ export default async function handler(req, res) {
 
   const pdfBuffer = await pdf(doc).toBuffer();
 
-  // 6) Respuesta HTTP correcta
+  // 6) Respuesta
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
