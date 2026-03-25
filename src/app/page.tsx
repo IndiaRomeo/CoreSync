@@ -569,11 +569,11 @@ export default function Home() {
           setTimeout(() => setTapShare(false), 350);
           const shareData = {
             title: "Core Sync Collective - Evento Techno",
-            text: "¡No te pierdas este evento! 06 de diciembre, San Sebastián de Mariquita.",
+            text: "¡No te pierdas este evento! 04 de abril, San Sebastián de Mariquita.",
             url:
               typeof window !== "undefined"
                 ? window.location.href
-                : "https://coresync.com",
+                : "https://collectivecoresync.com/",
           };
           if (navigator.share) {
             try {
