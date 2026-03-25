@@ -69,7 +69,7 @@ export function buildTicketEmailHtml(entry, ticketPdfUrl, BASE_URL) {
                   <table width="100%">
                     <tr>
                       <td align="left">
-                        <img src="${BASE_URL}/core-sync-log-navidad.png"
+                        <img src="${BASE_URL}/core-sync-logo.png"
                           width="48" height="48"
                           style="border-radius:999px;border:1px solid #22c55e33;" />
                       </td>
