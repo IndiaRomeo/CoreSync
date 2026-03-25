@@ -26,17 +26,18 @@ async function registrarLog({
 export default async function handler(req, res) {
   const { codigo, sec, qr, validador } = req.query;
 
-  // 1) Al menos un dato
   if (!codigo && !sec && !qr) {
-    return res
-      .status(400)
-      .json({ ok: false, error: "Falta código, código de seguridad o QR" });
+    return res.status(400).json({
+      ok: false,
+      error: "Falta código, código de seguridad o QR",
+    });
   }
 
-  // 👈 AQUÍ SIN TYPESCRIPT
   const orFilters = [];
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  // --- A) Código de ticket (manual o por query) ---
+  // A) Código manual
   if (codigo) {
     const cod = String(codigo).trim();
     if (cod) {
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // --- B) Código de seguridad (manual) ---
+  // B) Código de seguridad manual
   if (sec) {
     const s = String(sec).trim();
     if (s) {
@@ -52,14 +53,13 @@ export default async function handler(req, res) {
     }
   }
 
-  // --- C) QR escaneado ---
+  // C) QR escaneado
   if (qr) {
     const qrString = String(qr).trim();
 
-    // 1) Intentar como URL (por si alguna vez pones link en el QR)
+    // 1. Intentar leer como URL
     try {
       const url = new URL(qrString);
-
       const qpCodigo =
         url.searchParams.get("codigo") ||
         url.searchParams.get("ticket") ||
@@ -73,67 +73,71 @@ export default async function handler(req, res) {
       if (qpCodigo) {
         orFilters.push(`codigo.eq.${qpCodigo.trim()}`);
       }
-      if (qpId) {
+
+      if (qpId && uuidRegex.test(qpId.trim())) {
         orFilters.push(`id.eq.${qpId.trim()}`);
       }
     } catch {
-      // no era URL, seguimos con los otros formatos
+      // No era URL, seguimos
     }
 
-    // 2) Formato con pipes: ej. "CS-123456|ABCDEF|uuid"
+    // 2. Formato con pipes: CoreSync|CS-937267|Nombre|Tel|Email
     const parts = qrString
       .split("|")
       .map((p) => p.trim())
       .filter(Boolean);
 
     for (const p of parts) {
-      if (p.startsWith("CS-")) {
+      if (/^CS-\d{4,12}$/i.test(p)) {
         orFilters.push(`codigo.eq.${p}`);
       }
-      // si alguna parte parece un uuid largo, lo probamos como id
-      if (p.length > 20) {
+
+      if (uuidRegex.test(p)) {
         orFilters.push(`id.eq.${p}`);
       }
     }
 
-    // 3) Fallback: buscar un patrón tipo CS-###### dentro del string
+    // 3. Fallback: buscar patrón tipo CS-######
     const match = qrString.match(/CS-\d{4,12}/i);
     if (match) {
       orFilters.push(`codigo.eq.${match[0]}`);
     }
   }
 
-  if (!orFilters.length) {
-    return res
-      .status(400)
-      .json({ ok: false, error: "No se pudo interpretar el dato enviado" });
+  // Eliminar duplicados
+  const uniqueFilters = [...new Set(orFilters)];
+
+  if (!uniqueFilters.length) {
+    return res.status(400).json({
+      ok: false,
+      error: "No se pudo interpretar el dato enviado",
+    });
   }
 
-  // 2) Buscar en tu tabla entradas (con tus columnas reales)
   const { data, error } = await supabaseAdmin
     .from("entradas")
     .select(
       "id, codigo, security_code, buyer_name, buyer_phone, buyer_email, status_pago, qr_used_at, qr_used_by"
     )
-    .or(orFilters.join(","))
+    .or(uniqueFilters.join(","))
     .maybeSingle();
 
   if (error) {
     console.error("Error Supabase validate-ticket:", error);
-    return res
-      .status(500)
-      .json({ ok: false, error: "Error consultando el ticket" });
+    return res.status(500).json({
+      ok: false,
+      error: "Error consultando el ticket",
+    });
   }
 
   if (!data) {
-    return res
-      .status(404)
-      .json({ ok: false, error: "Ticket no encontrado" });
+    return res.status(404).json({
+      ok: false,
+      error: "Ticket no encontrado",
+    });
   }
 
-  // 3) Reglas de negocio usando status_pago (tu columna real)
-
-  // 1) Ticket no pagado
+  // Ticket no pagado
   if (String(data.status_pago).toLowerCase() !== "aprobado") {
     await registrarLog({
       codigo: data.codigo,
@@ -144,12 +148,13 @@ export default async function handler(req, res) {
       validador,
     });
 
-    return res
-      .status(400)
-      .json({ ok: false, error: "Ticket no pagado" });
+    return res.status(400).json({
+      ok: false,
+      error: "Ticket no pagado",
+    });
   }
 
-  // 2) Ticket ya usado
+  // Ticket ya usado
   if (data.qr_used_at) {
     await registrarLog({
       codigo: data.codigo,
@@ -166,7 +171,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // 3) Validación OK
+  // Validación OK
   const { error: updError } = await supabaseAdmin
     .from("entradas")
     .update({
@@ -177,12 +182,12 @@ export default async function handler(req, res) {
 
   if (updError) {
     console.error("Error actualizando uso de ticket:", updError);
-    return res
-      .status(500)
-      .json({ ok: false, error: "Error registrando uso" });
+    return res.status(500).json({
+      ok: false,
+      error: "Error registrando uso",
+    });
   }
 
-  // 👇 aquí logeas como VALIDADO
   await registrarLog({
     codigo: data.codigo,
     nombre: data.buyer_name,
