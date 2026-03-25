@@ -21,9 +21,7 @@ function playBeep(type = "ok") {
   const url = type === "ok" ? "/ok.mp3" : "/fail.mp3";
   const audio = new window.Audio(url);
   audio.volume = 1;
-  audio.play().catch(() => {
-    // Ignora el error de autoplay bloqueado
-  });
+  audio.play().catch(() => {});
 }
 
 export default function Validador() {
@@ -39,7 +37,6 @@ export default function Validador() {
   const [pin, setPin] = useState("");
   const [validador, setValidador] = useState("");
 
-  // inputs manuales
   const [codigoManual, setCodigoManual] = useState("");
   const [securityManual, setSecurityManual] = useState("");
 
@@ -47,9 +44,7 @@ export default function Validador() {
     const savedValidador = localStorage.getItem("validador");
     if (savedValidador) {
       setValidador(savedValidador);
-      const savedContador = localStorage.getItem(
-        `contador_${savedValidador}`
-      );
+      const savedContador = localStorage.getItem(`contador_${savedValidador}`);
       if (savedContador) {
         setContador(parseInt(savedContador, 10));
       }
@@ -66,14 +61,13 @@ export default function Validador() {
     }, ms);
   }
 
-  // Función reutilizable para llamar al endpoint
   const callValidateTicket = async (
     queryString: string,
     codigoCache?: string
   ) => {
     if (!validador) {
       setMsg("Primero inicia sesión como validador");
-      resetAfter(3000);
+      resetAfter(1500);
       return;
     }
 
@@ -94,12 +88,10 @@ export default function Validador() {
       if (r.ok) {
         setData(r);
         playBeep("ok");
+
         setContador((prev) => {
           const nuevo = prev + 1;
-          localStorage.setItem(
-            `contador_${validador}`,
-            nuevo.toString()
-          );
+          localStorage.setItem(`contador_${validador}`, nuevo.toString());
           return nuevo;
         });
 
@@ -107,73 +99,74 @@ export default function Validador() {
           scannedCodesRef.current.add(codigoCache);
         }
 
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        resetAfter(5000);
+        resetAfter(1200);
       } else {
         setMsg(r.error || "No válido");
         playBeep("fail");
 
         if (r.error === "Este ticket ya fue usado.") {
-          resetAfter(3000);
+          resetAfter(1200);
         } else {
-          if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          resetAfter(2500);
+          resetAfter(1000);
         }
       }
     } catch {
       setMsg("Error de red");
-      setScanned(false);
-      setIsFetching(false);
+      resetAfter(1000);
     }
   };
 
-  // Escaneo QR
   const handleResult = async (qrValue: string) => {
     if (!qrValue) return;
+    if (scanned || isFetching) return;
 
     const parts = qrValue.split("|");
     const codigo = parts[1] || parts[0];
 
     if (!codigo) {
       setMsg("Código QR inválido");
-      resetAfter(2500);
+      resetAfter(1000);
       return;
     }
 
-    await callValidateTicket(
-      `qr=${encodeURIComponent(qrValue)}`,
-      codigo
-    );
+    if (scannedCodesRef.current.has(codigo)) {
+      return;
+    }
+
+    scannedCodesRef.current.add(codigo);
+
+    await callValidateTicket(`qr=${encodeURIComponent(qrValue)}`, codigo);
+
+    setTimeout(() => {
+      scannedCodesRef.current.delete(codigo);
+    }, 1500);
   };
 
-  // Validar por código de ticket
   const handleValidateByCodigo = async (
     e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
     const cod = codigoManual.trim();
+
     if (!cod) {
       setMsg("Ingresa un código de ticket");
-      resetAfter(2000);
+      resetAfter(1000);
       return;
     }
 
-    await callValidateTicket(
-      `codigo=${encodeURIComponent(cod)}`,
-      cod
-    );
+    await callValidateTicket(`codigo=${encodeURIComponent(cod)}`, cod);
     setCodigoManual("");
   };
 
-  // Validar por código de seguridad
   const handleValidateBySecurity = async (
     e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
     const sec = securityManual.trim();
+
     if (!sec) {
       setMsg("Ingresa un código de seguridad");
-      resetAfter(2000);
+      resetAfter(1000);
       return;
     }
 
@@ -183,7 +176,6 @@ export default function Validador() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col relative">
-      {/* 🔔 Banner flotante de resultado (debajo del header) */}
       {(data || msg) && (
         <div className="fixed inset-x-0 top-16 z-40 flex justify-center px-4">
           <div
@@ -230,16 +222,13 @@ export default function Validador() {
         </div>
       )}
 
-      {/* Top bar / header */}
       <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-[0.25em] text-emerald-400">
               Core Sync Collective
             </p>
-            <h1 className="text-lg font-semibold">
-              Validador de tickets
-            </h1>
+            <h1 className="text-lg font-semibold">Validador de tickets</h1>
           </div>
 
           {validador && (
@@ -270,12 +259,10 @@ export default function Validador() {
                 scannedCodesRef.current.clear();
                 localStorage.removeItem("validador");
                 if (currentValidador) {
-                  localStorage.removeItem(
-                    `contador_${currentValidador}`
-                  );
+                  localStorage.removeItem(`contador_${currentValidador}`);
                 }
                 setMsg("Sesión cerrada");
-                resetAfter(2000);
+                resetAfter(1000);
               }}
             >
               Cerrar sesión
@@ -286,15 +273,14 @@ export default function Validador() {
 
       <main className="flex-1 flex justify-center">
         <div className="w-full max-w-xl px-4 py-6 space-y-6">
-          {/* Login de validador */}
           {!validador && (
             <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
               <h2 className="text-base font-semibold mb-2">
                 Inicia sesión como validador
               </h2>
               <p className="text-xs text-slate-400 mb-4">
-                Usa tu nombre y PIN asignado para empezar a escanear
-                entradas en el evento.
+                Usa tu nombre y PIN asignado para empezar a escanear entradas en
+                el evento.
               </p>
               <div className="space-y-3">
                 <input
@@ -320,7 +306,7 @@ export default function Validador() {
                       localStorage.setItem("validador", username);
                     } else {
                       setMsg("Nombre o PIN incorrecto");
-                      resetAfter(3000);
+                      resetAfter(1500);
                     }
                   }}
                 >
@@ -330,15 +316,11 @@ export default function Validador() {
             </section>
           )}
 
-          {/* Zona de escaneo + formularios */}
           {validador && (
             <>
-              {/* Scanner card (diseño anterior) */}
               <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">
-                    Escaneo rápido por QR
-                  </h2>
+                  <h2 className="text-sm font-semibold">Escaneo rápido por QR</h2>
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Cámara activa
@@ -347,32 +329,26 @@ export default function Validador() {
 
                 <div className="mt-3">
                   <div className="relative w-full max-w-sm mx-auto aspect-[4/3] overflow-hidden rounded-2xl border border-slate-700 bg-black">
-                    {/* Cámara */}
-                    {!scanned && (
-                      <div className="absolute inset-0">
-                        <QrScanner onResult={handleResult} />
-                      </div>
-                    )}
+                    <div className="absolute inset-0">
+                      <QrScanner onResult={handleResult} />
+                    </div>
 
-                    {/* Overlay del marco grande (diseño viejo) */}
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                       <div className="w-52 h-52 rounded-3xl border-2 border-emerald-400/80 shadow-[0_0_0_9999px_rgba(15,23,42,0.65)]" />
                     </div>
 
-                    {/* Texto inferior */}
                     <div className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-[11px] text-slate-200/90">
                       Apunta al código QR del ticket
                     </div>
                   </div>
 
                   <p className="mt-2 text-[11px] text-center text-slate-400">
-                    Al escanear, el sistema marcará automáticamente el
-                    ticket como usado y mostrará los datos del asistente.
+                    Al escanear, el sistema marcará automáticamente el ticket
+                    como usado y mostrará los datos del asistente.
                   </p>
                 </div>
               </section>
 
-              {/* Formularios manuales */}
               <section className="grid gap-4 md:grid-cols-2">
                 <form
                   onSubmit={handleValidateByCodigo}
