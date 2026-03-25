@@ -73,7 +73,7 @@ export default function Home() {
           buyer_phone: buyerPhone,
           importe: 30000,
           event_name: "Core Sync Collective - Techno Santo",
-          event_date: "2025-12-06T21:00:00.000-05:00",
+          event_date: "2026-04-04T21:00:00.000-05:00",
           event_location: "San Sebastián de Mariquita",
         }),
       });

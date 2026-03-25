@@ -12,7 +12,7 @@ import { requireAdmin } from "@/lib/requireAdmin";
 const EVENT_NAME =
   process.env.EVENT_NAME || "Semana Santa Underground – Techno Santo";
 const EVENT_DATE =
-  process.env.EVENT_DATE || "2026-12-06T21:00:00-05:00";
+  process.env.EVENT_DATE || "2026-04-04T21:00:00-05:00";
 const EVENT_LOCATION =
   process.env.EVENT_LOCATION || "(Core Sync · Mariquita, Tolima)";
 const TICKET_PRICE = Number(process.env.TICKET_PRICE || 30000);
